@@ -2,7 +2,8 @@
 
 ![logo](/favicon.ico)
 
-# YJWIKI<small>2018-2021<small>
+# YJWiki
+研百家之术，究古今之变，是谓研究。
 
-[GitHub](https://github.com/yanjiulab/yjwiki/)
+[GitHub](https://github.com/yanjiulab/)
 [Get Started](#YJWiki)
