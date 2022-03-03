@@ -4,6 +4,7 @@
 
 - [ ] Linux 是如何开机的
 - [ ] 开机自启动 - systemd
+- [ ] 路由 - frr
 - [ ] VFS - mount
 - [ ] 进程查看 - ps
 - [ ] 隔离 - namespace

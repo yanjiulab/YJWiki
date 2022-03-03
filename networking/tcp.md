@@ -301,7 +301,7 @@ TCP Reno 状态转移图如下图所示：
 
 ![fsm](tcp.assets/fsm.png)
 
-# 参考
+## 参考
 - [Transmission Control Protocol](https://en.wikipedia.org/wiki/Transmission_Control_Protocol)
 - [TCP Congestion Control](https://www.geeksforgeeks.org/tcp-congestion-control/)
 - [TCP congestion control - wikipedia](https://en.wikipedia.org/wiki/TCP_congestion_control)

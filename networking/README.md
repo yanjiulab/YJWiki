@@ -5,7 +5,7 @@
 
 - 基础部分
     - [ ] 基础
-    - [x] 体系架构
+    - [x] [体系架构](/networking/arch.md)
 - 交换网络部分
     - [ ] 局域网(局域网分类、协议、MAC接入等二层概念、交换机(物理接口逻辑接口)/概念)
     - [ ] 以太网（以太网交换（2、3）/MAC地址、表、转发规则等/链路聚合lacp../）
@@ -13,10 +13,10 @@
     - [ ] 环路检测（stp/mstp/vbst/sep/rrpp/erps/ld）
     - [ ] 二层透传
 - 网络互联部分
-    - [ ] IP地址（ipv4/arp/dns/dhcp/ipv6(nd)/dhcpv6）
-    - [ ] IP路由（rip/ospf/isis/bgp）
-    - [ ] 组播 (igmp/pimv4/msdp/mld/pimv6/igmp snooping/mld snooping)
-    - [ ] MPLS标签交换
+    - [ ] IP 地址（ipv4/arp/dns/dhcp/ipv6(nd)/dhcpv6）
+    - [ ] IP 单播路由（rip/ospf/isis/bgp）
+    - [x] IP 组播 (igmp/pimv4/msdp)
+    - [ ] MPLS 标签交换
     - [ ] 隧道/VPN(gre/ipsec/vxlan)
 - 传输层部分
     - [ ] TCP
