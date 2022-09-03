@@ -313,3 +313,32 @@ MSDP 对等体之间交互 SA 消息，消息中携带组播源 DR 在 RP 上注
 为了防止 SA 消息在 MSDP 对等体之间被循环转发，MSDP 对接收到的 SA 消息执行 RPF 检查，在消息传递的入方向上进行严格的控制。不符合 RPF 规则的 SA 消息将被丢弃。
 
 当网络中存在多个 MSDP 对等体时，很容易导致 SA 消息在对等体之间泛滥。同时，MSDP 对等体对每一个到来的 SA 报文进行 RPF 检查，给系统造成很大的负担。将多个 MSDP 对等体加入同一个 Mesh Group，就可以大幅度减少在这些 MSDP 对等体之间传递的SA消息。
+
+# PIM DM
+
+This section describes the generation and processing of PIM-DM Join, Prune, and Graft messages. Prune messages are sent toward the upstream neighbor for S to indicate that traffic from S addressed to group G is not desired. **In the case of downstream routers A and B, where A wishes to continue receiving data and B does not, A will send a Join in response to B’s Prune to override the Prune.** This is the only situation in PIM-DM in which a **Join** message is used. Finally, a Graft message is used to re-join a previously pruned branch to the delivery tree.
+
+
+
+- Common Section
+    - PIM Ver (4b)
+    - Type (4b)
+    - Reserved (1B)
+    - Checksum (2B)
+    - Upstream Neighbor Address (Encoded Unicast Format)
+    - Reserved (1B)
+    - Number Groups (1B)
+    - Hold Time (2B)
+- Group Section 1... n (Repeat)
+    - Multicast Group Address (Encoded Group Format)
+    - Number of Joined Sources
+    - Number of Pruned Sources
+    - Joined Source Address 1 ... n (Encoded Source Format)
+    - Pruned Source Address 1 ... n (Encoded Source Format)
+
+
+
+
+
+
+
