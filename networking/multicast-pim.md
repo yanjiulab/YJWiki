@@ -27,8 +27,43 @@ SSM 模型与 ASM 模型之间的最大差异就是**是否指定了组播源**�
 
 ## PIM 基本概念与术语
 
-TODO
-上游下游
+为了便于描述 PIM 协议，首先解释一些基本术语与概念。
+
+|    术语    |      英文/简写      | 解释                                                         |
+| :--------: | :-----------------: | ------------------------------------------------------------ |
+| PIM 路由器 |          /          | 在接口上使能了 PIM 协议的路由器。                            |
+| 组播分发树 |         MDT         | 以组播组为单位在路由器上建立的一点到多点的组播转发路径。     |
+| 上游/下游  | upstream/downstream | 上下游是一个相对的概念，其中靠近组播源的一侧称为上游，靠近组播接受者的一侧称为下游。 |
+| PIM 路由表 |         MRT         | 通过 PIM 协议建立的组播路由表项的集合。                      |
+|            |                     |                                                              |
+
+
+
+PIM 网络以组播组为单位在路由器上建立一点到多点的组播转发路径。由于组播转发路径呈现树型结构，也称为**组播分发树** MDT（Multicast Distribution Tree）。组播分发树主要包括以下两种：
+
+- 以组播源为根，组播组成员为叶子的组播分发树称为 **SPT**（Shortest Path Tree）。SPT 同时适用于 PIM-DM 网络和 PIM-SM 网络。
+- 以 RP（Rendezvous Point）为根，组播组成员为叶子的组播分发树称为 **RPT**（RP Tree）。RPT 适用于 PIM-SM 网络。
+
+**PIM 路由器**是指在接口上使能了 PIM 协议的路由器，包括以下四种：
+
+- 叶子路由器：与用户主机相连的 PIM 路由器，但连接的用户主机不一定为组成员，如 RouterA、RouterB、RouterC。
+- 第一跳路由器：组播转发路径上，与组播源相连且负责转发该组播源发出的组播数据的PIM路由器。如 RouterE。
+- 最后一跳路由器：组播转发路径上，与组播组成员相连且负责向该组成员转发组播数据的PIM路由器。如 RouterA、RouterB。
+- 中间路由器：组播转发路径上，第一跳路由器与最后一跳路由器之间的PIM路由器。如 RouterD。
+
+**PIM 路由表项**即通过 PIM 协议建立的组播路由表项。PIM 网络中存在两种路由表项：`(S，G)` 路由表项或 `(*, G)` 路由表项。S 表示组播源，G 表示组播组，* 表示任意。
+
+- `(S，G)` 路由表项主要用于在 PIM 网络中建立 SPT。对于 PIM-DM 网络和 PIM-SM 网络适用。
+- `(*，G)` 路由表项主要用于在 PIM 网络中建立 RPT。对于 PIM-SM 网络适用。
+
+PIM 路由表项中主要用于**指导转发的信息**如下：
+
+- 组播源地址。
+- 组播组地址。
+- 上游接口（靠近网络）：本地路由器上接收到组播数据的接口，如 Int3。
+- 下游接口（靠近主机）：将组播数据转发出去的接口，如 Int1、Int2。
+
+
 
 ## PIM 协议消息格式
 
@@ -50,7 +85,7 @@ PIM 消息头如下所示，共计 4 字节（4b+4b+8b+16b=32b=4B）。
 其中，类型字段解释如下。
 
 | 类型          | 值   | 组播模式     | 目的地址                              |
-|:-------------:|:----:| ----------- | ------------------------------------ |
+|:-------------:|:----:| :---------: | :----------------------------------: |
 | Hello         | 0    |             | Multicast to ALL-PIM-ROUTERS         |
 | Register      | 1    |             | Unicast to RP                        |
 | Register-Stop | 2    |             | Unicast to source of Register packet |
@@ -81,6 +116,8 @@ Encoded-Unicast Address 格式如下：
 - Addr Family  （1 字节）
 - Encoding Type  （1 字节）
 - Unicast Address  （IPv4 为 4 字节）
+
+一般情况而言，EUA 通常为
 
 Encoded-Group Address 格式如下：
 
@@ -370,6 +407,7 @@ PIM DM 协议由 RFC 3973 描述，是一种状态较为简单的协议，一般
 
 The Upstream(S,G) state machine for sending Prune, Graft, and Join
 messages is given below. There are three states.
+
 - Forwarding (F) This is the starting state of the Upsteam(S,G) state machine. The state machine is in this state if it just started or if oiflist(S,G) != NULL.
 - Pruned (P) The set, olist(S,G), is empty. The router will not forward data from S addressed to group G.
 - AckPending (AP)
