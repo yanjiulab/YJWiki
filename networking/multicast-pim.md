@@ -117,7 +117,7 @@ Encoded-Unicast Address 格式如下：
 - Encoding Type  （1 字节）
 - Unicast Address  （IPv4 为 4 字节）
 
-一般情况而言，EUA 通常为
+一般情况而言，EUA 通常为邻居 IP 地址。
 
 Encoded-Group Address 格式如下：
 
@@ -134,7 +134,7 @@ Encoded-Group Address 格式如下：
 - [B]idirectional PIM  
 - Reserved 
 - Admin Scope [Z]one  
-- Mask Len  
+- Mask Len 
 - Group multicast Address（IPv4 为 4 字节）
 
 Encoded-Source Address 格式如下：
@@ -149,23 +149,14 @@ Encoded-Source Address 格式如下：
 
 - Addr Family  （1 字节）
 - Encoding Type  （1 字节）
-- Encoding Type
-- Reserved
-  Transmitted as zero, ignored on receipt.
+- Reserved：为 0。
 - S The Sparse bit is a 1-bit value, set to 1 for PIM-SM. It is used for PIM version 1
   compatibility.
-- W The WC (or WildCard) bit is a 1-bit value for use with PIM Join/Prune messages (see
-  Section 4.9.5.1).
+- W The WC (or WildCard) bit is a 1-bit value for use with PIM Join/Prune messages
 - R The RPT (or Rendezvous Point Tree) bit is a 1-bit value for use with PIM Join/Prune
   messages (see Section 4.9.5.1). If the WC bit is 1, the RPT bit MUST be 1.
-- Mask Len
-  The mask length field is 8 bits. The value is the number of contiguous one bits left
-  justified used as a mask which, combined with the Source Address, describes a source
-  subnet. The mask length MUST be equal to the mask length in bits for the given
-  Address Family and Encoding Type (32 for IPv4 native and 128 for IPv6 native). A
-  router SHOULD ignore any messages received with any other mask length.
-- Source Address
-  The source address.  
+- Mask Len：掩码长度。
+- Source Address：组播源 IP 地址。
 
 ### Hello 消息
 
@@ -273,16 +264,21 @@ RP -> S
 ```
 
 - Unicast Upstream Neighbor Address：上游邻居单播地址
-
-
+- Group Number：该消息包含几个组。
+- 组条目
+    - 组地址
+    - 加入数量
+    - 剪枝数量
+    - 加入地址列表
+    - 剪枝地址列表
 
 ### Bootstrap 消息
 
 ```
-0 1 2 3
+0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|PIM Ver| Type |N| Reserved | Checksum |
+|PIM Ver|  Type |   Reserved    |            Checksum           |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 | Fragment Tag | Hash Mask Len | BSR Priority |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -338,26 +334,26 @@ RP -> S
 PIM 路由器在接收到邻居路由器发送的相同组播报文后，会以组播的方式向本网段的所有 PIM 路由器发送 Assert 报文，其中目的地址为永久组地址 224.0.0.13。
 
 ```
-0 1 2 3
+0                   1                   2                   3
 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|PIM Ver| Type | Reserved | Checksum |
+|PIM Ver|  Type |   Reserved    |            Checksum           |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| Group Address (Encoded-Group format) |
+|              Group Address (Encoded-Group format)             |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| Source Address (Encoded-Unicast format) |
+|             Source Address (Encoded-Unicast format)           |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|R| Metric Preference |
+|R|                        Metric Preference                    |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| Metric |
+|                             Metric                            |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
 
 ### Graft 消息
-TODO
+嫁接消息格式与加入/剪枝消息格式相同，区别在于嫁接消息类型为 6，
 
 ### Graft-Ack 消息
-TODO
+嫁接相应消息与接收到的嫁接消息相同，只不过其类型需要改为 7，且上游邻居地址为嫁接消息的发送者地址。
 
 ### C-RP-Adv 消息
 
@@ -393,7 +389,9 @@ C−RPs 周期性向 BSR 发送单播 Candidate-RP-Advertisement 消息。
 
 ## PIM DM
 
-PIM DM 协议由 RFC 3973 描述，是一种状态较为简单的协议，一般应用于**组播组成员规模相对较小**、**相对密集**的网络。DM 协议假定网络中的组成员分布非常稠密，每个网段都可能存在组成员。
+### 简介
+
+PIM DM 协议由 **RFC 3973** 描述，是一种状态较为简单的协议，一般应用于**组播组成员规模相对较小**、**相对密集**的网络。DM 协议假定网络中的组成员分布非常稠密，每个网段都可能存在组成员。
 
 当有活跃的组播源出现时，DM 致力于将组播源发来的组播报文**扩散（Flooding）**到整个网络的 PIM 路由器上，从而形成一棵以某组播源为根，以众多接收者为叶子的组播转发树。然而这颗组播转发树太过庞大，对于一个 PIM 路由器，如果某接口下游已经没有接收者，实际上已经无需再向该接口继续扩散，因此组播路由器会进行**剪枝（Prune）**操作，这样可以降低无效的网络流量。倘若被裁剪掉的分支由于下游路由器上有新的组成员加入，而希望重新恢复转发状态时，则进行**嫁接（Graft）**机制主动恢复其对组播报文的转发。
 
@@ -401,8 +399,41 @@ PIM DM 协议由 RFC 3973 描述，是一种状态较为简单的协议，一般
 
 除此之外，PIM-DM 的关键工作机制包括邻居发现、扩散、剪枝、嫁接、断言和状态刷新。其中，扩散、剪枝、嫁接是构建SPT的主要方法。
 
+### 数据转发规则
 
-(RFC 3973)
+首先，假设 `iif` 为数据入端口，`S` 为数据源地址，`G` 为组播组地址，
+
+First, an RPF check MUST be performed to determine whether the packet
+should be accepted based on TIB state and the interface on which that
+the packet arrived. Packets that fail the RPF check MUST NOT be
+forwarded, and the router will conduct an assert process for the
+(S,G) pair specified in the packet. Packets for which a route to the
+source cannot be found MUST be discarded.
+If the RPF check has been passed, an outgoing interface list is
+constructed for the packet. If this list is not empty, then the
+packet MUST be forwarded to all listed interfaces. If the list is
+empty, then the router will conduct a prune process for the (S,G)
+pair specified in the packet.
+
+
+
+Upon receipt of a data packet from S addressed to G on interface iif:
+if (iif == RPF_interface(S) AND UpstreamPState(S,G) != Pruned) {
+oiflist = olist(S,G)
+} else {
+oiflist = NULL
+}
+forward packet on all interfaces in oiflist
+This pseudocode employs the following "macro" definition:
+UpstreamPState(S,G) is the state of the Upstream(S,G) state machine
+in Section 4.4.1.
+
+
+
+### 剪枝、加入和嫁接
+
+
+
 ### Upstream
 
 The Upstream(S,G) state machine for sending Prune, Graft, and Join
