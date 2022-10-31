@@ -389,8 +389,6 @@ C−RPs 周期性向 BSR 发送单播 Candidate-RP-Advertisement 消息。
 
 ## PIM DM
 
-### 简介
-
 PIM DM 协议由 **RFC 3973** 描述，是一种状态较为简单的协议，一般应用于**组播组成员规模相对较小**、**相对密集**的网络。DM 协议假定网络中的组成员分布非常稠密，每个网段都可能存在组成员。
 
 当有活跃的组播源出现时，DM 致力于将组播源发来的组播报文**扩散（Flooding）**到整个网络的 PIM 路由器上，从而形成一棵以某组播源为根，以众多接收者为叶子的组播转发树。然而这颗组播转发树太过庞大，对于一个 PIM 路由器，如果某接口下游已经没有接收者，实际上已经无需再向该接口继续扩散，因此组播路由器会进行**剪枝（Prune）**操作，这样可以降低无效的网络流量。倘若被裁剪掉的分支由于下游路由器上有新的组成员加入，而希望重新恢复转发状态时，则进行**嫁接（Graft）**机制主动恢复其对组播报文的转发。
@@ -399,62 +397,86 @@ PIM DM 协议由 **RFC 3973** 描述，是一种状态较为简单的协议，�
 
 除此之外，PIM-DM 的关键工作机制包括邻居发现、扩散、剪枝、嫁接、断言和状态刷新。其中，扩散、剪枝、嫁接是构建SPT的主要方法。
 
+### 协议状态信息
+
+首先路由器需要保持通用信息。
+
+- For each interface：
+    - Hello Timer (HT)
+    - State Refresh Capable
+    - LAN Delay Enabled
+    - Propagation Delay (PD)
+    - Override Interval (OI)
+    - For each neighbor:
+        - Neighbor’s Gen ID.
+        - Neighbor’s LAN Prune Delay
+        - Neighbor’s Override Interval
+        - Neighbor’s State Refresh Capability
+        - Neighbor Liveness Timer (NLT)
+
+其中主要是为每个接口维护邻居信息。
+
+其次，路由器需要为每个 `(S, G)` 表项维护如下信息。
+
+- For each interface:
+    - Local Membership: State: One of {"NoInfo", "Include"}
+    - PIM (S,G) Prune State: State: One of {"NoInfo" (NI), "Pruned" (P), "PrunePending"
+        (PP)}
+    - (S,G) Assert Winner State: State: One of {"NoInfo" (NI), "I lost Assert" (L), "I won
+        Assert" (W)}
+- Upstream interface-specific:
+    - Graft/Prune State: 
+        - State: One of {"NoInfo" (NI), "Pruned" (P), "Forwarding" (F), "AckPending" (AP) }
+        - GraftRetry Timer (GRT)
+        - Override Timer (OT)
+        - Prune Limit Timer (PLT)
+    - Originator State:
+        - Source Active Timer (SAT)
+        - State Refresh Timer (SRT)
+
 ### 数据转发规则
 
-首先，假设 `iif` 为数据入端口，`S` 为数据源地址，`G` 为组播组地址，
+假设 `iif` 为数据入端口，`S` 为数据源地址，`G` 为组播组地址，`RPF_Interface(S)` 为通过 RPF 检查的接口。
 
-First, an RPF check MUST be performed to determine whether the packet
-should be accepted based on TIB state and the interface on which that
-the packet arrived. Packets that fail the RPF check MUST NOT be
-forwarded, and the router will conduct an assert process for the
-(S,G) pair specified in the packet. Packets for which a route to the
-source cannot be found MUST be discarded.
-If the RPF check has been passed, an outgoing interface list is
-constructed for the packet. If this list is not empty, then the
-packet MUST be forwarded to all listed interfaces. If the list is
-empty, then the router will conduct a prune process for the (S,G)
-pair specified in the packet.
+首先，RPF 检查判断数据是否从正确的端口进入，即 `RPF_Interface(S) != iif` 时，数据包将会被丢弃，同时进入 Assert 流程。
 
-
-
-Upon receipt of a data packet from S addressed to G on interface iif:
-if (iif == RPF_interface(S) AND UpstreamPState(S,G) != Pruned) {
-oiflist = olist(S,G)
-} else {
-oiflist = NULL
-}
-forward packet on all interfaces in oiflist
-This pseudocode employs the following "macro" definition:
-UpstreamPState(S,G) is the state of the Upstream(S,G) state machine
-in Section 4.4.1.
-
-
+如果 RPF 检查通过，则查看是否具有 `(S, G)` 表项，若没有则生成 `(S, G)` 表项，初始情况下该出接口列表为除 RPF 接口外所有 PIM 邻居接口，因此泛洪不会导致环路。若表项存在且不空，则将数据转发到列表中所有的接口。若表项存在且为空，则向上游发送 `(S, G)` 剪枝消息，表示下游已没有接受者，无需再向该路由器进行数据转发。
 
 ### 剪枝、加入和嫁接
 
+向上游邻居发送 `(S, G)` 剪枝消息表示该路由器将不再需要从 S 发往 G 的消息。假设 C 有两个下游路由器 A 和 B，其中 A 希望继续接收数据，而 B 不希望继续接收数据，B 正常情况下会向上游 C 发送剪枝消息，有趣的是剪枝消息的目的 IP 为全体 PIM 路由器，因此若 A 和 B 处于同一 LAN 中时，A 也会受到该剪枝消息，此时，A 必须发送 Join 加入消息用来覆盖 B 的剪枝消息，这也是 PIM DM 中唯一需要发送加入消息的场合。最后，如果下游接受者想要重新加入转发树，将会发送嫁接消息。
 
+#### Upstream 发送状态机
 
-### Upstream
+![multicast](multicast.assets/pim-dm-upstream-state-machine.PNG)
 
-The Upstream(S,G) state machine for sending Prune, Graft, and Join
-messages is given below. There are three states.
+The Upstream(S,G) state machine for sending Prune, Graft, and Join messages is given below. There are three states.
 
-- Forwarding (F) This is the starting state of the Upsteam(S,G) state machine. The state machine is in this state if it just started or if oiflist(S,G) != NULL.
-- Pruned (P) The set, olist(S,G), is empty. The router will not forward data from S addressed to group G.
-- AckPending (AP)
+- Forwarding (F) 转发状态
+- Pruned (P) 剪枝状态
+- AckPending (AP) 嫁接响应等待状态
 
 three state-machine-specific timers:
 - GraftRetry Timer (GRT(S,G)) ：如果上游没有回复 GA，则 GRT 超时，重发 G 报文，GRT 复位。若收到 GA，则取消 GRT。
 - Override Timer (OT(S,G))：收到来自上游的剪枝报文，如果下游出口不空，则需要启动 OT，OT超时时发送 Join 报文以恢复上游对自己的转发。
 - Prune Limit Timer (PLT(S,G))：如果上游已经时 P 状态，则 PLT 超时之前，为了限制 LAN 中的 P 报文数量，将不允许发送 P 报文。
 
-### Downstream
+#### Downstream 接收状态机
+
+![multicast](multicast.assets/pim-dm-downstream-state-machine.PNG)
 
 The Prune(S,G) Downstream state machine for receiving Prune, Join and Graft messages on interface I is given below
-- NoInfo(NI)
-- PrunePending(PP)
-- Pruned(P)
+- NoInfo(NI) 正常转发状态
+- PrunePending(PP) 剪枝等待状态：收到剪枝消息后，进入该状态等待下游邻居发送 Join 消息来覆盖该剪枝消息。
+- Pruned(P) 剪枝状态：如果没有收到 Join 消息，则进入剪枝状态。
 
 two timers:
-- PrunePending Timer (PPT(S,G,I))：超时后真正剪枝，进入 P 状态，同时启动 PT
-- Prune Timer (PT(S,G,I))：PT 超时后重新恢复转发，进入 NI 状态。可以使用 SR 报文一直刷新 PT，让下游一直不能恢复转发。（TODO思考why）
+- PrunePending Timer (PPT(S,G,I))：PPT 超时后进入剪枝状态，同时启动剪枝定时器 PT。
+- Prune Timer (PT(S,G,I))：PT 超时后重新恢复转发，进入 NI 状态。可以使用 SR 报文一直刷新 PT，让下游一直不能恢复转发。
+
+## PIM 总结
+
+- DM 和 SM 虽然共享数据包格式，但却不能直接交互。
+- PIM 路由器无法通过 Hello 包来区分是 DM 邻居还是 SM 邻居。
+- DM 的加入、剪枝、嫁接消息都是指定源的，因此无需和 SSM 协议进行区分。
+
