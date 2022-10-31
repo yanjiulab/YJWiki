@@ -29,27 +29,20 @@ SSM 模型与 ASM 模型之间的最大差异就是**是否指定了组播源**�
 
 为了便于描述 PIM 协议，首先解释一些基本术语与概念。
 
-|    术语    |      英文/简写      | 解释                                                         |
-| :--------: | :-----------------: | ------------------------------------------------------------ |
-| PIM 路由器 |          /          | 在接口上使能了 PIM 协议的路由器。                            |
-| 组播分发树 |         MDT         | 以组播组为单位在路由器上建立的一点到多点的组播转发路径。     |
-| 上游/下游  | upstream/downstream | 上下游是一个相对的概念，其中靠近组播源的一侧称为上游，靠近组播接受者的一侧称为下游。 |
-| PIM 路由表 |         MRT         | 通过 PIM 协议建立的组播路由表项的集合。                      |
-|            |                     |                                                              |
-
-
+|     术语     |      英文/简写      | 解释                                                         |
+| :----------: | :-----------------: | ------------------------------------------------------------ |
+|  PIM 路由器  |          /          | 在接口上使能了 PIM 协议的路由器。                            |
+|  基础路由表  |        MRIB         | 大多数情况下为单播路由表，用来决策 RPF。                     |
+|  转发树信息  |         TIB         | 在标准规范中，PIM 协议和 IGMP 协议生成的信息按树型结构组织。 |
+|  组播路由表  |      MFIB/MRT       | 一般软件将 TIB 实现为组播转发表/组播路由表，相对于查树信息，查表转发更加高效。 |
+| 反向路径转发 |         RPF         | 组播入口必须同单播到该源的接口相同。                         |
+|  组播分发树  |         MDT         | 以组播组为单位在路由器上建立的一点到多点的组播转发路径。     |
+|  上游/下游   | Upstream/Downstream | 上下游是一个相对的概念，其中靠近组播源的一侧称为上游，靠近组播接受者的一侧称为下游。 |
 
 PIM 网络以组播组为单位在路由器上建立一点到多点的组播转发路径。由于组播转发路径呈现树型结构，也称为**组播分发树** MDT（Multicast Distribution Tree）。组播分发树主要包括以下两种：
 
 - 以组播源为根，组播组成员为叶子的组播分发树称为 **SPT**（Shortest Path Tree）。SPT 同时适用于 PIM-DM 网络和 PIM-SM 网络。
 - 以 RP（Rendezvous Point）为根，组播组成员为叶子的组播分发树称为 **RPT**（RP Tree）。RPT 适用于 PIM-SM 网络。
-
-**PIM 路由器**是指在接口上使能了 PIM 协议的路由器，包括以下四种：
-
-- 叶子路由器：与用户主机相连的 PIM 路由器，但连接的用户主机不一定为组成员，如 RouterA、RouterB、RouterC。
-- 第一跳路由器：组播转发路径上，与组播源相连且负责转发该组播源发出的组播数据的PIM路由器。如 RouterE。
-- 最后一跳路由器：组播转发路径上，与组播组成员相连且负责向该组成员转发组播数据的PIM路由器。如 RouterA、RouterB。
-- 中间路由器：组播转发路径上，第一跳路由器与最后一跳路由器之间的PIM路由器。如 RouterD。
 
 **PIM 路由表项**即通过 PIM 协议建立的组播路由表项。PIM 网络中存在两种路由表项：`(S，G)` 路由表项或 `(*, G)` 路由表项。S 表示组播源，G 表示组播组，* 表示任意。
 
@@ -63,15 +56,156 @@ PIM 路由表项中主要用于**指导转发的信息**如下：
 - 上游接口（靠近网络）：本地路由器上接收到组播数据的接口，如 Int3。
 - 下游接口（靠近主机）：将组播数据转发出去的接口，如 Int1、Int2。
 
+## PIM 基本流程
+
+### 邻居建立
+
+### DR 选举
+
+- 组播接收者所在子网会竞选出一个路由器作为该子网 DR（Designated Router），DR 可视为该子网的 PIM 代理，接收者通过向 DR 发送 IGMP/MLD Join/Leave 消息来表明自己是否加入/退出该组播组。
+
+
+
+
+## PIM DM
+
+### 协议简介
+
+PIM DM 协议由 **RFC 3973** 描述，是一种状态较为简单的协议，一般应用于**组播组成员规模相对较小**、**相对密集**的网络。DM 协议假定网络中的组成员分布非常稠密，每个网段都可能存在组成员。
+
+当有活跃的组播源出现时，DM 致力于将组播源发来的组播报文**扩散（Flooding）**到整个网络的 PIM 路由器上，从而形成一棵以某组播源为根，以众多接收者为叶子的组播转发树。然而这颗组播转发树太过庞大，对于一个 PIM 路由器，如果某接口下游已经没有接收者，实际上已经无需再向该接口继续扩散，因此组播路由器会进行**剪枝（Prune）**操作，这样可以降低无效的网络流量。倘若被裁剪掉的分支由于下游路由器上有新的组成员加入，而希望重新恢复转发状态时，则进行**嫁接（Graft）**机制主动恢复其对组播报文的转发。
+
+综上所述，PIM-DM 通过周期性的进行“扩散、剪枝、嫁接”，来构建并维护了若干棵**连接组播源和组成员的单向无环源最短路径树（Source Specific Shortest Path Tree, SPT）**，这些树以组播转发表的形式保存，每棵树对应了组播转发表的其中一个表项。
+
+除此之外，PIM-DM 的关键工作机制包括邻居发现、扩散、剪枝、嫁接、断言和状态刷新。其中，扩散、剪枝、嫁接是构建SPT的主要方法。
+
+### 协议状态信息
+
+首先路由器需要保持通用信息。
+
+- For each interface：
+    - Hello Timer (HT)
+    - State Refresh Capable
+    - LAN Delay Enabled
+    - Propagation Delay (PD)
+    - Override Interval (OI)
+    - For each neighbor:
+        - Neighbor’s Gen ID.
+        - Neighbor’s LAN Prune Delay
+        - Neighbor’s Override Interval
+        - Neighbor’s State Refresh Capability
+        - Neighbor Liveness Timer (NLT)
+
+其中主要是为每个接口维护邻居信息。
+
+其次，路由器需要为每个 `(S, G)` 表项维护如下信息。
+
+- For each interface:
+    - Local Membership: State: One of {"NoInfo", "Include"}
+    - PIM (S,G) Prune State: State: One of {"NoInfo" (NI), "Pruned" (P), "PrunePending"
+        (PP)}
+    - (S,G) Assert Winner State: State: One of {"NoInfo" (NI), "I lost Assert" (L), "I won
+        Assert" (W)}
+- Upstream interface-specific:
+    - Graft/Prune State: 
+        - State: One of {"NoInfo" (NI), "Pruned" (P), "Forwarding" (F), "AckPending" (AP) }
+        - GraftRetry Timer (GRT)
+        - Override Timer (OT)
+        - Prune Limit Timer (PLT)
+    - Originator State:
+        - Source Active Timer (SAT)
+        - State Refresh Timer (SRT)
+
+### 数据转发规则
+
+假设 `iif` 为数据入端口，`S` 为数据源地址，`G` 为组播组地址，`RPF_Interface(S)` 为通过 RPF 检查的接口。
+
+首先，RPF 检查判断数据是否从正确的端口进入，即 `RPF_Interface(S) != iif` 时，数据包将会被丢弃，同时进入 Assert 流程。
+
+如果 RPF 检查通过，则查看是否具有 `(S, G)` 表项，若没有则生成 `(S, G)` 表项，初始情况下该出接口列表为除 RPF 接口外所有 PIM 邻居接口，因此泛洪不会导致环路。若表项存在且不空，则将数据转发到列表中所有的接口。若表项存在且为空，则向上游发送 `(S, G)` 剪枝消息，表示下游已没有接受者，无需再向该路由器进行数据转发。
+
+### 剪枝、加入和嫁接
+
+向上游邻居发送 `(S, G)` 剪枝消息表示该路由器将不再需要从 S 发往 G 的消息。假设 C 有两个下游路由器 A 和 B，其中 A 希望继续接收数据，而 B 不希望继续接收数据，B 正常情况下会向上游 C 发送剪枝消息，有趣的是剪枝消息的目的 IP 为全体 PIM 路由器，因此若 A 和 B 处于同一 LAN 中时，A 也会受到该剪枝消息，此时，A 必须发送 Join 加入消息用来覆盖 B 的剪枝消息，这也是 PIM DM 中唯一需要发送加入消息的场合。最后，如果下游接受者想要重新加入转发树，将会发送嫁接消息。
+
+#### Upstream 发送状态机
+
+![multicast](multicast.assets/pim-dm-upstream-state-machine.PNG)
+
+The Upstream(S,G) state machine for sending Prune, Graft, and Join messages is given below. There are three states.
+
+- Forwarding (F) 转发状态
+- Pruned (P) 剪枝状态
+- AckPending (AP) 嫁接响应等待状态
+
+three state-machine-specific timers:
+- GraftRetry Timer (GRT(S,G)) ：如果上游没有回复 GA，则 GRT 超时，重发 G 报文，GRT 复位。若收到 GA，则取消 GRT。
+- Override Timer (OT(S,G))：收到来自上游的剪枝报文，如果下游出口不空，则需要启动 OT，OT超时时发送 Join 报文以恢复上游对自己的转发。
+- Prune Limit Timer (PLT(S,G))：如果上游已经时 P 状态，则 PLT 超时之前，为了限制 LAN 中的 P 报文数量，将不允许发送 P 报文。
+
+#### Downstream 接收状态机
+
+![multicast](multicast.assets/pim-dm-downstream-state-machine.PNG)
+
+The Prune(S,G) Downstream state machine for receiving Prune, Join and Graft messages on interface I is given below
+- NoInfo(NI) 正常转发状态
+- PrunePending(PP) 剪枝等待状态：收到剪枝消息后，进入该状态等待下游邻居发送 Join 消息来覆盖该剪枝消息。
+- Pruned(P) 剪枝状态：如果没有收到 Join 消息，则进入剪枝状态。
+
+two timers:
+- PrunePending Timer (PPT(S,G,I))：PPT 超时后进入剪枝状态，同时启动剪枝定时器 PT。
+- Prune Timer (PT(S,G,I))：PT 超时后重新恢复转发，进入 NI 状态。可以使用 SR 报文一直刷新 PT，让下游一直不能恢复转发。
+
+
+
+## PIM SM
+
+### 协议简介
+
+PIM SM 协议修订于 **RFC 7761** 描述，一般应用于**组播组成员规模相对较大**、**相对稀疏**的网络。相比于 DM 的“推送”模式，PIM-SM 模型使用“拉”模式转发组播报文，其核心思想为：在网络中维护一台重要的 PIM 路由器，称为 汇聚点 RP (Rendezvous Point)，其功能为：
+
+- **维护组成员信息**：当网络中出现组成员（用户主机通过 IGMP 加入某组播组 G）时，最后一跳路由器向 RP 发送加入（Join） 报文，逐跳创建`(*, G）`表项，生成一棵以 RP 为根的 RPT。
+- **维护组播源信息**：当网络中出现活跃的组播源（组播源向某组播组G发送第一个组播数据）时，第一跳路由器将组播数据封装在注册（Register ）报文中单播发往 RP，在 RP 上创建`(S, G)` 表项，注册源信息。
+
+协议进一步可以分为以下三个阶段：
+
+#### 阶段一：RP Tree
+
+在 RP Tree 阶段，组播接收者只需表明自己感兴趣的组播组即可。
+
+- 当接收者想加入组 G 时，向 DR 发送 IGMP Join 消息。DR 收到接收者发送的对于某个组 G 的 IGMP Join 消息时，便向 RP 发送一个对该组的 PIM Join 消息，即 `(*, G)` Join。该 Join 消息逐跳发送至 RP，沿途每一个 PIM 路由器都会建立 `(*, G)` 表项。当越来越多的接收者加入组 G 时，RP 就形成了一颗以自身为根的组播 G 分发树，即 RP Tree。RPT 也称为共享树，即所有组播源共享该树进行组播组 G 的数据分发。Join 消息将会周期性发送，以保证接收者一直在组中。
+- 当接收者想退出组 G 时，向 DR 发送 IGMP Leave 消息。DR 收到接收者发送的对于某个组 G 的 IGMP Leave 消息时，便向 RP 发送一个对该组的 PIM Prune 消息，即 `(*, G)` Prune。Prune （剪枝）消息将会周期性发送，以保证接收者一直不接收该组消息。如果 剪枝消息没有发送，则又会恢复对该接收者的转发。
+
+在 RP Tree 阶段，组播发送者只需要向某组发送组播数据即可。
+
+- 源端 DR 收到组播数据，进行**单播封装**，直接发给 RP。这个过程称为 Registering，封装的数据包称为 PIM Register 消息。
+- RP 收到单播数据包，进行**解封**，再沿 RPT 发送给组播接收者。
+
+总结，在 RPT 阶段 ，组播数据将会打包成单播发给 RP，然后再根据组播路由表沿 RPT 发送到接收者。
+
+#### 阶段二：Register-Stop
+
+频繁的注册封装数据包
+
+#### 阶段三：Shortest-Path Tree
+
+
+
+### 基本概念与术语（TODO）
+
+
+
 
 
 ## PIM 协议消息格式
 
 PIM 协议消息承载于 IP 协议，协议号为 103。PIM 消息包括两部分：
+
 - PIM 通用头 (PIM Header)
 - PIM 消息内容 (PIM Data)
 
 ### PIM 通用头
+
 PIM 消息头如下所示，共计 4 字节（4b+4b+8b+16b=32b=4B）。
 
 ```
@@ -84,23 +218,25 @@ PIM 消息头如下所示，共计 4 字节（4b+4b+8b+16b=32b=4B）。
 
 其中，类型字段解释如下。
 
-| 类型          | 值   | 组播模式     | 目的地址                              |
-|:-------------:|:----:| :---------: | :----------------------------------: |
-| Hello         | 0    |             | Multicast to ALL-PIM-ROUTERS         |
-| Register      | 1    |             | Unicast to RP                        |
-| Register-Stop | 2    |             | Unicast to source of Register packet |
-| Join/Prune    | 3    |             | Multicast to ALL-PIM-ROUTERS         |
-| Bootstrap     | 4    |             | Multicast to ALL-PIM-ROUTERS         |
-| Assert        | 5    |             | Multicast to ALL-PIM-ROUTERS         |
-| Graft         | 6    | PIM-DM only | Unicast to RPF’(S)                   |
-| Graft-Ack     | 7    | PIM-DM only | Unicast to source of Graft packet    |
-| C-RP-Adv      | 8    |             | Unicast to Domain’s BSR              |
+|     类型      |  值  |  组播模式   |               目的地址               |
+| :-----------: | :--: | :---------: | :----------------------------------: |
+|     Hello     |  0   |             |     Multicast to ALL-PIM-ROUTERS     |
+|   Register    |  1   |             |            Unicast to RP             |
+| Register-Stop |  2   |             | Unicast to source of Register packet |
+|  Join/Prune   |  3   |             |     Multicast to ALL-PIM-ROUTERS     |
+|   Bootstrap   |  4   |             |     Multicast to ALL-PIM-ROUTERS     |
+|    Assert     |  5   |             |     Multicast to ALL-PIM-ROUTERS     |
+|     Graft     |  6   | PIM-DM only |          Unicast to RPF’(S)          |
+|   Graft-Ack   |  7   | PIM-DM only |  Unicast to source of Graft packet   |
+|   C-RP-Adv    |  8   |             |       Unicast to Domain’s BSR        |
 
 
 不同类型的 PIM 消息具有结构各异的消息内容，除此之外，PIM 消息类型也会影响 IP 头中的目的地址。因此，根据目的 IP 是单播地址还是组播地址，PIM 消息被分为单播消息和组播消息两种。其中，组播消息目的地址为 ALL-PIM-ROUTERS 组（224.0.0.13/IPv4，ff02::d/IPv6），TTL 为 1。
 
 ### 编码地址格式
+
 PIM 消息内容中使用了大量的编码的地址格式，为了便于描述消息格式，首先介绍编码地址格式，该地址包括三种：
+
 - 编码单播地址（Encoded-Unicast Address）
 - 编码组播地址（Encoded-Group Address）
 - 编码组播源地址（Encoded-Source Address）
@@ -151,10 +287,10 @@ Encoded-Source Address 格式如下：
 - Encoding Type  （1 字节）
 - Reserved：为 0。
 - S The Sparse bit is a 1-bit value, set to 1 for PIM-SM. It is used for PIM version 1
-  compatibility.
+    compatibility.
 - W The WC (or WildCard) bit is a 1-bit value for use with PIM Join/Prune messages
 - R The RPT (or Rendezvous Point Tree) bit is a 1-bit value for use with PIM Join/Prune
-  messages (see Section 4.9.5.1). If the WC bit is 1, the RPT bit MUST be 1.
+    messages (see Section 4.9.5.1). If the WC bit is 1, the RPT bit MUST be 1.
 - Mask Len：掩码长度。
 - Source Address：组播源 IP 地址。
 
@@ -187,14 +323,14 @@ Hello 消息采用 TLV 构建，其格式如下
 其中包括：
 
 - Holdtime TLV
-  - Type=1
-  - Length=2
-  - Holdtime=全 0 表示立即删除邻居；全 1 表示永不超时；默认为 Hello 周期的 3 倍（105 秒）。
+    - Type=1
+    - Length=2
+    - Holdtime=全 0 表示立即删除邻居；全 1 表示永不超时；默认为 Hello 周期的 3 倍（105 秒）。
 
 - DR Priority
-  - Type=19
-  - Length=4
-  - DR Priority=4 字节整型
+    - Type=19
+    - Length=4
+    - DR Priority=4 字节整型
 
 ### Register 消息
 
@@ -350,9 +486,11 @@ PIM 路由器在接收到邻居路由器发送的相同组播报文后，会以�
 ```
 
 ### Graft 消息
+
 嫁接消息格式与加入/剪枝消息格式相同，区别在于嫁接消息类型为 6，
 
 ### Graft-Ack 消息
+
 嫁接相应消息与接收到的嫁接消息相同，只不过其类型需要改为 7，且上游邻居地址为嫁接消息的发送者地址。
 
 ### C-RP-Adv 消息
@@ -380,99 +518,12 @@ C−RPs 周期性向 BSR 发送单播 Candidate-RP-Advertisement 消息。
 ```
 
 其中:
+
 - Prefix Count 表示消息中该 C-RP 通告的组地址数量，不能为 0。
 - RP Address 表示该 C-RP 单播地址。
 - Holdtime 表示该通告有效期，一般设为 2.5 倍 C-RP-ADV 消息周期。
 
 
-
-
-## PIM DM
-
-PIM DM 协议由 **RFC 3973** 描述，是一种状态较为简单的协议，一般应用于**组播组成员规模相对较小**、**相对密集**的网络。DM 协议假定网络中的组成员分布非常稠密，每个网段都可能存在组成员。
-
-当有活跃的组播源出现时，DM 致力于将组播源发来的组播报文**扩散（Flooding）**到整个网络的 PIM 路由器上，从而形成一棵以某组播源为根，以众多接收者为叶子的组播转发树。然而这颗组播转发树太过庞大，对于一个 PIM 路由器，如果某接口下游已经没有接收者，实际上已经无需再向该接口继续扩散，因此组播路由器会进行**剪枝（Prune）**操作，这样可以降低无效的网络流量。倘若被裁剪掉的分支由于下游路由器上有新的组成员加入，而希望重新恢复转发状态时，则进行**嫁接（Graft）**机制主动恢复其对组播报文的转发。
-
-综上所述，PIM-DM 通过周期性的进行“扩散、剪枝、嫁接”，来构建并维护了若干棵**连接组播源和组成员的单向无环源最短路径树（Source Specific Shortest Path Tree, SPT）**，这些树以组播转发表的形式保存，每棵树对应了组播转发表的其中一个表项。
-
-除此之外，PIM-DM 的关键工作机制包括邻居发现、扩散、剪枝、嫁接、断言和状态刷新。其中，扩散、剪枝、嫁接是构建SPT的主要方法。
-
-### 协议状态信息
-
-首先路由器需要保持通用信息。
-
-- For each interface：
-    - Hello Timer (HT)
-    - State Refresh Capable
-    - LAN Delay Enabled
-    - Propagation Delay (PD)
-    - Override Interval (OI)
-    - For each neighbor:
-        - Neighbor’s Gen ID.
-        - Neighbor’s LAN Prune Delay
-        - Neighbor’s Override Interval
-        - Neighbor’s State Refresh Capability
-        - Neighbor Liveness Timer (NLT)
-
-其中主要是为每个接口维护邻居信息。
-
-其次，路由器需要为每个 `(S, G)` 表项维护如下信息。
-
-- For each interface:
-    - Local Membership: State: One of {"NoInfo", "Include"}
-    - PIM (S,G) Prune State: State: One of {"NoInfo" (NI), "Pruned" (P), "PrunePending"
-        (PP)}
-    - (S,G) Assert Winner State: State: One of {"NoInfo" (NI), "I lost Assert" (L), "I won
-        Assert" (W)}
-- Upstream interface-specific:
-    - Graft/Prune State: 
-        - State: One of {"NoInfo" (NI), "Pruned" (P), "Forwarding" (F), "AckPending" (AP) }
-        - GraftRetry Timer (GRT)
-        - Override Timer (OT)
-        - Prune Limit Timer (PLT)
-    - Originator State:
-        - Source Active Timer (SAT)
-        - State Refresh Timer (SRT)
-
-### 数据转发规则
-
-假设 `iif` 为数据入端口，`S` 为数据源地址，`G` 为组播组地址，`RPF_Interface(S)` 为通过 RPF 检查的接口。
-
-首先，RPF 检查判断数据是否从正确的端口进入，即 `RPF_Interface(S) != iif` 时，数据包将会被丢弃，同时进入 Assert 流程。
-
-如果 RPF 检查通过，则查看是否具有 `(S, G)` 表项，若没有则生成 `(S, G)` 表项，初始情况下该出接口列表为除 RPF 接口外所有 PIM 邻居接口，因此泛洪不会导致环路。若表项存在且不空，则将数据转发到列表中所有的接口。若表项存在且为空，则向上游发送 `(S, G)` 剪枝消息，表示下游已没有接受者，无需再向该路由器进行数据转发。
-
-### 剪枝、加入和嫁接
-
-向上游邻居发送 `(S, G)` 剪枝消息表示该路由器将不再需要从 S 发往 G 的消息。假设 C 有两个下游路由器 A 和 B，其中 A 希望继续接收数据，而 B 不希望继续接收数据，B 正常情况下会向上游 C 发送剪枝消息，有趣的是剪枝消息的目的 IP 为全体 PIM 路由器，因此若 A 和 B 处于同一 LAN 中时，A 也会受到该剪枝消息，此时，A 必须发送 Join 加入消息用来覆盖 B 的剪枝消息，这也是 PIM DM 中唯一需要发送加入消息的场合。最后，如果下游接受者想要重新加入转发树，将会发送嫁接消息。
-
-#### Upstream 发送状态机
-
-![multicast](multicast.assets/pim-dm-upstream-state-machine.PNG)
-
-The Upstream(S,G) state machine for sending Prune, Graft, and Join messages is given below. There are three states.
-
-- Forwarding (F) 转发状态
-- Pruned (P) 剪枝状态
-- AckPending (AP) 嫁接响应等待状态
-
-three state-machine-specific timers:
-- GraftRetry Timer (GRT(S,G)) ：如果上游没有回复 GA，则 GRT 超时，重发 G 报文，GRT 复位。若收到 GA，则取消 GRT。
-- Override Timer (OT(S,G))：收到来自上游的剪枝报文，如果下游出口不空，则需要启动 OT，OT超时时发送 Join 报文以恢复上游对自己的转发。
-- Prune Limit Timer (PLT(S,G))：如果上游已经时 P 状态，则 PLT 超时之前，为了限制 LAN 中的 P 报文数量，将不允许发送 P 报文。
-
-#### Downstream 接收状态机
-
-![multicast](multicast.assets/pim-dm-downstream-state-machine.PNG)
-
-The Prune(S,G) Downstream state machine for receiving Prune, Join and Graft messages on interface I is given below
-- NoInfo(NI) 正常转发状态
-- PrunePending(PP) 剪枝等待状态：收到剪枝消息后，进入该状态等待下游邻居发送 Join 消息来覆盖该剪枝消息。
-- Pruned(P) 剪枝状态：如果没有收到 Join 消息，则进入剪枝状态。
-
-two timers:
-- PrunePending Timer (PPT(S,G,I))：PPT 超时后进入剪枝状态，同时启动剪枝定时器 PT。
-- Prune Timer (PT(S,G,I))：PT 超时后重新恢复转发，进入 NI 状态。可以使用 SR 报文一直刷新 PT，让下游一直不能恢复转发。
 
 ## PIM 总结
 
