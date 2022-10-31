@@ -190,17 +190,102 @@ RPT 阶段有两个最大的问题：
 - 频繁的封装-解封数据包消耗软硬件资源
 - 数据包需要从源发到 RP，然后才能沿着 RPT 分发到接受者，这有可能绕远路。
 
-因此，RP 在收到数据包时，会创建 `(S, G)` 表项，并向组播源上游发送 `(S, G)`  Join 消息，
+因此，当 RP 从源端 S 接收到一个组 G 的 register 封装组播包时，会向 S 发送一个特定源组播加入消息，即 `(S, G)` Join。该 Join 消息逐跳发送至 S，沿途每一个 PIM 路由器都会建立 `(S, G)` 表项。此后，从 S 发来的 G 组播数据将会根据 `(S, G)` 表项向 RP 转发，该路径称为 Source-Specific Tree ，组播数最终到达 RP，然后再沿 RPT 发送到接收者，在转发到 RP 的过程中，如果经过已经包含  `(*, G)` 的路由器时，即两个树有交叉，则数据会从 SST 转发至 RPT，从而跳过 RP。
 
-Although Register-encapsulation may continue indefinitely, for these reasons, the RP will normally choose to switch to native forwarding. To do this, when the RP receives a register-encapsulated data packet from source S on group G, it will normally initiate an (S,G) source- specific Join towards S. This Join message travels hop-by-hop towards S, instantiating (S,G) multicast tree state in the routers along the path. (S,G) multicast tree state is used only to forward packets for group G if those packets come from source S. Eventually the Join message reaches S’s subnet or a router that already has (S,G) multicast tree state, and then packets from S start to flow following the (S,G) tree state towards the RP. These data packets may also reach routers with (*,G) state along the path towards the RP; if they do, they can shortcut onto the RP tree at this point. While the RP is in the process of joining the source-specific tree for S, the data packets will continue being encapsulated to the RP. When packets from S also start to arrive natively at the RP, the RP will be receiving two copies of each of these packets. At this point, the RP starts to discard the encapsulated copy of these packets, and it sends a Register-Stop message back to S’s DR to prevent the DR from unnecessarily encapsulating the packets. At the end of phase two, traffic will be flowing natively from S along a source-specific tree to the RP, and from there along the shared tree to the receivers. Where the two trees intersect, traffic may transfer from the source-specific tree to the RP tree and thus avoid taking a long detour via the RP. Note that a sender may start sending before or after a receiver joins the group, and thus phase two may happen before the shared tree to the receiver is built.
+在上述 RP 构建 SST 过程中，当 RP 向 S 发送特定源组播加入消息时，组播封装包也在进行。如果数据包开始按照 `(S, G)` 进行转发，则 RP 会收到两份数据包。此时，RP 会丢弃封装数据包，并且向源端 DR 发送 Register-Stop 以表示停止封装不需要的数据包。
 
 #### 阶段三：Shortest-Path Tree
 
+虽然 SST 阶段解决了数据包封装解封的问题，但仍然没有完全优化转发路径。相比于直接经过最短路径，数据从组播源到组播接收者，都需要经过 RP ，而这可能会造成走弯路。因此，为了获取更低的时延和更高的带宽利用率，接收端 DR 可以选择将 RPT 切换至 SPT (Source Specific Shortest Path Tree)。
+
+- 首先，接受端 DR 向组播源 S 发送一个 `(S, G)` Join 消息。
+- 接着，沿途每一个 PIM 路由器都会建立 `(S, G)` 表项。
+- 最后，该 Join 消息逐跳发送至 S 所在子网，或者到达一个已经拥有 `(S, G)` 表项的路由器。
+
+此时，DR 或 DR 上游路由器，又将会收到两份数据，一份来自 RPT，一份来自 SPT。
+
+- 第一次收到 SPT 数据时（他怎么知道是哪里来的？），丢弃从 RPT 发来的数据。
+- 向 RP 发送 `(S, G, rpt)` Prune 消息。
+- 该消息逐跳传播，告知沿途路由器 S 发往 G 的数据不能再沿此路转发。
+- 最终，该消息发送至 RP，或者仍然需要该路径的路由器。
+
+总结，在 SPT 阶段，数据从 S 到接收者经过最短路径传输。此时 RP 仍然会接收到 S 的数据，但是并不会沿着 RPT 发送到接收者。从接收者的角度来看，这就是最终的组播分发树状态。
+
+IGMPv3 允许接收者只接收从指定源 S 发出的 G 组播数据。在这种情况下，接收端 DR 将会直接跳过向 RP 发送 `(*, G)` Join 消息而直接向 S 发送 `(S, G)` Join 消息，这个阶段称为指定源组播模式（PIM-SM/SSM）。PIM-SSM 使用 232.0.0.0 to 232.255.255.255 IP 地址。
+
+相反的，IGMPv3 允许接收者只拒绝从指定源 S 发出的 G 组播数据。在这种情况下，接收端 DR 将会照常向 RP 发送 `(*, G)` Join 消息，但是却紧跟一个 `(S, G, rpt)` Prune 消息。
+
+### RP 选举
+
+PIM-SM 路由器需要知道每个组的 RP 地址，RP 可通过**动态选举**或静态配置。
+
+一种常用的 BSR 选举机制（RFC 5059）流程大致如下：
+
+- 首先，选举一个路由器作为 BSR (Bootstrap Router) 
+    - 开始时，每个 PIM 路由器都认为自己是 BSR 候选者，因此都会发送 Bootstrap 报文。
+    - 当收到其他人发来的 Bootstrap 消息时，每个 PIM 路由器执行相同的选举算法，异步算出唯一 BSR（由守护进程处理）。
+- 接着，所有 RP 候选者向 BSR 发送单播 Advertisement 报文，报文中携带 C-RP 地址、服务的组范围和 C-RP 优先级。BSR 根据所有候选者 RP 发来的消息，汇总成为 RP-Set，周期性的通过 Boostrap 报文逐跳泛洪到全网。
+- 最后，全网 PIM-SM 路由器都收到 RP-Set 消息，并设置 RP 地址，到此 RP 选举完成。
+
+### 协议状态信息
+
+TODO
+
+### 数据转发规则
+
+TODO
+
+### 组播源注册处理
+
+#### DR 发送注册消息
+
+TODO
+
+#### RP 接收注册消息
+
+TODO
+
+### 加入剪枝处理
+
+#### 接收 `(*,G)` 加入/剪枝消息
+
+- 加入消息：检查 `RP(G)`
+- 剪枝消息：
 
 
-### 基本概念与术语（TODO）
+
+When a router receives a Join`(*,G)`, it must first check to see whether the RP in the message matches RP(G) (the router’s idea of who the RP is). If the RP in the message does not match RP(G), the Join(*,G) should be silently dropped. (Note that other source list entries, such as (S,G,rpt) or (S,G), in the same Group-Specific Set should still be processed.) If a router has no RP information (e.g., has not recently received a BSR message), then it may choose to accept Join(*,G) and treat the RP in the message as RP(G). Received Prune(*,G) messages are processed even if the RP in the message does not match RP(G).
+
+#### 接收 `(S,G)` 加入/剪枝消息
+
+#### 接收 `(S,G,rpt)` 加入/剪枝消息
+
+#### 发送 `(*,G)` 加入/剪枝消息
+
+#### 发送 `(S,G)` 加入/剪枝消息
+
+#### 周期性`(S,G,rpt)` 加入/剪枝消息
+
+## PIM-SSM 
+
+The Source-Specific Multicast (SSM) service model [6] can be implemented with a strict subset of the PIM-SM protocol mechanisms. Both regular IP Multicast and SSM semantics can coexist on a single router, and both can be implemented using the PIM-SM protocol. A range of multicast addresses, currently 232.0.0.0/8 in IPv4 and ff3x::/32 for IPv6, is reserved for SSM, and the choice of semantics is determined by the multicast group address in both data packets and PIM messages.
+
+A PIM-SSM-only router MUST implement the following portions of this specification: o Upstream (S,G) state machine (Section 4.5.5) o Downstream (S,G) state machine (Section 4.5.2) o (S,G) Assert state machine (Section 4.6.1)
+
+Hello messages, neighbor discovery, and DR election (Section 4.3) o Packet forwarding rules (Section 4.2)
 
 
+
+```
+oiflist = NULL
+if( iif == RPF_interface(S) AND UpstreamJPState(S,G) == Joined ) {
+	oiflist = inherited_olist(S,G)
+} else if( iif is in inherited_olist(S,G) ) {
+	send Assert(S,G) on iif
+}
+oiflist = oiflist (-) iif
+forward packet on all interfaces in oiflist
+```
 
 
 
@@ -418,58 +503,58 @@ RP -> S
 ### Bootstrap 消息
 
 ```
-0                   1                   2                   3
-0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|PIM Ver|  Type |   Reserved    |            Checksum           |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| Fragment Tag | Hash Mask Len | BSR Priority |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| BSR Address (Encoded-Unicast format) |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| Group Address 1 (Encoded-Group format) |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| RP Count 1 | Frag RP Cnt 1 | Reserved |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| RP Address 1 (Encoded-Unicast format) |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| RP1 Holdtime | RP1 Priority | Reserved |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| RP Address 2 (Encoded-Unicast format) |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| RP2 Holdtime | RP2 Priority | Reserved |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| . |
-| . |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| RP Address m (Encoded-Unicast format) |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| RPm Holdtime | RPm Priority | Reserved |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| Group Address 2 (Encoded-Group format) |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| . |
-| . |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| Group Address n (Encoded-Group format) |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| RP Count n | Frag RP Cnt n | Reserved |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| RP Address 1 (Encoded-Unicast format) |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| RP1 Holdtime | RP1 Priority | Reserved |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| RP Address 2 (Encoded-Unicast format) |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| RP2 Holdtime | RP2 Priority | Reserved |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| . |
-| . |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| RP Address m (Encoded-Unicast format) |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-| RPm Holdtime | RPm Priority | Reserved |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |PIM Ver| Type  |N|  Reserved   |           Checksum            |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |         Fragment Tag          | Hash Mask Len | BSR Priority  |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |             BSR Address (Encoded-Unicast format)              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |            Group Address 1 (Encoded-Group format)             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | RP Count 1    | Frag RP Cnt 1 |         Reserved              |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |             RP Address 1 (Encoded-Unicast format)             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |          RP1 Holdtime         | RP1 Priority  |   Reserved    |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |             RP Address 2 (Encoded-Unicast format)             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |          RP2 Holdtime         | RP2 Priority  |   Reserved    |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                               .                               |
+   |                               .                               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |             RP Address m (Encoded-Unicast format)             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |          RPm Holdtime         | RPm Priority  |   Reserved    |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |            Group Address 2 (Encoded-Group format)             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                               .                               |
+   |                               .                               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |            Group Address n (Encoded-Group format)             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   | RP Count n    | Frag RP Cnt n |          Reserved             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |             RP Address 1 (Encoded-Unicast format)             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |          RP1 Holdtime         | RP1 Priority  |   Reserved    |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |             RP Address 2 (Encoded-Unicast format)             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |          RP2 Holdtime         | RP2 Priority  |   Reserved    |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                               .                               |
+   |                               .                               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |             RP Address m (Encoded-Unicast format)             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |          RPm Holdtime         | RPm Priority  |   Reserved    |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
 
 ### Assert 消息
@@ -538,3 +623,8 @@ C−RPs 周期性向 BSR 发送单播 Candidate-RP-Advertisement 消息。
 - PIM 路由器无法通过 Hello 包来区分是 DM 邻居还是 SM 邻居。
 - DM 的加入、剪枝、嫁接消息都是指定源的，因此无需和 SSM 协议进行区分。
 
+## RFC
+
+\- RFC 7761 4601
+
+\- RFC 5059
