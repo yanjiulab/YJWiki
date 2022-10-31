@@ -274,8 +274,6 @@ A PIM-SSM-only router MUST implement the following portions of this specificatio
 
 Hello messages, neighbor discovery, and DR election (Section 4.3) o Packet forwarding rules (Section 4.2)
 
-
-
 ```
 oiflist = NULL
 if( iif == RPF_interface(S) AND UpstreamJPState(S,G) == Joined ) {
