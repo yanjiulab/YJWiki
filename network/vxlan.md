@@ -1,6 +1,10 @@
-VXLAN
+# VXLAN
 
-# Virtual eXtensible Local Area Networking 
+## 简介
+
+VXALN 全称为 Virtual eXtensible Local Area Network，即虚拟扩展局域网。表面上该技术是 VLAN 的扩展。
+
+
 
 ## 简介 
 
@@ -105,7 +109,7 @@ Tunnel information for eth0:
 
 ## 简介
 
-VXALN 全称为 Virtual eXtensible Local Area Network，即虚拟扩展局域网。顾名思义，该技术是 VLAN 的扩展。
+
 
 | 简称 | 全称                     | 中文           | 解释                                          |
 | ---- | ------------------------ | -------------- | --------------------------------------------- |
