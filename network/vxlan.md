@@ -2,7 +2,7 @@
 
 ## 简介
 
-VXALN 全称为 Virtual eXtensible Local Area Network，即虚拟扩展局域网。表面上该技术是 VLAN 的扩展。
+VXALN 全称为 Virtual eXtensible Local Area Network，即虚拟扩展局域网。表面上来看，该技术是 VLAN 的扩展。
 
 
 
