@@ -2,13 +2,9 @@
 
 ## 简介
 
-VXALN 全称为 Virtual eXtensible Local Area Network，即虚拟扩展局域网，由 **RFC 7348** 描述。表面上来看，该技术是 VLAN 的扩展，用来解决 802.1q 协议中 VLAN ID 不能超过 4096 个的问题，实际上而言，该解决思路从二层交换网络跳脱出来，使用三层 UDP 隧道技术来进行拓展，因此，实际上 VXLAN 更多是一种
+VXALN 全称为 Virtual eXtensible Local Area Network，即虚拟扩展局域网，由 **RFC 7348** 描述。表面上来看，该技术是 VLAN 的扩展，用来解决 802.1q 协议中 VLAN ID 不能超过 4096 个的问题，实际上而言，该解决思路从二层交换网络跳脱出来，使用三层 UDP 隧道技术来进行拓展。因此，实际上 VXLAN 更多作为一种隧道技术来讨论。
 
 
-
-## 简介 
-
-The VXLAN protocol is a tunnelling protocol designed to solve the problem of limited VLAN IDs (4096) in IEEE 802.1q. With VXLAN the size of the identifier is expanded to 24 bits (16777216). VXLAN is described by IETF RFC 7348, and has been implemented by a number of vendors. The protocol runs over UDP using a single destination port. 
 
 ## 单播（静态泛洪）
 
