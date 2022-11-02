@@ -2,7 +2,11 @@
 
 ## 简介
 
-VXALN 全称为 Virtual eXtensible Local Area Network，即虚拟扩展局域网，由 **RFC 7348** 描述。表面上来看，该技术是 VLAN 的扩展，用来解决 802.1q 协议中 VLAN ID 不能超过 4096 个的问题，实际上而言，该解决思路从二层交换网络跳脱出来，使用三层 UDP 隧道技术来进行拓展。因此，实际上 VXLAN 更多作为一种隧道技术来讨论。
+VXALN 全称为 Virtual eXtensible Local Area Network，即虚拟扩展局域网，由 **RFC 7348** 描述。表面上来看，该技术是 VLAN 的扩展，用来解决 802.1q 协议中 VLAN ID 不能超过 4096 个的问题，实际上而言，该解决思路从二层交换网络跳脱出来，使用三层 UDP 隧道技术来进行拓展。VXLAN 在 Layer 3 网络之上构建 Layer 2 网络的虚拟化技术，其中 layer 3 网络称为底层网络（underlay），Layer 2 网络称为叠加网络（overlay），Overlay 网络通过封装技术、利用 underlay 网络提供的三层转发路径实现二层互通。
+
+
+
+因此，实际上 VXLAN 更多作为一种隧道技术来讨论。
 
 
 
