@@ -2,7 +2,7 @@
 
 ## 简介
 
-VXALN 全称为 Virtual eXtensible Local Area Network，即虚拟扩展局域网。表面上来看，该技术是 VLAN 的扩展，用来解决 802.1q 协议中 VLAN ID 不能超过 4096 个的限制问题，
+VXALN 全称为 Virtual eXtensible Local Area Network，即虚拟扩展局域网。表面上来看，该技术是 VLAN 的扩展，用来解决 802.1q 协议中 VLAN ID 不能超过 4096 个的问题，实际上而言，该解决思路从二层交换网络跳脱出来，使用三层隧道技术
 
 
 
