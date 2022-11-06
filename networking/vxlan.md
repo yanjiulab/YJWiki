@@ -149,7 +149,7 @@ VXLAN 创建之后，需要为 vxlan0 配置 IP 地址，这样相当于把主�
 
 总的来说，VTEP 类似于一个网桥，远端 VTEP 是虚拟端口：
 
-- vxlan0 向该 VNI 所属组地址发送 BUM 帧；
+- VTEP 接收到 BUM 流量时，向该 VNI 所属组地址发送 VXLAN 封装帧；
 - 通过源地址学习到“主机 MAC--VTEP IP 地址”映射。
 
 ### 单播静态泛洪
