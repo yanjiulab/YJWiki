@@ -145,7 +145,7 @@ VXLAN 创建之后，需要为 vxlan0 配置 IP 地址，这样系统会生成�
 
 此时，vxlan0 类似于一个网桥，远端 VTEP 是虚拟端口：
 
-- vxlan0 
+- vxlan0 向该 VNI 所属组地址发送 BUM 帧，所有加入了该地址的 VTEP 发送 
 
 - it sends **broadcast, unknown unicast, and multicast** (BUM) frames to all VTEPs using the multicast group; and
 - it discovers the association from Ethernet MAC addresses to VTEP IP addresses using **source-address learning**.
