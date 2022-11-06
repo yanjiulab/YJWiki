@@ -76,7 +76,7 @@ VNI 标识了由主机产生的 MAC 帧的活动范围，VNI 作为外部头，�
 
 Linux 操作系统上 VXLAN 实现主要来自于 Linux 内核或 Openvswitch。
 
-VXLAN 设备管理可以通过 **iproute2** 命令来完成。
+VXLAN 设备（或称 VTEP）管理可以通过 **iproute2** 命令来完成。
 
 创建 vxlan 设备:
 
@@ -147,7 +147,7 @@ VXLAN 创建之后，需要为 vxlan0 配置 IP 地址，这样相当于把主�
 
 若主机上具有虚拟主机，则 VM 可通过网桥与 vxlan0 设备相连，VM 流量通过网桥交换到 VXLAN 设备，进一步封装到远端 VTEP。此时 vxlan0 可以没有 IP 地址。
 
-此时，vxlan0 类似于一个网桥，远端 VTEP 是虚拟端口：
+总的来说，VTEP 类似于一个网桥，远端 VTEP 是虚拟端口：
 
 - vxlan0 向该 VNI 所属组地址发送 BUM 帧；
 - 通过源地址学习到“主机 MAC--VTEP IP 地址”映射。
