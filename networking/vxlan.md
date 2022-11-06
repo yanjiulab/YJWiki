@@ -121,7 +121,11 @@ VXLAN 表项管理通过 **bridge** 命令来完成：
 
 通常情况下，VXLAN 数据分发使用组播模式最为方便。
 
-- 
+- 通过同一组地址，自动发现其他 VTEP。
+- 组播
+- automatic discovery of other VTEPs sharing the same multicast group
+- good bandwidth usage (packets are replicated as late as possible)
+- decentralized and controller-less design
 
 创建 vxlan 设备:
 
