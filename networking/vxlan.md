@@ -124,9 +124,8 @@ VXLAN 表项管理通过 **bridge** 命令来完成：
 - 通过同一组地址，自动发现其他 VTEP。
 - 组播 1 对 N 数据分发模型契合 VXLAN 1 对 N 隧道模型。
 - 利用组播分布式特性，无控制面。
-- 
 
-创建 vxlan 设备:
+首先，创建 vxlan 设备:
 
 ```
 # ip link add vxlan0 type vxlan id 42 group 239.1.1.1 dev eth1 dstport 4789
