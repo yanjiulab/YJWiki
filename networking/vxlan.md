@@ -123,10 +123,8 @@ VXLAN 表项管理通过 **bridge** 命令来完成：
 
 - 通过同一组地址，自动发现其他 VTEP。
 - 组播 1 对 N 数据分发模型契合 VXLAN 1 对 N 隧道模型。
-- 无需额外
-- automatic discovery of other VTEPs sharing the same multicast group
-- good bandwidth usage (packets are replicated as late as possible)
-- decentralized and controller-less design
+- 利用组播分布式特性，无控制面。
+- 
 
 创建 vxlan 设备:
 
