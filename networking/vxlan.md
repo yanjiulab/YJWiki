@@ -131,7 +131,7 @@ VXLAN 表项管理通过 **bridge** 命令来完成：
 # ip link add vxlan0 type vxlan id 42 group 239.1.1.1 dev eth1 dstport 4789
 ```
 
-VXLAN 创建之后，需要为 vxlan0 配置 IP 地址，这样系统会生成路由表，到达该网段的路由出端口为 vxlan0 虚拟接口。
+VXLAN 创建之后，需要为 vxlan0 配置 IP 地址，这样相当于把主机自身挂在 vxlan0 设备上，因此系统会生成路由表，到达该网段的路由出端口为 vxlan0 虚拟接口。
 
 ```
 # ip addr add 10.0.0.1/24 dev vxlan0
