@@ -141,7 +141,7 @@ VXLAN 创建之后，需要为 vxlan0 配置 IP 地址，这样相当于把主�
 ...
 ```
 
-此时，假设我们从主机上 ping 10.0.0.2 时，在 vxlan0 接口上可以抓到原始 在 eth1 上可以通过 wireshark 抓包到封装的 ARP 包。
+此时，假设我们从主机上 ping 10.0.0.2 时，在 vxlan0 接口上可以抓到原始 ARP 帧，在 eth1 上可以抓到 VXLAN 封装的 ARP 包。
 
 ![image-20221106164343535](vxlan.assets/image-20221106164343535.png) 
 
