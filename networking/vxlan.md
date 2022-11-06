@@ -52,7 +52,7 @@ VNI 标识了由主机产生的 MAC 帧的活动范围，VNI 作为外部头，�
 
 同一 VXLAN 内主机进行 IP 通信时，主机开始不知道对端主机 MAC 地址，会发送 ARP 请求报文请求对端主机 MAC 地址。在正常二层网络中，该 ARP 请求报文 MAC 为广播 MAC，因此将会发送到同一广播域内所有主机上，目的主机通过单播回复 ARP 响应给发送者，使发送主机学习到对端 MAC 地址。
 
-这个问题可以归类为 BUM (Broadcast, Unknown Unicast, Multicast) 帧转发问题，VXLAN 网络也需要机制来解决该问题。
+这个问题可以归类为 BUM (Broadcast, Unknown Unicast, Multicast) 帧转发问题，VXLAN 网络也需要机制来解决该问题，例如
 
 - BUM 帧复制，静态配置远端 VTEPs 列表
 - EBGP 控制面
@@ -117,7 +117,7 @@ VXLAN 表项管理通过 **bridge** 命令来完成：
 # bridge fdb show dev vxlan0
 ```
 
-### 组播模式
+### 组播动态转发
 
 通常情况下，VXLAN 数据分发使用组播模式最为方便。
 
