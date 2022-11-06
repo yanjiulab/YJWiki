@@ -145,7 +145,7 @@ VXLAN 创建之后，需要为 vxlan0 配置 IP 地址，这样相当于把主�
 
 ![image-20221106164343535](vxlan.assets/image-20221106164343535.png) 
 
-另外，可通过创建 bridge，将多个 VM 和 vxlan0 绑定到一起
+若主机上后面可通过创建网桥，将多个 VM 和 vxlan0 绑定到一起
 
 此时，vxlan0 类似于一个网桥，远端 VTEP 是虚拟端口：
 
