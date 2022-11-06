@@ -54,8 +54,8 @@ VNI 标识了由主机产生的 MAC 帧的活动范围，VNI 作为外部头，�
 
 这个问题可以归类为 BUM (Broadcast, Unknown Unicast, Multicast) 帧转发问题，VXLAN 网络也需要机制来解决该问题，例如
 
-- BUM 帧复制，静态配置远端 VTEPs 列表
-- EBGP 控制面
+- BUM 帧复制，静态配置远端 VTEPs 列表。
+- BGP-EVPN 控制面
 
 ## VXLAN 帧格式
 
@@ -182,7 +182,7 @@ VXLAN 创建之后，需要为 vxlan0 配置 IP 地址，这样相当于把主�
 # bridge fdb append to 00:00:00:00:00:00 dst 192.168.0.102 dev vxlan0
 ```
 
-删除转发表项:
+### 其他控制方式
 
 ## 参考
 
