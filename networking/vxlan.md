@@ -158,9 +158,57 @@ VXLAN 创建之后，需要为 vxlan0 配置 IP 地址，这样相当于把主�
 
 #### 单播静态泛洪
 
+When the associations of MAC addresses and VTEPs are known, it is possible to pre-populate the FDB and disable learning:
+
+```
+# ip link add vxlan0 type vxlan id 42 local 192.168.0.103 dstport 4789
+# bridge fdb append 00:00:00:00:00:00 dev vxlan0 dst 2001:db8:2::1
+# bridge fdb append 00:00:00:00:00:00 dev vxlan0 dst 2001:db8:3::1
+```
+
+The VXLAN is defined without a remote multicast group. Instead, all the remote VTEPs are associated with the all-zero address: a BUM frame will be duplicated to all these destinations. The VXLAN device will still learn remote addresses automatically using source-address learning.
+
+It is a very simple solution. With a bit of automation, you can keep the default FDB entries up-to-date easily. However, the host will have to duplicate each BUM frame (head-end replication) as many times as there are remote VTEPs. This is quite reasonable if you have a dozen of them. This may become out-of-hand if you have thousands of them.
+
 #### 单播静态 L2 表项
 
+When the associations of MAC addresses and VTEPs are known, it is possible to pre-populate the FDB and disable learning:
+
+```
+# ip link add vxlan0 type vxlan id 42 local 192.168.0.103 dstport 4789 nolearning
+```
+
+- nolearning 可以使得
+
+```
+# bridge fdb append 00:00:00:00:00:00 dev vxlan0 dst [vtep-ip]
+# bridge fdb append 00:00:00:00:00:00 dev vxlan0 dst [vtep-ip]
+# bridge fdb append 50:54:33:00:00:09 dev vxlan0 dst [vtep-ip]
+# 
+```
+
+Thanks to the `nolearning` flag, source-address learning is disabled. Therefore, if a MAC is missing, the frame will always be sent using the all-zero entries.
+
+The all-zero entries are still needed for broadcast and multicast traffic (e.g. ARP and IPv6 neighbor discovery). This kind of setup works well to provide virtual L2 networks to virtual machines (no L3 information available). You need some glue to update the FDB entries.
+
+bgp evpn
+
 #### 单播静态 L3 表项
+
+```
+ip -6 link add vxlan100 type vxlan \
+>   id 100 \
+>   dstport 4789 \
+>   local 2001:db8:1::1 \
+>   nolearning \
+>   proxy
+# ip -6 neigh add 2001:db8:ff::11 lladdr 50:54:33:00:00:09 dev vxlan100
+# ip -6 neigh add 2001:db8:ff::12 lladdr 50:54:33:00:00:0a dev vxlan100
+# ip -6 neigh add 2001:db8:ff::13 lladdr 50:54:33:00:00:0b dev vxlan100
+# bridge fdb append 50:54:33:00:00:09 dev vxlan100 dst 2001:db8:2::1
+# bridge fdb append 50:54:33:00:00:0a dev vxlan100 dst 2001:db8:2::1
+# bridge fdb append 50:54:33:00:00:0b dev vxlan100 dst 2001:db8:3::1
+```
 
 #### 单播动态 L3 表项
 
@@ -176,9 +224,24 @@ VXLAN 创建之后，需要为 vxlan0 配置 IP 地址，这样相当于把主�
 - id 为 VNI。
 - local 和 remote 的 IP 地址也是底层网络的接口地址，两者并不需要在同一网段，路由可通即可。
 
-### 实践
+### 总结
 
-- 
+There is no one-size-fits-all solution.
+
+You should consider the **multicast** solution if:
+
+- you are in an environment where multicast is available;
+- you are ready to operate (and scale) a multicast network;
+- you need multicast and broadcast inside the virtual segments; and
+- you don’t have L2/L3 addresses available beforehand.
+
+The scalability of such a solution is pretty good if you take care of not putting all VXLAN interfaces into the same multicast group (e.g. use the last byte of the VNI as the last byte of the multicast group).
+
+When multicast is not available, another generic solution is **BGP EVPN**: BGP is used as a controller to ensure the distribution of the list of VTEPs and their respective FDBs. As mentioned earlier, an implementation of this solution is [FRR](https://github.com/FRRouting/frr). I explore this option in a separate post: [VXLAN: BGP EVPN with FRR](https://vincent.bernat.ch/en/blog/2017-vxlan-bgp-evpn).
+
+If you operate in a container-like environment where L2/L3 addresses are known beforehand, a solution using **static and/or dynamic L2 and L3 entries** based on a central registry and no source-address learning would also fit the bill. This provides a more security-tight solution (bound resources, MiTM attacks dampened down, inability to amplify bandwidth usage through excessive broadcast). Various environment-specific solutions are available[7](https://vincent.bernat.ch/en/blog/2017-vxlan-linux#fn-examples) or you can build your own.
+
+### 实践
 
 ```
 # bridge fdb append to 00:00:00:00:00:00 dst 192.168.0.100 dev vxlan0
