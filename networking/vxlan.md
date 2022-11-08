@@ -162,99 +162,97 @@ When the associations of MAC addresses and VTEPs are known, it is possible to pr
 
 ```
 # ip link add vxlan0 type vxlan id 42 local 192.168.0.103 dstport 4789
-# bridge fdb append 00:00:00:00:00:00 dev vxlan0 dst 2001:db8:2::1
-# bridge fdb append 00:00:00:00:00:00 dev vxlan0 dst 2001:db8:3::1
+# bridge fdb append 00:00:00:00:00:00 dev vxlan0 dst 192.168.0.101
+# bridge fdb append 00:00:00:00:00:00 dev vxlan0 dst 192.168.0.102
 ```
 
-The VXLAN is defined without a remote multicast group. Instead, all the remote VTEPs are associated with the all-zero address: a BUM frame will be duplicated to all these destinations. The VXLAN device will still learn remote addresses automatically using source-address learning.
+不需要指定组地址，而是指定 local 本地地址，数据转发时进行转发表：BUM 帧会复制多份，发往所有全 0 MAC 表项的 VTEP 地址。此时 VTEP 仍然会进行源地址学习，生成对应的“MAC-VTEP”表项。注意，此时转发表中的 VTEP 地址必须具有 ARP 表项，VTEP 不会向没有 ARP 表项的目的 VTEP 地址封装数据。
 
-It is a very simple solution. With a bit of automation, you can keep the default FDB entries up-to-date easily. However, the host will have to duplicate each BUM frame (head-end replication) as many times as there are remote VTEPs. This is quite reasonable if you have a dozen of them. This may become out-of-hand if you have thousands of them.
+单播静态泛洪是最简单的方式，仅需要一点自动化脚本即可保证所有 VTEP 转发表保持更新，该方式最大的缺点就是远端 VTEP 越多，则复制的份数越多，大型网络中会造成 VXLAN 冗余流量过大。
 
 #### 单播静态 L2 表项
 
-When the associations of MAC addresses and VTEPs are known, it is possible to pre-populate the FDB and disable learning:
+如果事先知道所有主机的 MAC 地址、所有 VTEP 地址，以及二者所属关系，那么在泛洪的基础上，可以预配转发表项并且禁止源地址学习功能。这样 U 帧可以直接转发，但 BM 帧仍然需要全 0 表项泛洪，因此全 0 表项仍然需要保留。
 
 ```
 # ip link add vxlan0 type vxlan id 42 local 192.168.0.103 dstport 4789 nolearning
 ```
 
-- nolearning 可以使得
-
 ```
-# bridge fdb append 00:00:00:00:00:00 dev vxlan0 dst [vtep-ip]
-# bridge fdb append 00:00:00:00:00:00 dev vxlan0 dst [vtep-ip]
-# bridge fdb append 50:54:33:00:00:09 dev vxlan0 dst [vtep-ip]
-# 
+# bridge fdb append 00:00:00:00:00:00 dev vxlan0 dst 192.168.0.101
+# bridge fdb append 00:00:00:00:00:00 dev vxlan0 dst 192.168.0.102
+# bridge fdb append 50:54:33:00:00:09 dev vxlan0 dst 192.168.0.101
+# bridge fdb append 50:54:33:00:00:0a dev vxlan0 dst 192.168.0.102
 ```
 
-Thanks to the `nolearning` flag, source-address learning is disabled. Therefore, if a MAC is missing, the frame will always be sent using the all-zero entries.
-
-The all-zero entries are still needed for broadcast and multicast traffic (e.g. ARP and IPv6 neighbor discovery). This kind of setup works well to provide virtual L2 networks to virtual machines (no L3 information available). You need some glue to update the FDB entries.
-
-bgp evpn
+[BGP EVPN](https://tools.ietf.org/html/rfc7432) with [FRR](https://github.com/FRRouting/frr) is an example of this strategy (see “[VXLAN: BGP EVPN with FRR](https://vincent.bernat.ch/en/blog/2017-vxlan-bgp-evpn)” for additional information).
 
 #### 单播静态 L3 表项
 
+在上述基础上，如果还知道所有主机的 IP 地址（适用于容器网络），可以通过配置 ARP 表项来完成 ARP 地址学习，这样可以避免使用全 0 MAC 地址，也能进一步减少 ARP 广播流量。
+
 ```
-ip -6 link add vxlan100 type vxlan \
->   id 100 \
->   dstport 4789 \
->   local 2001:db8:1::1 \
->   nolearning \
->   proxy
-# ip -6 neigh add 2001:db8:ff::11 lladdr 50:54:33:00:00:09 dev vxlan100
-# ip -6 neigh add 2001:db8:ff::12 lladdr 50:54:33:00:00:0a dev vxlan100
-# ip -6 neigh add 2001:db8:ff::13 lladdr 50:54:33:00:00:0b dev vxlan100
-# bridge fdb append 50:54:33:00:00:09 dev vxlan100 dst 2001:db8:2::1
-# bridge fdb append 50:54:33:00:00:0a dev vxlan100 dst 2001:db8:2::1
-# bridge fdb append 50:54:33:00:00:0b dev vxlan100 dst 2001:db8:3::1
+# ip link add vxlan0 type vxlan id 42 local 192.168.0.103 dstport 4789 nolearning proxy
+# ip neigh add 10.0.0.2 lladdr 50:54:33:00:00:09 dev vxlan0
+# ip neigh add 10.0.0.3 lladdr 50:54:33:00:00:0a dev vxlan0
+# bridge fdb append 50:54:33:00:00:09 dev vxlan0 dst 192.168.0.101
+# bridge fdb append 50:54:33:00:00:0a dev vxlan0 dst 192.168.0.102
 ```
+
+这种方式不再需要复制，但不适用于组播场景。
 
 #### 单播动态 L3 表项
 
-创建 vxlan 设备（点对点模式）:
+Linux 可以监控程序 L2 或 L3 是否表项缺少。
 
 ```
-# ip link add vxlan0 type vxlan id 42 local 192.168.0.103 remote 192.168.0.104 dev eth1 dstport 4789
+# ip link add vxlan0 type vxlan id 42 local 192.168.0.103 dstport 4789 nolearning proxy l2miss l3miss
+# ip neigh add 10.0.0.2 lladdr 50:54:33:00:00:09 dev vxlan0
+# ip neigh add 10.0.0.3 lladdr 50:54:33:00:00:0a dev vxlan0
+# bridge fdb append 50:54:33:00:00:09 dev vxlan0 dst 192.168.0.101
+# bridge fdb append 50:54:33:00:00:0a dev vxlan0 dst 192.168.0.102
+```
+
+当缺少表项时，ip 命令会使用 `NETLINK_ROUTE` 协议向监听  `AF_NETLINK` 的套接字发送通告，这个套接字必须绑定到 `RTNLGRP_NEIGH` 组。使用以下命令可以解析出该通告。
+
+```
+# ip monitor neigh dev vxlan100
+miss 10.0.0.2 STALE
+miss lladdr 50:54:33:00:00:0a STALE
 ```
 
 其中：
 
-- dev 为使用的物理网卡名称。
-- id 为 VNI。
-- local 和 remote 的 IP 地址也是底层网络的接口地址，两者并不需要在同一网段，路由可通即可。
+- 第一条通告表示缺少该 IP 的 MAC 地址
+- 第二条通告表示缺少该 MAC 的 VTEP 地址
+
+通过这种机制，我们可以编写程序，监听 `RTNLGRP_NEIGH` 通告消息，然后向某个"中心注册站"发送查询获取最新的表项对应关系，然后使用如下命令动态配置转发表。
+
+```
+# ip neigh replace 10.0.0.2 lladdr 50:54:33:00:00:09 dev vxlan0 nud reachable
+# bridge fdb replace 50:54:33:00:00:09 dst 192.168.0.101 dev vxlan0 dynamic
+```
+
+其中，nud 和 dynamic 表示该配置不是永久性的，具有标准的超时时间。
+
+这种方式适合于容器网络，并且具有某个中心注册站的环境。但这种方式在第一次数据通信引入了一点时延，同时也不适用于组播或者广播环境。
 
 ### 总结
 
-There is no one-size-fits-all solution.
+综上所述，没有一种解决方案适合所有的情况，但是如果满足以下条件，就应该考虑使用**组播**模式：
 
-You should consider the **multicast** solution if:
+- 底层网络具有组播环境；
+- 虚拟网络需要组播和广播通信；
+- 事先无法获取 L2 和 L3 表项。
 
-- you are in an environment where multicast is available;
-- you are ready to operate (and scale) a multicast network;
-- you need multicast and broadcast inside the virtual segments; and
-- you don’t have L2/L3 addresses available beforehand.
+当组播模式不可用时，考虑优先使用**单播静态 L2 表项**，因为该方式具有一种通用解决方式 **BGP EVPN**：其中 BGP 协议作为控制面，用来分发 VTEP 地址和对应的 FDB 表项。协议具体实现可以参考 [FRR](https://github.com/FRRouting/frr)。
 
-The scalability of such a solution is pretty good if you take care of not putting all VXLAN interfaces into the same multicast group (e.g. use the last byte of the VNI as the last byte of the multicast group).
-
-When multicast is not available, another generic solution is **BGP EVPN**: BGP is used as a controller to ensure the distribution of the list of VTEPs and their respective FDBs. As mentioned earlier, an implementation of this solution is [FRR](https://github.com/FRRouting/frr). I explore this option in a separate post: [VXLAN: BGP EVPN with FRR](https://vincent.bernat.ch/en/blog/2017-vxlan-bgp-evpn).
-
-If you operate in a container-like environment where L2/L3 addresses are known beforehand, a solution using **static and/or dynamic L2 and L3 entries** based on a central registry and no source-address learning would also fit the bill. This provides a more security-tight solution (bound resources, MiTM attacks dampened down, inability to amplify bandwidth usage through excessive broadcast). Various environment-specific solutions are available[7](https://vincent.bernat.ch/en/blog/2017-vxlan-linux#fn-examples) or you can build your own.
-
-### 实践
-
-```
-# bridge fdb append to 00:00:00:00:00:00 dst 192.168.0.100 dev vxlan0
-# bridge fdb append to 00:00:00:00:00:00 dst 192.168.0.101 dev vxlan0
-# bridge fdb append to 00:00:00:00:00:00 dst 192.168.0.102 dev vxlan0
-```
-
-### 其他控制方式
+如果是容器环境下，IP 和 MAC 地址很容易提前获取，则可以考虑基于中心注册站并取消源地址学习，使用**单播静态/动态 L3 表项** 实现 VXLAN 网络配置，将会更加安全、高效。
 
 ## 参考
 
 - [RFC7348 - Virtual eXtensible Local Area Network (VXLAN): A Framework for Overlaying Virtualized Layer 2 Networks over Layer 3 Networks](https://datatracker.ietf.org/doc/html/rfc7348)
-- https://vincent.bernat.ch/en/blog/2017-vxlan-linux
+- [VXLAN & Linux](https://vincent.bernat.ch/en/blog/2017-vxlan-linux)
 
-
+- [VXLAN: BGP EVPN with FRR](https://vincent.bernat.ch/en/blog/2017-vxlan-bgp-evpn)
 

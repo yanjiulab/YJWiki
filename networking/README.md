@@ -14,12 +14,12 @@
     - [ ] 二层透传
 - 网络互联部分
     - [ ] IP 地址（ipv4/arp/dns/dhcp/ipv6(nd)/dhcpv6）
-    - [ ] IP 单播路由（rip/ospf/isis/bgp）
-    - [x] IP 组播 (igmp/pimv4/msdp)
+    - [x] IP 单播路由
+    - [x] IP 组播路由
     - [ ] MPLS 标签交换
-    - [ ] 隧道/VPN(gre/ipsec/vxlan)
+    - [x] 隧道/VPN(gre/ipsec/vxlan)
 - 传输层部分
-    - [ ] TCP
+    - [x] TCP
     - [ ] UDP
     - [ ] Quic
     - [ ] TLS
@@ -30,5 +30,4 @@
     - [ ] QoS (优先级、流量整形、过滤等等)
     - [ ] 网络管理与监控（snmp/lldp/sflow/netconf）
     - [ ] 软件定义网络
-- 虚拟化部分
 
