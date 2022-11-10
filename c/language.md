@@ -1,4 +1,6 @@
-# 编程接口
+# 语言特性
+
+## 编程接口
 
 在使用 C 语言编程实现某个功能时候，应当明确可以使用哪些基础库，包括：
 
@@ -9,31 +11,137 @@
   - Windows Library
   - …
 
-首先，应当尽可能使用 C 标准库中的接口，这些库保证了最佳的可移植性。当然编写 C 语言的代码不可避免的将会用到这些库。
+**C 标准库也称为 ISO C 库**，主要经历了 C89, C99, C11 三个大版本，目前包括 **31** 个头文件。编程时首先考虑使用 C 标准库中的接口，这些库保证了最佳的可移植性。详细说明可以在 [C Standard Library header files](https://en.cppreference.com/w/c/header) 进行查阅。
 
-在实际编程时，应**尽量首选 POSIX 标准库接口**，对于 Unix、Linux 以及 Mac OS X 系统，甚至 Windows 都具有较好的可移植性。标准定义了接口的规范，而不同的操作系统根据自身平台的特征实现了这些接口。
+|         头文件          |                             说明                             |
+| :---------------------: | :----------------------------------------------------------: |
+|      `<assert.h>`       | [Conditionally compiled macro that compares its argument to zero](https://en.cppreference.com/w/c/error) |
+|   `<complex.h>` (C99)   | [Complex number arithmetic](https://en.cppreference.com/w/c/numeric/complex) |
+|       `<ctype.h>`       | [Functions to determine the type contained in character data](https://en.cppreference.com/w/c/string/byte) |
+|       `<errno.h>`       | [Macros reporting error conditions](https://en.cppreference.com/w/c/error) |
+|    `<fenv.h>` (C99)     | [Floating-point environment](https://en.cppreference.com/w/c/numeric/fenv) |
+|       `<float.h>`       | [Limits of floating-point types](https://en.cppreference.com/w/c/types/limits#Limits_of_floating_point_types) |
+|  `<inttypes.h>` (C99)   | [Format conversion of integer types](https://en.cppreference.com/w/c/types/integer) |
+|   `<iso646.h>` (C95)    | [Alternative operator spellings](https://en.cppreference.com/w/c/language/operator_alternative) |
+|      `<limits.h>`       | [Ranges of integer types](https://en.cppreference.com/w/c/types/limits) |
+|      `<locale.h>`       | [Localization utilities](https://en.cppreference.com/w/c/locale) |
+|       `<math.h>`        | [Common mathematics functions](https://en.cppreference.com/w/c/numeric/math) |
+|      `<setjmp.h>`       |  [Nonlocal jumps](https://en.cppreference.com/w/c/program)   |
+|      `<signal.h>`       |  [Signal handling](https://en.cppreference.com/w/c/program)  |
+|  `<stdalign.h>` (C11)   | [`alignas` and `alignof`](https://en.cppreference.com/w/c/types) convenience macros |
+|      `<stdarg.h>`       | [Variable arguments](https://en.cppreference.com/w/c/variadic) |
+|  `<stdatomic.h>` (C11)  | [Atomic operations](https://en.cppreference.com/w/c/thread#Atomic_operations) |
+|   `<stdbit.h>` (C23)    | Macros to work with the byte and bit representations of types |
+|   `<stdbool.h>` (C99)   | [Macros for boolean type](https://en.cppreference.com/w/c/types) |
+|  `<stdckdint.h>` (C23)  |       macros for performing checked integer arithmetic       |
+|      `<stddef.h>`       | [Common macro definitions](https://en.cppreference.com/w/c/types) |
+|   `<stdint.h>` (C99)    | [Fixed-width integer types](https://en.cppreference.com/w/c/types/integer) |
+|       `<stdio.h>`       |      [Input/output](https://en.cppreference.com/w/c/io)      |
+|      `<stdlib.h>`       | General utilities: [memory management](https://en.cppreference.com/w/c/memory), [program utilities](https://en.cppreference.com/w/c/program), [string conversions](https://en.cppreference.com/w/c/string), [random numbers](https://en.cppreference.com/w/c/numeric/random), [algorithms](https://en.cppreference.com/w/c/algorithm) |
+| `<stdnoreturn.h>` (C11) | [`noreturn`](https://en.cppreference.com/w/c/language/_Noreturn) convenience macro |
+|      `<string.h>`       | [String handling](https://en.cppreference.com/w/c/string/byte) |
+|   `<tgmath.h>` (C99)    | [Type-generic math](https://en.cppreference.com/w/c/numeric/tgmath) (macros wrapping math.h and complex.h) |
+|   `<threads.h>` (C11)   |   [Thread library](https://en.cppreference.com/w/c/thread)   |
+|       `<time.h>`        | [Time/date utilities](https://en.cppreference.com/w/c/chrono) |
+|    `<uchar.h>` (C11)    | [UTF-16 and UTF-32 character utilities](https://en.cppreference.com/w/c/string/multibyte) |
+|    `<wchar.h>` (C95)    | [Extended multibyte and wide character utilities](https://en.cppreference.com/w/c/string/wide) |
+|   `<wctype.h>` (C95)    | [Functions to determine the type contained in wide character data](https://en.cppreference.com/w/c/string/wide) |
 
-最后，考虑 Linux 库以及 Windows 库等，除非你确定编写的程序不需要跨平台使用。由于大部分时候我们的代码将会运行在 Linux 内核的机器上，因此有时候想要用到 Linux 内核相关功能，而 POSIX 标准没有涵盖这个接口的话，将不可避免的使用到 Linux 提供的相关库。
+C POSIX 库是与标准库同时发展的，它是 POSIX 系统中 C 标准库的规范，作为标准库的超集，其不仅兼容标准库，同时还引入了额外的功能。目前包括 **82** 个头文件（包含所有 C99 头文件）。虽然 POSIX 是为 Unix 标准制定的接口，但对于 Linux、Mac OS X 系统，甚至 Windows 都具有较好的可移植性。
+
+标准定义了接口的规范，而不同的操作系统根据自身平台的特征实现了这些接口。头文件详细说明可以在 [IEEE and The Open Group](http://pubs.opengroup.org/onlinepubs/9699919799/nframe.html) 网站中的 [IEEE Std POSIX.1-2017](http://pubs.opengroup.org/onlinepubs/9699919799/toc.htm) 进行查询。
+
+|      头文件      | 说明 |
+| :--------------: | :--: |
+|     <aio.h>      |      |
+|  <arpa/inet.h>   |      |
+|    <assert.h>    |      |
+|   <complex.h>    |      |
+|     <cpio.h>     |      |
+|    <ctype.h>     |      |
+|    <dirent.h>    |      |
+|    <dlfcn.h>     |      |
+|    <errno.h>     |      |
+|    <fcntl.h>     |      |
+|     <fenv.h>     |      |
+|    <float.h>     |      |
+|    <fmtmsg.h>    |      |
+|   <fnmatch.h>    |      |
+|     <ftw.h>      |      |
+|     <glob.h>     |      |
+|     <grp.h>      |      |
+|    <iconv.h>     |      |
+|   <inttypes.h>   |      |
+|    <iso646.h>    |      |
+|   <langinfo.h>   |      |
+|    <libgen.h>    |      |
+|    <limits.h>    |      |
+|    <locale.h>    |      |
+|     <math.h>     |      |
+|   <monetary.h>   |      |
+|    <mqueue.h>    |      |
+|     <ndbm.h>     |      |
+|    <net/if.h>    |      |
+|    <netdb.h>     |      |
+|  <netinet/in.h>  |      |
+| <netinet/tcp.h>  |      |
+|   <nl_types.h>   |      |
+|     <poll.h>     |      |
+|   <pthread.h>    |      |
+|     <pwd.h>      |      |
+|    <regex.h>     |      |
+|    <sched.h>     |      |
+|    <search.h>    |      |
+|  <semaphore.h>   |      |
+|    <setjmp.h>    |      |
+|    <signal.h>    |      |
+|    <spawn.h>     |      |
+|    <stdarg.h>    |      |
+|   <stdbool.h>    |      |
+|    <stddef.h>    |      |
+|    <stdint.h>    |      |
+|    <stdio.h>     |      |
+|    <stdlib.h>    |      |
+|    <string.h>    |      |
+|   <strings.h>    |      |
+|   <stropts.h>    |      |
+|   <sys/ipc.h>    |      |
+|   <sys/mman.h>   |      |
+|   <sys/msg.h>    |      |
+| <sys/resource.h> |      |
+|  <sys/select.h>  |      |
+|   <sys/sem.h>    |      |
+|   <sys/shm.h>    |      |
+|  <sys/socket.h>  |      |
+|   <sys/stat.h>   |      |
+| <sys/statvfs.h>  |      |
+|   <sys/time.h>   |      |
+|  <sys/times.h>   |      |
+|  <sys/types.h>   |      |
+|   <sys/uio.h>    |      |
+|    <sys/un.h>    |      |
+| <sys/utsname.h>  |      |
+|   <sys/wait.h>   |      |
+|    <syslog.h>    |      |
+|     <tar.h>      |      |
+|   <termios.h>    |      |
+|    <tgmath.h>    |      |
+|     <time.h>     |      |
+|    <trace.h>     |      |
+|    <ulimit.h>    |      |
+|    <unistd.h>    |      |
+|    <utime.h>     |      |
+|    <utmpx.h>     |      |
+|    <wchar.h>     |      |
+|    <wctype.h>    |      |
+|   <wordexp.h>    |      |
+
+除此之外，最后考虑 Linux 库以及 Windows 库等，除非你确定编写的程序不需要跨平台使用。由于大部分时候我们的代码将会运行在 Linux 内核的机器上，因此有时候想要用到 Linux 内核相关功能，而 POSIX 标准没有涵盖这个接口的话，将不可避免的使用到 Linux 提供的相关库。
+
+- GNU/Linux 是 POSIX 兼容的系统，其使用了 GNU C Library (glibc) 的实现，该实现兼容 C 标准库、POSIX 库等，可以使用 man 手册查阅相关 C 库用法。
+- Windows 有自己的头文件，可以在 MSDN 中找到，但也有 POSIX 兼容的版本，例如 Cygwin, MinGW 等。
 
 [List of standard header files in C and C++](https://stackoverflow.com/questions/2027991/list-of-standard-header-files-in-c-and-c) 有一份详细的目录可以帮助你了解这些头文件。
-
-## C 标准库
-
-C 标准库也称为 ISO C 库，主要经历了 C89, C99, C11 三个大版本，目前包括 **29** 个头文件。详细说明可以在 [C Standard Library header files](https://en.cppreference.com/w/c/header) 进行查阅。
-
-## POSIX 库
-
-C POSIX 库是与标准库同时发展的，它是 POSIX 系统中 C 标准库的规范，作为标准库的超集，其不仅兼容标准库，同时还引入了额外的功能。目前包括 **82** (包含所有 C99 头文件) 个头文件。
-
-头文件详细说明可以在 [IEEE and The Open Group](http://pubs.opengroup.org/onlinepubs/9699919799/nframe.html) 网站中的 [IEEE Std POSIX.1-2017](http://pubs.opengroup.org/onlinepubs/9699919799/toc.htm) 进行查询。
-
-## GNU/Linux 库
-
-GNU/Linux 是 POSIX 兼容的系统，其使用了 GNU C Library (glibc) 的实现，该实现兼容 C 标准库、POSIX 库等，可以使用 man 手册查阅相关 C 库用法。
-
-## Windows
-
-Windows 有自己的头文件，可以在 MSDN 中找到，但也有 POSIX 兼容的版本，例如 Cygwin, MinGW 等。
 
 ## 系统调用和库函数
 
@@ -47,23 +155,34 @@ Windows 有自己的头文件，可以在 MSDN 中找到，但也有 POSIX 兼�
 
 应用程序既可以调用系统调用也可以调用库函数，而很多库函数则会调用系统调用。
 
-![system-calls-functions](/home/liyanjiu/yjlab/uploads/article/c-stdlib/system-calls-functions.png)
-
-
-
-# 类型、运算符、表达式
+```
+   ┌────────────────────┐
+   │    Application     │
+   └────▲──────────▲────┘
+        │          │
+   ┌────▼──────┐   │        User Process
+   │ C library │   │
+   └────▲──────┘   │
+        │          │
+........│..........│....................
+        │          │
+   ┌────▼──────────▼────┐
+   │   System calls     │
+   ├────────────────────┤     Kernel
+   │                    │
+   │                    │
+   └────────────────────┘
+```
 
 ## 基本数据类型
 
-C 语言标准层面没有明确定义基本数据类型的大小，只能确定 sizeof(char) <= sizeof(short) <= sizeof(int) <= sizeof(long) <= sizeof(long long)。
+C 语言标准层面没有明确定义基本数据类型的大小，只能确定 `sizeof(char) <= sizeof(short) <= sizeof(int) <= sizeof(long) <= sizeof(long long)`。具体某种类型的大小与编译器和系统有关，具体来说和实现采用的**数据模型**有关，
 
-具体某种类型的大小与编译器和系统有关，具体来说和实现采用的**数据模型**有关，
-
-![primitive](/home/liyanjiu/yjlab/uploads/article/c-stdlib/primitive-type-bits.svg)
+![image-20221110174548349](language.assets/image-20221110174548349.png)
 
 对于目前 64 位操作系统而言，以下两种模型使用广泛：
-- LLP64: Microsoft Windows (x86-64 and IA-64) using Visual C++; and MinGW
-- LP64: Most Unix and Unix-like systems, e.g., Solaris, Linux, BSD, macOS. Windows when using Cygwin; z/OS
+- **LLP64**: Microsoft Windows (x86-64 and IA-64) using Visual C++; and MinGW
+- **LP64**: Most Unix and Unix-like systems, e.g., Solaris, Linux, BSD, macOS. Windows when using Cygwin; z/OS
 
 使用代码测试一下，本机为 Linux：
 
@@ -81,8 +200,6 @@ int main()
 ```
 
 >  当数据类型的位数重要时,请使用 `stdint.h` 中定义的固定长度类型 (fixed-size types)，例如 `int8_t`、`uint32_t` 等，或使用 `sizeof()` 计算位数。
-
-
 
 # 控制流
 
