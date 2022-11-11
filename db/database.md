@@ -2,7 +2,26 @@
 
 ## 数据库基础
 
-TODO
+### NoSQL
+
+NoSQL可以大体上分为4个种类：Key-value、Document-Oriented、Column-Family Databases以及 Graph-Oriented Databases。下面就一览这些类型的特性：
+
+键值（Key-Value）数据库 - Redis
+键值数据库就像在传统语言中使用的哈希表。你可以通过 key 来添加、查询或者删除数据，鉴于使用主键访问，所以会获得不错的性能及扩展性。
+
+面向文档（Document-Oriented）数据库 MongoDB
+
+列存储（Wide Column Store/Column-Family）数据库 HBase
+
+图数据库
+
+|      |      |      |
+| ---- | ---- | ---- |
+|      |      |      |
+|      |      |      |
+|      |      |      |
+
+
 
 ## MySQL
 
