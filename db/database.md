@@ -15,11 +15,12 @@ NoSQL可以大体上分为4个种类：Key-value、Document-Oriented、Column-Fa
 
 图数据库
 
-|      |      |      |
-| ---- | ---- | ---- |
-|      |      |      |
-|      |      |      |
-|      |      |      |
+| 种类                                      | 特性 | 代表 |
+| ----------------------------------------- | ---- | ---- |
+| 键值（Key-Value）数据库                   |      |      |
+| 面向文档（Document-Oriented）数据库       |      |      |
+| 列存储（Wide Column Store/Column-Family） |      |      |
+| 图数据库 Graph-Oriented                   |      |      |
 
 
 
