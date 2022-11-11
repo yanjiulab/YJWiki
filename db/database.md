@@ -4,11 +4,11 @@
 
 ### SQL 数据库
 
-SQL 数据库又称关系型数据库。
+SQL 数据库又称关系型数据库，基于 SQL 语言实现数据库的操作，典型代表为 MySQL 。
 
 ### NoSQL 数据库
 
-NoSQL可以大体上分为4个种类：
+NoSQL 数据库又称非关系型数据库，可以大体上分为4个种类：
 
 |                   种类                    | 特性                 |  代表   |
 | :---------------------------------------: | -------------------- | :-----: |
@@ -16,8 +16,6 @@ NoSQL可以大体上分为4个种类：
 |       面向文档（Document-Oriented）       |                      | MongoDB |
 | 列存储（Wide Column Store/Column-Family） |                      |  HBase  |
 |           面向图 Graph-Oriented           |                      |         |
-
-
 
 ## MySQL
 
