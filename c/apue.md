@@ -2,7 +2,7 @@
 
 本文主要内容来自 APUE。
 
-## 编程接口
+## Unix 编程接口
 
 在使用 C 语言编程实现某个功能时候，应当明确可以使用哪些基础库，包括：
 
@@ -144,8 +144,6 @@ C POSIX 库是与标准库同时发展的，它是 POSIX 系统中 C 标准库�
 - Windows 有自己的头文件，可以在 MSDN 中找到，但也有 POSIX 兼容的版本，例如 Cygwin, MinGW 等。
 
 [List of standard header files in C and C++](https://stackoverflow.com/questions/2027991/list-of-standard-header-files-in-c-and-c) 有一份详细的目录可以帮助你了解这些头文件。
-
-## 系统调用和库函数
 
 所有的操作系统都提供多种服务的入口点，由此程序向内核请求服务。各种版本的 Unix 实现都提供良好定义、数量有限、直接进入内核的入口点，这些入口点被称为**系统调用 (system call)**。不同的系统提供了不同的几十、上百个系统调用，具体数字在不同操作系统版本中会不同，
 
