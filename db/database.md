@@ -33,20 +33,7 @@ MySQL Community 包含了各种组件，例如：
 - MySQL APT Repository
 - MySQL SUSE Repository
 
-### MySQL APT Repository
-
-主要参照官方的 [A Quick Guide to Using the MySQL APT Repository](https://dev.mysql.com/doc/mysql-apt-repo-quick-guide/en/) 进行安装
-
-{% note info %}
-
-- APT 仓库源可以使用官方提供的 `mysql-apt-config_0.8.10-1_all.deb` 文件进行自动配置，也可以按照附录 A 手动添加。
-- 安装 MySQL Server 需要为 MySQL root 账户设置 password。
-- 通过 `shell> sudo service mysql {status, stop, start}` 可以查看、停止、启动 MySQL Server。
-- 通过 `shell> sudo dpkg-reconfigure mysql-apt-config` 可以随时重新配置 APT 仓库源，以便选择安装其他版本。
-- 其他问题查阅上述官方指南。
-    {% endnote %}
-
-# 索引
+### 索引
 
 索引的目的在于**提高查询效率**，类似于字典的目录。通过索引数据库可以不断的缩小想要获得数据的范围，从而筛选出最终想要的结果。但是索引并不是适用于所有的场合：
 
