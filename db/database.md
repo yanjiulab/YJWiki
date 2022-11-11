@@ -8,16 +8,14 @@ TODO
 
 ### 安装
 
-MySQL 提供了几种版本 [MySQL Downloads](https://www.mysql.com/downloads/)
-
-MySQL 提供了几种版本：
+[MySQL Downloads](https://www.mysql.com/downloads/) 提供了几种版本，包括：
 
 - Oracle MySQL Cloud Service (commercial)
 - MySQL Enterprise Edition (commercial)
 - MySQL Cluster CGE (commercial)
 - MySQL Community Edition (GPL)
 
-作为个人学习使用，选择 GPL 授权的社区版 [MySQL Community Edition](https://dev.mysql.com/downloads/)。
+作为个人学习使用，选择 GPL 授权的社区版 [MySQL Community Edition](https://dev.mysql.com/downloads/) 已经足够。
 
 MySQL Community 包含了各种组件，例如：
 
