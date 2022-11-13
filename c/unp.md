@@ -125,7 +125,9 @@ rtm->xxx = xxx;
 
 ## 进程间通信
 
-**进程间通信 (Inter Process communication, IPC)** 描述了在不同进程之间**传递消息**的方式。本文还介绍了许多**同步**形式。
+**进程间通信 (Inter Process communication, IPC)** 具有两种基本方式：
+
+- **消息传递（Message Passing）**：不同进程之间通过**传递消息**的方式。本文还介绍了许多**同步**形式。
 
 Message Passing
 - Pipes 
