@@ -15,7 +15,13 @@
 - 1974年，汤普逊和里奇合作在 ACM 通信上发表了一篇关于 UNIX 的文章，这是 **UNIX 第一次出现在贝尔实验室以外**。
 - 1982年，贝尔实验室综合了 AT&T 开发的中多版本，形成了 **UNIX System Ⅲ**，不久有增加了一些新功能，重新命名为 **UNIX System V**，然而，加州大学伯克利分校开发了 **BSD 4.3**，其作为 UNIX System III 和 V 的替代选择。
 
-[![unix-timeline](apue.assets/unix-timeline.svg)](apue.assets/unix-timeline.svg)
+![unix-timeline](apue.assets/unix-timeline.svg)
+
+将系统视为若干层，其中**操作系统 (operating system, system kernel or just kernel) 直接与硬件交互，为上层程序提供通用服务并将它们与硬件特性隔离开来。**
+
+![Architecture of UNIX Systems](system-structure.png)
+
+kernel 外的一层是 low-level 的程序，通过 **系统调用 (system call)** 与内核交互，这些程序包括 shell `sh` 和 editor `vi`，标准系统配置命令 (commands)，以及 `a.out` 这种由 C 编译器生成的可执行文件。同时，许多应用或程序是由许多 low-level 组合而成的，叫做 high-level 程序，这些程序通过对底层程序的调用，为用户提供了更好的界面和操作，同时简化了开发。
 
 ### 编程接口
 
