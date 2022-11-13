@@ -168,6 +168,7 @@ Synchronization
 ## Processes, Threads, and the Sharing of Information
 三种共享信息的方式
 ![share-information](share-information.png)
+
 1. 左侧的两个进程正在**共享驻留在文件系统文件中的某些信息**。要访问此数据，每个进程都**必须经过内核**（读、写等），在更新文件时，**需要某种形式的同步**，既可以保护多个编写者彼此之间，又可以保护一个或多个读取者免受编写者的侵害。
 2. 中间的两个进程共享一些驻留在内核中的信息。管道是这种共享类型的一个示例，System V 消息队列和 System V 信号量也是如此。访问共享信息的每个操作都**涉及对内核的系统调用**。
 3. 右侧的两个进程具有每个进程可以引用的共享内存区域。一旦每个进程设置了共享内存，这些进程就可以访问共享内存中的数据，而完全**不需要内核**。共享内存的进程**需要某种形式的同步**。
@@ -178,20 +179,9 @@ Synchronization
 
 尽管 Unix 系统中的进程概念已经使用了很长时间，但是给定进程中的多个线程的概念相对较新。Posix.1 线程标准（称为Pthreads）于 1995 年获得批准。从 IPC 的角度来看，同一进程中的所有线程共享相同的全局变量，这使得共享内存的概念称为线程模型的固有属性，正因如此，多个线程访问这些全局变量必须使用同步手段，事实上，同步虽然不是明确的 IPC 形式，但与许多形式的 IPC 一起使用来控制对某些共享数据的访问。
 
-In this text, we describe IPC between processes and IPC between threads. We
-assume a threads environment and make statements of the form "if the pipe is empty,
-the calling thread is blocked in its call to read until some thread writes data to the
-pipe." If your system does not support threads, you can substitute "process" for
-"thread in this sentence, providing the classic Unix definition of blocking in a read of
-an empty pipe. But on a system that supports threads, only the thread that calls read
-on an empty pipe is blocked, and the remaining threads in the process can continue to
-execute. Writing data to this empty pipe can be done by another thread in the same
-process or by some thread in another process.
-Appendix B summarizes some of the characteristics of threads and the five basic
-Pthread functions that are used throughout this text.
-
 ## Persistence of IPC Objects
-持久化方式|生存周期|
+持久化方式|生存周期
+---|---
 process-persistent IPC|直到打开 IPC 对象的最后一个进程关闭该对象
 kernel-persistent IPC|直到内核重启或 IPC 对象被显式删除
 filesystem-persistent IPC|直到 IPC 对象被显式删除。
