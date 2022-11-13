@@ -1,13 +1,6 @@
 # Internet Protocol
 
-IP 协议提供无连接的、尽力而为的服务，是 TCP/IP 网络中的网络层承载协议，也称为 routed 协议。
-
-- 尽力而为即
-
-- *unreliable*. IP provides a **best effort service**, which means there are no guarantees that an IP datagram successfully gets to its destination. 
-- *connectionless*. IP does not maintain any state information about successive datagrams.
-
-RFC751定义。
+IP 协议提供无连接的（connectionless）、尽力而为（unreliable, best effort service）的服务，是 TCP/IP 网络中的网络层承载协议，也称为 routed 协议，由 RFC751 定义。
 子网的报文如何传送IP。
 支持高层协议，主要是TCP和UDP。
 无连接协议，不可靠服务，尽力而为的服务策略。
