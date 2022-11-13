@@ -128,7 +128,8 @@ rtm->xxx = xxx;
 进程间通信（Inter Process communication, IPC）具有两种基本方式：
 
 - **消息传递（Message Passing）**：不同进程之间通过传递消息来获取信息。
-- 同步（Synchronization）：不同进程之间通过共享对象来获取信息。
+    - 
+- **同步（Synchronization）**：不同进程之间通过共享对象来获取信息。
 
 Message Passing
 - Pipes 
