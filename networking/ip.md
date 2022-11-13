@@ -1,6 +1,6 @@
 # Internet Protocol
 
-IP 协议提供无连接的、
+IP 协议提供无连接的、尽力而为的服务，是 TCP/IP 网络中的网络层承载协议，也称为 routed 协议。
 
 
 
