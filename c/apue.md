@@ -404,9 +404,3 @@ ubuntu@sdnhubvm:~/liyj[18:38]$   PID  PPID  PGID   SID COMMAND
 
 酷炫
 
-
-
-
-
-### 
-
