@@ -1,5 +1,19 @@
 # Internet Protocol
 
+IP 协议提供无连接的、
+
+
+
+IP is the workhorse protocol of the TCP/IP protocol suite, all TCP, UDP, ICMP, IGMP data gets transmitted as IP datagrams.
+
+- *unreliable*. IP provides a **best effort service**, which means there are no guarantees that an IP datagram successfully gets to its destination. 
+- *connectionless*. IP does not maintain any state information about successive datagrams.
+
+RFC751定义。
+子网的报文如何传送IP。
+支持高层协议，主要是TCP和UDP。
+无连接协议，不可靠服务，尽力而为的服务策略。
+
 ## IPv4 头格式
 IP 头格式如下所示：
 
