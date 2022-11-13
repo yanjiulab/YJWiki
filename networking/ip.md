@@ -2,9 +2,7 @@
 
 IP 协议提供无连接的、尽力而为的服务，是 TCP/IP 网络中的网络层承载协议，也称为 routed 协议。
 
-
-
-IP is the workhorse protocol of the TCP/IP protocol suite, all TCP, UDP, ICMP, IGMP data gets transmitted as IP datagrams.
+- 尽力而为即
 
 - *unreliable*. IP provides a **best effort service**, which means there are no guarantees that an IP datagram successfully gets to its destination. 
 - *connectionless*. IP does not maintain any state information about successive datagrams.
