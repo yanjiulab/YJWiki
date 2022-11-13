@@ -2,9 +2,24 @@
 
 本文主要内容来自 APUE。
 
-## 编程接口
+## Unix 基础
 
-在使用 C 语言编程实现某个功能时候，应当明确可以使用哪些基础库，包括：
+### Unix 简介
+
+自 1969 年成立开始，Unix 系统便迅速流行，因为它为各种不同硬件架构的机器**提供了统一的运行环境**。Unix 系统分为两部分，一部分是**程序 (programs) 和服务 (services)** ,它们是供用户使用的，包括 Shell，邮件，文字处理包，源码控制系统等。另一部分是支持这些程序和服务的**操作系统**。
+
+- 1965 年，Bell Telephone Laboratory，通用电气公司以及 MIT 的 MAC计划小组共同开发了 **Multics** 这个新的操作系统。
+- Multics 系统的原始版本确实在 GE 645 机器上运行，但因为没有提供预期统一计算服务，再加上发展目标不明确，因此，贝尔实验室结束了对该项目的支持。
+- 贝尔实验室的科学家们打算改进它们自己的编程环境，于是，Ken Thompson, Dennis Ritchie 等人起草了一份文件系统 (file system) 设计的白皮书，后来推动了早期 Unix 文件系统的发展。后来再加上进程子系统和一些工具，Unix 就这样诞生了。其名称是相对于 Multics 的复杂而取的，**暗含了 Unix 系统的精简**。
+- 第一版使用汇编语言和 B 语言写成。Ritchie 改进了 B 语言，创造了 C 语言，用来生成机器码，声明数据类型，定义数据结构。1973 年，**系统用 C 语言重写**。
+- 1974年，汤普逊和里奇合作在 ACM 通信上发表了一篇关于 UNIX 的文章，这是 **UNIX 第一次出现在贝尔实验室以外**。
+- 1982年，贝尔实验室综合了 AT&T 开发的中多版本，形成了 **UNIX System Ⅲ**，不久有增加了一些新功能，重新命名为 **UNIX System V**，然而，加州大学伯克利分校开发了 **BSD 4.3**，其作为 UNIX System III 和 V 的替代选择。
+
+[![unix-timeline](unix-timeline.svg)](unix-timeline.svg)
+
+### 编程接口
+
+在使用 C 语言编程实现某个功能时候，需要使用操作系统提供的编程接口，Unix 系统提供了如下库供用户使用，包括：
 
 - C 标准库
 - 其他库
@@ -13,7 +28,18 @@
     - Windows Library
     - …
 
-**C 标准库也称为 ISO C 库**，主要经历了 C89, C99, C11 三个大版本，目前包括 **31** 个头文件。编程时首先考虑使用 C 标准库中的接口，这些库保证了最佳的可移植性。详细说明可以在 [C Standard Library header files](https://en.cppreference.com/w/c/header) 进行查阅。
+编程时首先考虑使用 C 标准库中的接口，这些库保证了最佳的可移植性。C POSIX 库是与标准库同时发展的，它是 POSIX 系统中 C 标准库的规范，作为标准库的超集，其不仅兼容标准库，同时还引入了额外的功能。虽然 POSIX 是为 Unix 标准制定的接口，但对于 Linux、Mac OS X 系统，甚至 Windows 都具有较好的可移植性。
+
+除此之外，最后考虑 Linux 库以及 Windows 库等，除非你确定编写的程序不需要跨平台使用。由于大部分时候我们的代码将会运行在 Linux 内核的机器上，因此有时候想要用到 Linux 内核相关功能，而 POSIX 标准没有涵盖这个接口的话，将不可避免的使用到 Linux 提供的相关库。
+
+- GNU/Linux 是 POSIX 兼容的系统，其使用了 GNU C Library (glibc) 的实现，该实现兼容 C 标准库、POSIX 库等，可以使用 man 手册查阅相关 C 库用法。
+- Windows 有自己的头文件，可以在 MSDN 中找到，但也有 POSIX 兼容的版本，例如 Cygwin, MinGW 等。
+
+[List of standard header files in C and C++](https://stackoverflow.com/questions/2027991/list-of-standard-header-files-in-c-and-c) 有一份详细的目录可以帮助你了解这些头文件。
+
+### ISO C - 标准库
+
+**C 标准库也称为 ISO C 库**，主要经历了 C89, C99, C11 三个大版本，目前包括 **31** 个头文件。详细说明可以在 [C Standard Library header files](https://en.cppreference.com/w/c/header) 进行查阅。
 
 |         头文件          |                             说明                             |
 | :---------------------: | :----------------------------------------------------------: |
@@ -49,9 +75,9 @@
 |    `<wchar.h>` (C95)    | [Extended multibyte and wide character utilities](https://en.cppreference.com/w/c/string/wide) |
 |   `<wctype.h>` (C95)    | [Functions to determine the type contained in wide character data](https://en.cppreference.com/w/c/string/wide) |
 
-C POSIX 库是与标准库同时发展的，它是 POSIX 系统中 C 标准库的规范，作为标准库的超集，其不仅兼容标准库，同时还引入了额外的功能。目前包括 **82** 个头文件（包含所有 C99 头文件）。虽然 POSIX 是为 Unix 标准制定的接口，但对于 Linux、Mac OS X 系统，甚至 Windows 都具有较好的可移植性。
+### IEEE POSIX
 
-标准定义了接口的规范，而不同的操作系统根据自身平台的特征实现了这些接口。头文件详细说明可以在 [IEEE and The Open Group](http://pubs.opengroup.org/onlinepubs/9699919799/nframe.html) 网站中的 [IEEE Std POSIX.1-2017](http://pubs.opengroup.org/onlinepubs/9699919799/toc.htm) 进行查询。
+IEEE POSIX 标准定义了接口的规范，而不同的操作系统根据自身平台的特征实现了这些接口。目前包括 **82** 个头文件（包含所有 C99 头文件），头文件详细说明可以在 [IEEE and The Open Group](http://pubs.opengroup.org/onlinepubs/9699919799/nframe.html) 网站中的 [IEEE Std POSIX.1-2017](http://pubs.opengroup.org/onlinepubs/9699919799/toc.htm) 进行查询。
 
 |      头文件      | 说明 |
 | :--------------: | :--: |
@@ -138,14 +164,7 @@ C POSIX 库是与标准库同时发展的，它是 POSIX 系统中 C 标准库�
 |    <wctype.h>    |      |
 |   <wordexp.h>    |      |
 
-除此之外，最后考虑 Linux 库以及 Windows 库等，除非你确定编写的程序不需要跨平台使用。由于大部分时候我们的代码将会运行在 Linux 内核的机器上，因此有时候想要用到 Linux 内核相关功能，而 POSIX 标准没有涵盖这个接口的话，将不可避免的使用到 Linux 提供的相关库。
-
-- GNU/Linux 是 POSIX 兼容的系统，其使用了 GNU C Library (glibc) 的实现，该实现兼容 C 标准库、POSIX 库等，可以使用 man 手册查阅相关 C 库用法。
-- Windows 有自己的头文件，可以在 MSDN 中找到，但也有 POSIX 兼容的版本，例如 Cygwin, MinGW 等。
-
-[List of standard header files in C and C++](https://stackoverflow.com/questions/2027991/list-of-standard-header-files-in-c-and-c) 有一份详细的目录可以帮助你了解这些头文件。
-
-## 系统调用和库函数
+### 系统调用和库函数
 
 所有的操作系统都提供多种服务的入口点，由此程序向内核请求服务。各种版本的 Unix 实现都提供良好定义、数量有限、直接进入内核的入口点，这些入口点被称为**系统调用 (system call)**。不同的系统提供了不同的几十、上百个系统调用，具体数字在不同操作系统版本中会不同，
 
@@ -159,9 +178,33 @@ C POSIX 库是与标准库同时发展的，它是 POSIX 系统中 C 标准库�
 
 ![image-20221111172301732](apue.assets/image-20221111172301732.png)
 
+### 系统重要文件
+
+TODO
+
+| 文件 | 说明 |
+| ---- | ---- |
+|      |      |
+|      |      |
+|      |      |
+
+### 基本系统数据类型
+
+TODO
+
+| 类型      | 说明 |
+| --------- | ---- |
+| `clock_t` |      |
+|           |      |
+|           |      |
+
 ## 文件相关
 
-文件 IO
+### 文件描述符
+
+
+
+件 IO
 
 文件和目录
 
@@ -173,13 +216,7 @@ C POSIX 库是与标准库同时发展的，它是 POSIX 系统中 C 标准库�
 
 ## 进程环境
 
-## ================
-
-
-
-# 
-
-## 进程启动和终止
+### 进程启动和终止
 
 进程启动
 
@@ -191,11 +228,11 @@ exit
 
 [图 exec 和 exit]
 
-## 命令行参数
+### 命令行参数
 
 int argc, char * argv[]
 
-## 环境表
+### 环境表
 
 extern char ** environ --> char *envp[] ---> 多个 char *
 
@@ -207,35 +244,35 @@ extern char ** environ --> char *envp[] ---> 多个 char *
 
 ISO 目前使用 environ 变量
 
-## C 程序存储空间布局
+### C 程序存储空间布局
 
 [图]
 
-## 共享库
+### 共享库
 
-## 存储空间分配
+### 存储空间分配
 
 malloc
 
-## 环境变量
+### 环境变量
 
 getenv
 
 修改不影响父进程
 
-## 拓展
+### 拓展
 
 setjump,longjmp 
 
 setrlimit
 
-# 进程控制
+## 进程控制
 
-## 进程标识
+### 进程标识
 
 getpid 等函数
 
-## fork
+#### fork
 
 copy on write
 
@@ -243,41 +280,41 @@ linux 新 clone
 
 posix 调用一个调用线程
 
-## exit
+#### exit
 
-## wait
+#### wait
 
 等待子进程
 
-## 竞争条件
+#### 竞争条件
 
 信号机制
 
-## exec
+#### exec
 
 多个函数图
 
-## 用户ID组ID
+#### 用户ID组ID
 
-## system
+#### system
 
-## 进程调度
+### 进程调度
 
 nice值
 
-# 进程关系
+## 进程关系
 
-## 终端登录、网络登陆、伪终端
+### 终端登录、网络登陆、伪终端
 
 父子关系：进程pid--〉父进程，ppid
 
-## 进程组
+### 进程组
 
 - 一个或多个进程的集合，有pgid
 
 - 一个组有一个组长进程，该进程的PGID为PID。
 
-## 会话
+### 会话
 
 - 一个或多个进程组的集合，有sid。
 
@@ -287,14 +324,14 @@ nice值
 - 几个进程组可分为：一个前台进程组和若干后台进程组
 - 终端键入：ctrl+c，发送到前台进程组所有进程
 - 创建会话：进程调用 setsid
-  - 不是进程组长：变成新会话首进程，成为新进程组组长进程，pgid为pid
-  - 已经是进程组长：出错。如要创建，可以fork然后关闭父进程。
+    - 不是进程组长：变成新会话首进程，成为新进程组组长进程，pgid为pid
+    - 已经是进程组长：出错。如要创建，可以fork然后关闭父进程。
 
-## 作业控制
+### 作业控制
 
 fg、bg
 
-## shell执行程序
+### shell执行程序
 
 ```shell
 @sdnhubvm:~/liyj[18:37]$ ps -o pid,ppid,pgid,sid,comm | cat
@@ -310,15 +347,15 @@ ubuntu@sdnhubvm:~/liyj[18:38]$   PID  PPID  PGID   SID COMMAND
 28876 28247 28875 28247 cat
 ```
 
-## 孤儿进程
+### 孤儿进程
 
-## BSD实现
+### BSD实现
 
-# 信号
+## 信号
 
 信号=软件中断，处理异步事件
 
-## 信号概念
+### 信号概念
 
 
 
@@ -344,4 +381,20 @@ ubuntu@sdnhubvm:~/liyj[18:38]$   PID  PPID  PGID   SID COMMAND
 
 - 机制
 - 可重入
+
+## 线程
+
+## 守护进程
+
+## 终端/伪终端
+
+## 数据库
+
+酷炫
+
+
+
+
+
+### 
 
