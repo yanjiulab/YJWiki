@@ -19,7 +19,7 @@
 
 ### Unix 系统结构
 
-Unix 将系统视为若干层，其中**操作系统 (**operating system, system kernel or just kernel) 直接与硬件交互，为上层程序提供通用服务并将它们与硬件特性隔离开来。
+Unix 将系统视为若干层，其中操作系统 (operating system, system kernel or just kernel) 直接与硬件交互，为上层程序提供通用服务并将它们与硬件特性隔离开来。这里的操作系统是指狭义上的操作系统，实际上。
 
 ![Architecture of UNIX Systems](apue.assets/system-structure.png)
 
