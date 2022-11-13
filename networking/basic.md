@@ -62,7 +62,7 @@ NBMA：非广播型多路访问技术，在一个MA网络中没有广播机制�
 
 $$ d_{node} = d_{proc} + d_{queue} + d_{trans} + d_{prop} $$ 
 
-![delay](delay.png)
+![delay](basic.assert/delay.png)
 
 **处理时延**主要包括检查分组首部和决定将该分组导向何处所需要的时间。高速路由器的处理时延通常是微妙或耕地数量级。
 
