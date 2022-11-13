@@ -174,7 +174,12 @@ Unix 将系统视为若干层，其中**内核** (operating system, system kerne
 
 ![Architecture of UNIX Systems](apue.assets/system-structure.png)
 
-一个完整可用的操作系统，从其中，从底层至高层，
+其中，从底层至高层分别为：
+
+- 硬件
+- 内核
+- 底层程序（low-level）
+- 高层程序（high-level）
 
 内核外的一层是 low-level 的程序，通过 **系统调用 (system call)** 与内核交互，这些程序包括 shell `sh` 和 editor `vi`，标准系统配置命令 (commands)，以及 `a.out` 这种由 C 编译器生成的可执行文件。同时，许多应用或程序是由许多 low-level 组合而成的，叫做 high-level 程序，这些程序通过对底层程序的调用，为用户提供了更好的界面和操作，同时简化了开发。
 
