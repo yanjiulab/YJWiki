@@ -15,7 +15,7 @@
 - 1974年，汤普逊和里奇合作在 ACM 通信上发表了一篇关于 UNIX 的文章，这是 **UNIX 第一次出现在贝尔实验室以外**。
 - 1982年，贝尔实验室综合了 AT&T 开发的中多版本，形成了 **UNIX System Ⅲ**，不久有增加了一些新功能，重新命名为 **UNIX System V**，然而，加州大学伯克利分校开发了 **BSD 4.3**，其作为 UNIX System III 和 V 的替代选择。
 
-[![unix-timeline](unix-timeline.svg)](unix-timeline.svg)
+[![unix-timeline](apue.assets/unix-timeline.svg)](apue.assets/unix-timeline.svg)
 
 ### 编程接口
 
