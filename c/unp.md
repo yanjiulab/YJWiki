@@ -133,8 +133,10 @@ rtm->xxx = xxx;
     - 信号 (Signal)
     - 消息队列 (Message queue)
     - 网络套接字 (Socket)  
-    - 
+    - Unix 域套接字 (Unix domain socket)
 - **同步（Synchronization）**：不同进程之间通过共享对象来获取信息。
+    - 共享内存 (Shared memory)
+    - 内存映射文件 (Memory-mapped file)
 
 Message Passing
 - Pipes 
