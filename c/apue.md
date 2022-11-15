@@ -323,12 +323,6 @@ int atexit(void (*func)(void));
 
 malloc
 
-### 环境变量
-
-getenv
-
-修改不影响父进程
-
 ### 拓展
 
 setjump,longjmp 
