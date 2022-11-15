@@ -178,10 +178,6 @@ Hello world!
 
 > 另一种方式是直接使用 `gcc -static -o main main.c libhello.a` 来生成静态可执行文件。
 
-
-
-
-
 ## 动态链接
 
 ### 链接过程
