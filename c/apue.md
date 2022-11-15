@@ -236,37 +236,82 @@ TODO
 | fcntl     | 改变己经打开文件的属性                       | <fcntl.h>                                                |
 | ioctl     | I/O操作的杂货箱                              | <unistd.h> in System V <br><sys/ioctl.h> in BSD or Linux |
 
-
-
 ## 进程环境
 
-### 进程启动和终止
+### 进程开始
 
-进程启动
+C 语言的程序总是从 main 函数开始执行，main 函数的原型如下：
+```
+int main(int argc, char *argv[]);
+```
 
-exec
+- argc 是命令行参数数量
+- argv 是参数指针数组
 
-进程终止
+当内核执行一个 C 程序时，需要先执行一个启动程序，该启动程序将**命令行参数**和**环境变量表**传递给 main 函数。
 
-exit
+命令行参数可以使用如下方式遍历。
 
-[图 exec 和 exit]
+```c
+for (i = 0; i < argc; i++)
+for (i = 0; argv[i] != NULL; i++)
+```
 
-### 命令行参数
+第一个命令行参数是程序名本身。
 
-int argc, char * argv[]
+```c
+$ ./echoarg arg1 TEST foo
+argv[0]: ./echoarg
+argv[1]: arg1
+argv[2]: TEST
+argv[3]: foo
+```
 
-### 环境表
+除了命令行参数，每个程序都会接收到一个环境表 (environment list)，这是一个字符指针数组，每个指针指向一个以 null 结束的字符串。全局变量 environ 则指向环境表：`extern char **environ;`。
 
-extern char ** environ --> char *envp[] ---> 多个 char *
+![image-20221115225220667](apue.assets/image-20221115225220667.png)
 
-环境指针 环境表 环境字符串
+环境变量字符串格式为：`name=value`。尽管我们可以直接得到全局变量 environ 指针，但并不直接通过它访问环境变量，而是通过系列函数对变量进行增删查改。
 
-[图]
+| 函数     | 声明                                                         |      |
+| -------- | ------------------------------------------------------------ | ---- |
+| getenv   | char *getenv(const char *name);                              |      |
+| putenv   | int putenv(char *str);                                       |      |
+| setenv   | int setenv(const char *name, const char *value, int rewrite); |      |
+| unsetenv | int unsetenv(const char *name);                              |      |
+| clearenv |                                                              |      |
 
-大多数 Liunx 支持：int argc, char *argv[], char *envp[]
 
-ISO 目前使用 environ 变量
+
+### 进程终止
+
+有 8 种方式可以终止一个进程，其中前 5 种为正常终止，后 3 种为非正常终止：
+
+1. 从 main 返回
+2. 调用 exit
+3. 调用 _exti 或 _Exit
+4. 最后一个线程从其 start routine 返回
+5. 从最后一个线程调用 pthread_exit
+6. 调用 abort
+7. 接受到一个信号
+8. 最后一个线程对取消请求做出响应
+
+exit, _exit, _Exit 三个函数用于正常终止一个进程，其中 _exit, _Exit 直接返回内核，而 exit 先执行一些清理处理，然后返回内核。由于历史原因，exit 总会执行一个标准 I/O 库的清理关闭操作，这会导致所有打开流调用 fclose 函数，使得所有输出缓存中的所有数据都被 flush (写到文件)。
+
+3 个退出函数都带有一个整型参数，称为终止状态。在大部分 Unix 的 shell 中，可以使用 `echo $?` 查看上一条执行语句的终止状态。
+
+进程可以登记 (register) 函数，登记的函数将会在 exit 调用时自动执行，因此这些函数也称为**终止处理程序 (exit handlers)**。登记由调用 **atexit** 来完成。
+
+```
+#include <stdlib.h>
+int atexit(void (*func)(void));
+```
+
+内核使程序唯一执行的方法是调用 exec 函数，进程自愿终止的唯一方法是显式或隐式地 (通过 exit) 调用 _exit 或 _Exit 函数。进程也可非自愿的由一个信号终止。
+
+![image-20221115223432113](apue.assets/image-20221115223432113.png)
+
+
 
 ### C 程序存储空间布局
 
@@ -320,18 +365,25 @@ setrlimit
 
 由于在 fork 之后经常跟随着 exec, 而后者又会将所有的运行时内存结构替换掉，所以每次 fork 为子进程创建一个副本可能是不划算的。因此现在很多实现并不执行一个父进程数据段、栈和堆的完全副本.作为替代使用了**写时复制 (Copy-On-Write, COW) **技术，意思是父进程或子进程任何一个试图修改的时候才会创建真正的副本，否则内核只是将权限修改为只读，实际上这些区域还是共享的。
 
-### exec
+### exec 函数
 
 用 fork 函数创建新的子进程后，子进程往往要调用一种 exec 函数以执行另一个程序。当进程调用一种 exec 函数时，**该进程执行的程序完全替换为新程序**，而新程序则从其 main 函数开始执行。因为**调用 exec 并不创建新进程**，所以前后的进程ID并未改变。exec 只是用磁盘上的一个新程序替换了当前进程的正文段、数据段、堆段和栈段。
 
-有 7 种不同的 exec 函数可供使用，被统称为 exec 函数。他们都在头文件 `unistd.h`。
+有 7 种不同的 exec 函数可供使用，被统称为 exec 函数。他们都在头文件 `unistd.h`，成功返回 0，否则返回 -1。
 
-| 函数 | 说明 |
-| :--: | :--: |
-|      |      |
-|      |      |
+```c
+#include <unistd.h>
+int execl(const char *pathname, const char *arg0, ... /* (char *)0 */ );
+int execv(const char *pathname, char *const argv[]);
+int execle(const char *pathname, const char *arg0, ... /* (char *)0, char *const envp[] */ );
+int execve(const char *pathname, char *const argv[], char *const envp[]);
+int execlp(const char *filename, const char *arg0, ... /* (char *)0 */ );
+int execvp(const char *filename, char *const argv[]);
+int fexecve(int fd, char *const argv[], char *const envp[]);
+```
 
-这几种函数的区别在名字里已经有所暗示：
+几种函数的区别在名字里已经有所暗示：
+
 - 待运行程序名
     - 空：表示取路径名作为参数。
     - p：表示取文件名作为参数，且在 PATH 环境变量中指定的各个目录中搜索。
@@ -342,11 +394,9 @@ setrlimit
     - 空：使用调用进程中的 environ 变量为新程序复制现有的环境。
     - e：表示可以传递一个指向环境字符串指针数组的指针。
 
-![exec-diff](exec-diff.png)
-
 在很多 Unix 实现中，这 7 个函数中只有 execve 是**内核的系统调用**。另外 6 个只是库函数，关系如下：
 
-
+![image-20221115213710326](apue.assets/image-20221115213710326.png)
 
 ### clone 系统调用
 
@@ -376,41 +426,15 @@ flags 的最低字节指定了当子进程结束时需要发送给父进程的�
 
 flags 还可以与零个或多个常量进行按位或运算，以指定在调用进程和子进程之间共享的内容，具体的常量可以查看 man 文档。
 
-### ====
+### TODO
 
-### 进程标识
-
-getpid 等函数
-
-#### fork
-
-copy on write
-
-linux 新 clone
-
-posix 调用一个调用线程
-
-#### exit
-
-#### wait
-
-等待子进程
-
-#### 竞争条件
-
-信号机制
-
-#### exec
-
-多个函数图
-
-#### 用户ID组ID
-
-#### system
-
-### 进程调度
-
-nice值
+- exit
+- wait/waitpid/wait3/wait4
+- 竞争条件
+- 更改用户 ID 和组 ID
+- system
+- 进程调度
+- 进程时间
 
 ## 进程关系
 
@@ -467,8 +491,6 @@ ubuntu@sdnhubvm:~/liyj[18:38]$   PID  PPID  PGID   SID COMMAND
 
 ### 信号概念
 
-
-
 信号名字 和 signal.h常量
 
 - 列表
@@ -500,5 +522,5 @@ ubuntu@sdnhubvm:~/liyj[18:38]$   PID  PPID  PGID   SID COMMAND
 
 ## 数据库
 
-酷炫
+TODO
 
