@@ -318,7 +318,7 @@ One deficiency with creat is that the file is opened only for writing.
 | read   | ssize_t read(int fd, void *buf, size_t nbytes);        | unistd.h | number of bytes read, 0 if end of file, −1 on error |
 | write  | ssize_t write(int fd, const void *buf, size_t nbytes); | unistd.h | number of bytes written if OK, −1 on error          |
 
-# Files and Directories
+Files and Directories
 
 ## File Type
 
@@ -373,11 +373,11 @@ argv[3]: foo
 
 环境变量字符串格式为：`name=value`。尽管我们可以直接得到全局变量 environ 指针，但并不直接通过它访问环境变量，而是通过系列函数对变量进行增删查改。
 
-| 函数     | 声明                                                         |      |
-| -------- | ------------------------------------------------------------ | ---- |
-| getenv   | char *getenv(const char *name);                              |      |
-| putenv   | int putenv(char *str);                                       |      |
-| setenv   | int setenv(const char *name, const char *value, int rewrite); |      |
+|   函数   | 声明                                                         |      |
+| :------: | ------------------------------------------------------------ | ---- |
+|  getenv  | char *getenv(const char *name);                              |      |
+|  putenv  | int putenv(char *str);                                       |      |
+|  setenv  | int setenv(const char *name, const char *value, int rewrite); |      |
 | unsetenv | int unsetenv(const char *name);                              |      |
 | clearenv |                                                              |      |
 
