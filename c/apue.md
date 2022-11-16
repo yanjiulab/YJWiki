@@ -373,13 +373,13 @@ argv[3]: foo
 
 环境变量字符串格式为：`name=value`。尽管我们可以直接得到全局变量 environ 指针，但并不直接通过它访问环境变量，而是通过系列函数对变量进行增删查改。
 
-|   函数   | 声明                                                         |      |
-| :------: | ------------------------------------------------------------ | ---- |
-|  getenv  | char *getenv(const char *name);                              |      |
-|  putenv  | int putenv(char *str);                                       |      |
-|  setenv  | int setenv(const char *name, const char *value, int rewrite); |      |
-| unsetenv | int unsetenv(const char *name);                              |      |
-| clearenv |                                                              |      |
+|   函数   | 声明                                                         |
+| :------: | ------------------------------------------------------------ |
+|  getenv  | char *getenv(const char *name);                              |
+|  putenv  | int putenv(char *str);                                       |
+|  setenv  | int setenv(const char *name, const char *value, int rewrite); |
+| unsetenv | int unsetenv(const char *name);                              |
+| clearenv |                                                              |
 
 
 
@@ -581,26 +581,28 @@ ubuntu@sdnhubvm:~/liyj[18:38]$   PID  PPID  PGID   SID COMMAND
 
 ### ===
 
-# 进程关系
 当子进程终止时，父进程得到通知并能取得子进程的退出状态。
 
-## 终端登录
+终端登录
+
 ![login](index/login.png)
 ![shell](index/shell.png)
 
-## 进程组
+进程组
+
 每个进程除了有一进程 ID 之外，还属于一个进程组。进程组是一个或多个进程的集合。
 同一进程组中的各进程接收来自同一终端的各种信号。
 每个进程组有一个唯一的进程组ID
 
-## 会话
+会话
+
 会话 (session) 是一个或多个进程组的集合。
 通常是由 shell 的管道将几个进程编成一组的。
 
-{% codeblock %}
+```
 $ proc1 | proc2 &
 $ proc3 | proc4 | proc5
-{% endcodeblock %}
+```
 
 ![session-control](index/session-control.png)
 
