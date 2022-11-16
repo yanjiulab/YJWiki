@@ -242,6 +242,18 @@ TODO
 
 
 
+| 文件类型               | Macro |
+| ---------------------- | ----- |
+| regular file           |       |
+| directory file         |       |
+| character special file |       |
+| block special file     |       |
+| pipe or FIFO           |       |
+| symbolic file          |       |
+| socket                 |       |
+
+
+
 ## 进程环境
 
 ### 进程开始
