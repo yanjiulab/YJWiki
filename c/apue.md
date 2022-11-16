@@ -252,7 +252,89 @@ TODO
 | symbolic file          |       |
 | socket                 |       |
 
+File I/O
 
+unbuffered I/O, not ISO C, but POSIX.1 and SUS
+five functions: open, read, write, lseek and close.
+dum, fcntl, sync, fsync, ioctl
+
+
+
+## open and openat Funcitons
+
+{% codeblock lang:c %}
+#include <fcntl.h>
+int open(const char *path, int oflag, ... /* mode_t mode */ );
+int openat(int fd, const char *path, int oflag, ... /* mode_t mode */ );
+{% endcodeblock %}
+
+
+## create Function
+
+{% codeblock creat lang:c %}
+#include <fcntl.h>
+int creat(const char* **path, mode_t mode);
+// Returns: file descriptor opened for write-only if OK, −1 on error
+{% endcodeblock %}
+
+
+
+One deficiency with creat is that the file is opened only for writing.
+
+## close Function
+
+## lseek Function
+
+## read Function
+
+{% codeblock read lang:c %}
+#include<unistd.h>
+{% endcodeblock %}
+
+## File Sharing
+
+内核使用三种数据结构来表示打开的文件：
+
+1. Every process has an entry in the **process table**. Associated with each file descriptor are
+    - The file descriptor flags
+    - A pointer to a **file table entry**
+2. The kernel maintains a file table for all open files. Each file table entry contains
+    - The file status flags for the file, such as read, write, append, sync, and nonblocking
+    - The current file offset
+    - A pointer to the **v-node table entry** for the file
+3. 
+
+![file-data-structure](file-data-structure.png)
+
+## Summary
+
+| Name   | Function                                               | Header   | Return                                              |
+| ------ | ------------------------------------------------------ | -------- | --------------------------------------------------- |
+| open   |                                                        |          |                                                     |
+| openat |                                                        |          |                                                     |
+| creat  |                                                        |          |                                                     |
+| close  |                                                        |          |                                                     |
+| lseek  |                                                        |          |                                                     |
+| read   | ssize_t read(int fd, void *buf, size_t nbytes);        | unistd.h | number of bytes read, 0 if end of file, −1 on error |
+| write  | ssize_t write(int fd, const void *buf, size_t nbytes); | unistd.h | number of bytes written if OK, −1 on error          |
+
+# Files and Directories
+
+## File Type
+
+| File Type              | Macro |
+| ---------------------- | ----- |
+| regular file           |       |
+| directory file         |       |
+| character special file |       |
+| block special file     |       |
+| pipe or FIFO           |       |
+| symbolic file          |       |
+| socket                 |       |
+
+`stat /etc/passwd /etc /run/systemd/journal/dev-log  /dev/tty /dev/sr0 /dev/cdrom | grep -E 'File|Size'`  
+
+# 
 
 ## 进程环境
 
