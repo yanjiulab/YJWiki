@@ -579,6 +579,40 @@ ubuntu@sdnhubvm:~/liyj[18:38]$   PID  PPID  PGID   SID COMMAND
 
 ### BSD实现
 
+### ===
+
+# 进程关系
+当子进程终止时，父进程得到通知并能取得子进程的退出状态。
+
+## 终端登录
+![login](index/login.png)
+![shell](index/shell.png)
+
+## 进程组
+每个进程除了有一进程 ID 之外，还属于一个进程组。进程组是一个或多个进程的集合。
+同一进程组中的各进程接收来自同一终端的各种信号。
+每个进程组有一个唯一的进程组ID
+
+## 会话
+会话 (session) 是一个或多个进程组的集合。
+通常是由 shell 的管道将几个进程编成一组的。
+
+{% codeblock %}
+$ proc1 | proc2 &
+$ proc3 | proc4 | proc5
+{% endcodeblock %}
+
+![session-control](index/session-control.png)
+
+1. 该进程变成新会话的会话首进程 (session leader，会话首进程是创建该会话的进程)。此
+时，该进程是新会话中的唯一进程。
+2. 该进程成为一个新进程组的组长进程。新进程组 ID 是该调用进程的进程 ID。
+3. 该进程没有控制终端(下一节讨论控制终端)。如果在调用setsid之前该进程有一个
+控制终端，那么这种联系也被切断。
+
+
+![job-control](index/job-control.png)
+
 ## 信号
 
 信号=软件中断，处理异步事件
