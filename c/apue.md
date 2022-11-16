@@ -381,8 +381,6 @@ argv[3]: foo
 | unsetenv | int unsetenv(const char *name);                              |
 | clearenv |                                                              |
 
-
-
 ### 进程终止
 
 有 8 种方式可以终止一个进程，其中前 5 种为正常终止，后 3 种为非正常终止：
