@@ -80,7 +80,7 @@ NAT 模式基于 NAT 技术完成转发，类似于 NAT 路由器的功能，只
 因为 CIP 被修改掉了，RS 只能看到 LVS 的 DIP，可将 CIP 放入 TCP 包的 Option 中传递给 RS，RS 上一般部署自己写的模块来从 Options 中读取 CIP，这样 RS 能看到 CIP 了, 当然这不是一个开源的通用方案。
 {% endnote %}
 
-## Virtual Server via IP Tunneling
+### Virtual Server via IP Tunneling
 IP 隧道模式利用了 IP 隧道技术来打通 LVS 和 RS 之间的通信。当请求包到达 LVS 后，LVS 将请求包封装成一个新的 IP 报文，新的 IP 包的目的 IP 是某一 RS 的 IP，然后转发给 RS，RS 收到报文后 IPIP 内核模块解封装，取出用户的请求报文发现目的 IP 是 VIP，而自己的 tun 虚拟网卡上配置了这个 IP，从而愉快地处理请求并将结果直接发送给客户。
 
 这种方式的运行过程十分类似于 DR 模式，只不过 DR 模式基于 MAC 转发，而 IP 隧道模式基于 IPIP 协议路由。
@@ -96,7 +96,7 @@ IP 隧道模式利用了 IP 隧道技术来打通 LVS 和 RS 之间的通信。�
 - 多增加了一个 IP 头，增加了开销。
 - LVS 和 RS 上的 tun 虚拟网卡上配置同一个 VIP（类似 DR）。
 
-# 四层 LB vs 七层 LB
+## 四层 LB vs 七层 LB
 LVS 通常用来实现四层负载均衡，通过发布虚拟 VIP 和四层的端口号，来决定哪些流量需要做负载均衡。
 
 七层的负载均衡就是基于虚拟的 URL 或主机 IP 的负载均衡：在四层负载均衡的基础上，再考虑应用层的特征，比如同一个 Web 服务器的负载均衡，除了根据 VIP 加端口辨别是否需要处理的流量，还可根据七层的 URL、浏览器类别、语言来决定是否要进行负载均衡。
@@ -109,7 +109,7 @@ LVS 通常用来实现四层负载均衡，通过发布虚拟 VIP 和四层的�
 
 除此之外，还有二层负载均衡和三层负载均衡，由于应用程度不广泛，故不再讨论。
 
-# 参考
+## 参考
 - [LVS Documentation](http://www.linuxvirtualserver.org/Documents.html)
 - [LVS wikepedia](https://en.wikipedia.org/wiki/Linux_Virtual_Server)
 - [DR mode of LVS load balancing cluster deployment](https://programmer.group/dr-mode-of-lvs-load-balancing-cluster-deployment.html)
