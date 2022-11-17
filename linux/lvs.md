@@ -44,7 +44,7 @@ LVS 不同的转发方式具有不同的网络架构，也导致了不同的性�
 
 具体流程为：入站请求走 LVS，LVS 修改目的 MAC，将其转发给真正的 RS，RS 的回复报文绕过 LVS 直接发给 Client。具体数据包流向如下图所示。其中 LVS 和 RS 虽然有虚线连接，但只表示逻辑上的连接，实际数据包是通过交换机转发的。
 
-![lvs-dr](lvs-dr.png)
+![lvs-dr](lvs.assets/lvs-dr.png)
 
 由于大部分情况下都是请求包小，回复包大，LVS 不容易成为流量瓶颈，同时 LVS 只需要修改进来的包的 MAC 地址，因此 DR 模式性能很好。
 
@@ -57,7 +57,7 @@ LVS 不同的转发方式具有不同的网络架构，也导致了不同的性�
 ## Virtual Server via NAT
 NAT 模式基于 NAT 技术完成转发，类似于 NAT 路由器的功能，只不过多了负载均衡的过程，这种方式配置简单，支持端口映射（看名字就知道），并且 RIP 一般是私有地址。其数据包流向如下图所示：
 
-![lvs-nat](lvs.asserts/lvs-nat.png)
+![lvs-nat](lvs.assets/lvs-nat.png)
 
 这种模式的缺点为：
 - LVS 必须有一个接口和所有 RS 在同一个 LAN/VLAN。
@@ -67,7 +67,7 @@ NAT 模式基于 NAT 技术完成转发，类似于 NAT 路由器的功能，只
 ## Virtual Server via FullNAT
 完全 NAT 模式是 NAT 模式的一个变种，与 NAT 模式不同，FullNAT 模式不仅将目的 IP 修改为 RIP，并且将源 IP 修改为 DIP，这样 DIP 和 RIP 不必非得在同一个二层网络之中，两者只需要 IP 互通即可。
 
-![lvs-fullnat](lvs-fullnat.png)
+![lvs-fullnat](lvs.assets/lvs-fullnat.png)
 
 但这种模式也有缺点：
 - RS 看不到 CIP（NAT 模式下可以看到）。
@@ -82,7 +82,7 @@ IP 隧道模式利用了 IP 隧道技术来打通 LVS 和 RS 之间的通信。�
 
 这种方式的运行过程十分类似于 DR 模式，只不过 DR 模式基于 MAC 转发，而 IP 隧道模式基于 IPIP 协议路由。
 
-![lvs-tun](lvs-tun.png)
+![lvs-tun](lvs.assets/lvs-tun.png)
 
 这种方式的优点是：
 - 集群节点可以跨二层。
