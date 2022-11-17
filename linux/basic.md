@@ -4,17 +4,10 @@
 
 ## 用户和组
 
-用户 (Users) 和组 (Groups) 是一种 GNU/Linux 系统对文件、目录和外设访问控制 (access control) 的机制 (mechanism)，管理员可以微调组成员和权限，以授权和拒绝用户或服务对系统资源的访问。
+用户 (Users) 和组 (Groups) 是一种 GNU/Linux 系统对文件、目录和外设访问控制 (access control) 的机制 (mechanism)，管理员可以微调组成员和权限，以授权和拒绝用户或服务对系统资源的访问。Linux/Unix 是完全意义上的**多用户多任务**操作系统，所以推荐的做法是**为大多数任务创建和使用非特权账户，而仅使用 root 账户进行系统管理**。
 
-- 
-
-
-
-新安装的 Linux 默认采用超级权限用户登录，也就是 `root`，长时间用 root 账户登录或是在 SSH 服务器上公开它是十分不安全的。Linux/Unix 是完全意义上的**多用户多任务**操作系统，所以推荐的做法是**为大多数任务创建和使用非特权账户，而仅使用 root 账户进行系统管理**。Linux 默认提供了相当简单粗暴的访问控制机制，所以，每一个 Linuxer 都应当十分熟悉用户和组的概念。
-
-用户就是计算机为每个使用者创建的名称，这个名称是一个人获得使用计算机的权限。当然，一个人 (individual)可以有多个账户/用户 (account/user)，只要名字不同即可。但有一些名字是保留的，不可以使用，例如 `root`。
-
-多个用户 (users) 可以组合在一起形成组 (group)，一个组可以包含多个用户，一个用户也可以属于多个组，这是很自然的，因为人在社交中也在不同的场合中扮演不同的角色。
+- 用户就是计算机为每个使用者创建的名称，只要名字不同即可。但有一些名字是保留的，不可以使用，例如 `root`。
+- 多个用户 (users) 可以组合在一起形成组 (group)，一个组可以包含多个用户，一个用户也可以属于多个组。
 
 ### 权限和所属
 
@@ -56,15 +49,6 @@ liyj
 drwxrwxrwx
 ```
 
-{% note info %}
-stat - display file or file system status
-stat 是用来显示文件（默认行为）或文件系统的命令，较常使用的有：
-- 直接使用 `stat FILE ...` 显示文件状态，输出使用较为详细的默认格式。
-- 通过 `-c` 参数可以指定 format 从而改变 (**c**hange) 文件状态输出格式，format 参数见 manual 手册。
-- 通过 `-f` 参数可以显示文件系统的状态。
-
-详细用法请查阅 manual 手册。
-{% endnote %}
 
 其中 rwx 分别代表了 可读，可写，可执行，有相应权限则写明字母，若无相应权限，则用 `-` 代替。如上述 `grub` 目录 root 用户有读、写、执行权限，而 root 组所有用户以及其他用户，均只有读、执行权限。
 
@@ -92,10 +76,7 @@ stat 是用来显示文件（默认行为）或文件系统的命令，较常使
 account:password:UID:GID:GECOS:directory:shell
 ```
 - `account` 是用户名，需要遵循标准 *Nix 命名准则。
-- `password` 是用户密码。
-{% note warning %}
-`/etc/passwd` 对所有人可读，存储密码（无论是否通过哈希运算等方式加密）是不安全的，因此在 password 字段，用一个占位符 `x` 代替，加密过的密码储存在 `/etc/shadow` 文件，该文件对普通用户限制访问，shadow 这个名字也表示了密码被阴影笼罩住了。:p
-{% endnote %}
+- `password` 是用户密码。`/etc/passwd` 对所有人可读，存储密码（无论是否通过哈希运算等方式加密）是不安全的，因此在 password 字段，用一个占位符 `x` 代替，加密过的密码储存在 `/etc/shadow` 文件，该文件对普通用户限制访问，shadow 这个名字也表示了密码被阴影笼罩住了。
 - `UID` 是用户ID，在 Arch 中，第一个非 root 用户的默认 UID 是 1000，后续创建的用户 UID 也应大于1000。
 - `GID` 是用户首要组的 ID，组的 ID 在 `/etc/group` 文件中。
 - `GECOS` 是可选的注释字段，通常记录用户全名。
@@ -111,11 +92,11 @@ group:password:GID:user_list
 - `GID` 是群组 ID，是一个整数。
 - `user_list` 是群组中的用户成员，用逗号分割，群组可能是该用户的首要组，也可能是附加组；若此项为空，则表示该群组成员仅有一个，且用户名同组名相同。
 
-## 用户管理
+### 用户管理
 - 使用 `who` 或 `users` 命令，可以查看目前已登陆的用户。
 - 以 root 执行 `passwd -Sa`，可以查看系统上的用户。
 
-### `useradd` 创建用户
+#### `useradd` 创建用户
 ```
 # useradd -m -g initial_group -G additional_groups -s login_shell username
 ```
@@ -149,7 +130,7 @@ liyj  test1
 # useradd -r -s /usr/bin/nologin username
 ```
 
-### `usermod` 更改用户信息
+#### `usermod` 更改用户信息
 | 作用               | 命令                                       | 注释                                                         |
 | ------------------ | ------------------------------------------ | ------------------------------------------------------------ |
 | 更改用户登录名称   | `# usermod -l newname oldname`             | 仅更改用户名字，不更改主目录名称，更不更改同步创建的组名     |
@@ -160,35 +141,35 @@ liyj  test1
 
 更具体内容，请参阅 `man usermod`。
 
-### `userdel` 删除用户
+#### `userdel` 删除用户
 ```
 # userdel -r username
 ```
 
-## 群组管理
+### 群组管理
 - 使用 `groups user` 查看用户群组关系，如果 user 省略，默认查看当前用户的群组关系。另外，通过 `id user` 可以看到更详细的信息，如 UID 和 GID。
 - 列出系统上所有群组：`cat /etc/group`
 
-### 增删群组
+#### 增删群组
 ```
 # groupadd group # 创建新的组
 # groupdel group # 删除用户组
 ```
 
-### `gpasswd` 增删群组成员
+#### `gpasswd` 增删群组成员
 ```
 # gpasswd -a user group # 将用户添加到组
 # gpasswd -d user group # 将用户从组中移除
 ```
 
-### `groupmod` 更改信息
+#### `groupmod` 更改信息
 更改用户所属的组名，不变更GID：
 ```
 # groupmod -n newname oldname
 ```
 
-
 ### 交互式脚本
+
 除了上述的命令，还有一些以交互方式执行的脚本，这些脚本后台调用上述命令，更加易用。这些脚本的命名方式采用**动作＋对象**，而不是**对象＋动作**，这些脚本包括：
 - `adduser`, `addgroup` - add a user or group to the system
     - Add a normal user

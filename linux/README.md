@@ -8,7 +8,7 @@
     - [ ] Linux 是如何开机的
 - [ ] 开机自启动 - systemd
 - [ ] 网络命令：iproute2
-- [ ] 路由 - frrout
+- [ ] 路由 - frrouting
 - [ ] 虚拟文件系统 VFS - mount
 - [ ] 进程查看 - ps
 - [ ] 隔离 - namespace
@@ -16,8 +16,8 @@
 - [ ] 资源限制 - cgroups
 - [ ] 容器 - docker
 - [ ] 虚拟机 - KVM
-- [ ] 流量控制 - tc
-- [ ] 负载均衡 - lvs
+- [x] 流量控制 - tc
+- [x] 负载均衡 - lvs
 - [ ] 主备- keepalived
 - [ ] KVM
 - [ ] 隔离机制：namespace

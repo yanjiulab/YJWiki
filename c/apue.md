@@ -208,90 +208,39 @@ TODO
 |           |      |
 |           |      |
 
-## 文件相关
+## 文件
+
+Unix 中一切皆文件。 这是很有趣的哲学，意味着**文件 (file)**这一模型，提供了对所有 I/O 资源访问的抽象，包括文档、目录、磁盘、CD-ROM、调制解调器、键盘、打印机、显示器和终端等等，甚至也包括了进程、网络之间的通信。所有文件都通过一致的 API 以提供访问，因此只用同一套简单的命令，就可以读写磁盘、键盘、文档以及网络设备。
 
 ### 文件描述符
 
+对于 Linux 而言，所有的文件都通过文件描述符引用。文件描述符是一个非负整数，当打开或创建一个文件时，内核向进程返回一个文件描述符。
 
+### 文件类型
 
-### 文件和目录
+Unix 文件大部分是普通文件和目录，但也包括其他类型。
 
-### ====
+|              文件类型               |                   说明                   |
+| :---------------------------------: | :--------------------------------------: |
+|        普通文件 regular file        |           主要包括文本和二进制           |
+|         目录 directory file         | 包含其他文件的名字以及指向这些文件的指针 |
+| 字符特殊文件 character special file |             带缓冲访问的设备             |
+|    块特殊文件 block special file    |            不带缓冲访问的设备            |
+|          FIFO pipe or FIFO          |              进程间通信文件              |
+|       符号链接 symbolic file        |              指向另一个文件              |
+|            套接字 socket            |              网络进程间通信              |
 
-件 IO
+TODO 
 
-文件和目录
+stat 函数
 
-标准I哦
+`stat /etc/passwd /etc /run/systemd/journal/dev-log  /dev/tty /dev/sr0 /dev/cdrom | grep -E 'File|Size'` 可以查看各类文件类型 。
 
-| 系统函数  | 描述                                         | 头文件                                                   |
-| --------- | -------------------------------------------- | -------------------------------------------------------- |
-| open      | 打开或创建一个文件                           | <fcntl.h>                                                |
-| creat     | 创建一个文件（不推荐使用）                   | <fcntl.h>                                                |
-| read      | 从打开文件中读数据                           | <unistd.h>                                               |
-| write     | 向打开文件中写数据                           | <unistd.h>                                               |
-| lseek     | 显式地为一个打开文件设置偏移量               | <unistd.h>                                               |
-| close     | 关闭一个打开文件                             | <unistd.h>                                               |
-| dup       | 复制一个现有的文件描述符                     | <unistd.h>                                               |
-| dup2      | 复制一个现有的文件描述符                     | <unistd.h>                                               |
-| sync      | 保证磁盘上实际文件系统与缓冲区中内容的一致性 | <unistd.h>                                               |
-| fsync     | 保证磁盘上实际文件系统与缓冲区中内容的一致性 | <unistd.h>                                               |
-| fdatasync | 保证磁盘上实际文件系统与缓冲区中内容的一致性 | <unistd.h>                                               |
-| fcntl     | 改变己经打开文件的属性                       | <fcntl.h>                                                |
-| ioctl     | I/O操作的杂货箱                              | <unistd.h> in System V <br><sys/ioctl.h> in BSD or Linux |
+### 文件系统
 
 
 
-| 文件类型               | Macro |
-| ---------------------- | ----- |
-| regular file           |       |
-| directory file         |       |
-| character special file |       |
-| block special file     |       |
-| pipe or FIFO           |       |
-| symbolic file          |       |
-| socket                 |       |
-
-File I/O
-
-unbuffered I/O, not ISO C, but POSIX.1 and SUS
-five functions: open, read, write, lseek and close.
-dum, fcntl, sync, fsync, ioctl
-
-
-
-## open and openat Funcitons
-
-{% codeblock lang:c %}
-#include <fcntl.h>
-int open(const char *path, int oflag, ... /* mode_t mode */ );
-int openat(int fd, const char *path, int oflag, ... /* mode_t mode */ );
-{% endcodeblock %}
-
-
-## create Function
-
-{% codeblock creat lang:c %}
-#include <fcntl.h>
-int creat(const char* **path, mode_t mode);
-// Returns: file descriptor opened for write-only if OK, −1 on error
-{% endcodeblock %}
-
-
-
-One deficiency with creat is that the file is opened only for writing.
-
-## close Function
-
-## lseek Function
-
-## read Function
-
-{% codeblock read lang:c %}
-#include<unistd.h>
-{% endcodeblock %}
-
-## File Sharing
+### 文件存储结构
 
 内核使用三种数据结构来表示打开的文件：
 
@@ -304,37 +253,53 @@ One deficiency with creat is that the file is opened only for writing.
     - A pointer to the **v-node table entry** for the file
 3. 
 
-![file-data-structure](file-data-structure.png)
+### 文件所属及权限
 
-## Summary
+access
 
-| Name   | Function                                               | Header   | Return                                              |
-| ------ | ------------------------------------------------------ | -------- | --------------------------------------------------- |
-| open   |                                                        |          |                                                     |
-| openat |                                                        |          |                                                     |
-| creat  |                                                        |          |                                                     |
-| close  |                                                        |          |                                                     |
-| lseek  |                                                        |          |                                                     |
-| read   | ssize_t read(int fd, void *buf, size_t nbytes);        | unistd.h | number of bytes read, 0 if end of file, −1 on error |
-| write  | ssize_t write(int fd, const void *buf, size_t nbytes); | unistd.h | number of bytes written if OK, −1 on error          |
+umask
 
-Files and Directories
+chmod
 
-## File Type
+chown
 
-| File Type              | Macro |
-| ---------------------- | ----- |
-| regular file           |       |
-| directory file         |       |
-| character special file |       |
-| block special file     |       |
-| pipe or FIFO           |       |
-| symbolic file          |       |
-| socket                 |       |
+### 文件时间
 
-`stat /etc/passwd /etc /run/systemd/journal/dev-log  /dev/tty /dev/sr0 /dev/cdrom | grep -E 'File|Size'`  
 
-# 
+
+### 文件 I/O
+
+| 函数名    | 说明                           | 函数体                                                       | Header     | Return                                              |
+| --------- | ------------------------------ | ------------------------------------------------------------ | ---------- | --------------------------------------------------- |
+| **open**  | 打开或创建一个文件             | int open(const char *path, int oflag, ... /* mode_t mode */ ); | <fcntl.h>  | fd or -1                                            |
+| openat    |                                | int openat(int fd, const char *path, int oflag, ... /* mode_t mode */ ); | <fcntl.h>  | fd or -1                                            |
+| creat     | 创建一个文件（不推荐使用）     | int creat(const char* **path, mode_t mode);                  | <fcntl.h>  | fd or -1                                            |
+| **close** | 关闭一个打开文件               | int close(int fd);                                           | <unistd.h> | 0 or -1                                             |
+| **lseek** | 显式地为一个打开文件设置偏移量 | off_t lseek(int fd, off_t offset, int whence);               | <unistd.h> | offset or -1                                        |
+| **read**  | 从打开文件中读数据             | ssize_t read(int fd, void *buf, size_t nbytes);              | <unistd.h> | number of bytes read, 0 if end of file, −1 on error |
+| **write** | 向打开文件中写数据             | ssize_t write(int fd, const void *buf, size_t nbytes);       | unistd.h   | number of bytes written if OK, −1 on error          |
+
+
+
+| 系统函数  | 描述                                         | 头文件                                                   |
+| --------- | -------------------------------------------- | -------------------------------------------------------- |
+| dup2      | 复制一个现有的文件描述符                     | <unistd.h>                                               |
+| sync      | 保证磁盘上实际文件系统与缓冲区中内容的一致性 | <unistd.h>                                               |
+| dup       | 复制一个现有的文件描述符                     | <unistd.h>                                               |
+| fsync     | 保证磁盘上实际文件系统与缓冲区中内容的一致性 | <unistd.h>                                               |
+| fdatasync | 保证磁盘上实际文件系统与缓冲区中内容的一致性 | <unistd.h>                                               |
+| fcntl     | 改变己经打开文件的属性                       | <fcntl.h>                                                |
+| ioctl     | I/O操作的杂货箱                              | <unistd.h> in System V <br><sys/ioctl.h> in BSD or Linux |
+
+### 符号链接
+
+### 目录
+
+### 设备特殊文件
+
+## 标准 I/O
+
+
 
 ## 进程环境
 

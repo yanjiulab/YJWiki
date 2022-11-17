@@ -17,6 +17,7 @@
     - [图论](/algorithm/graph.md)
 - [数据库](/db/database.md)
 - [Linux](/linux/)
+    - [Linux 基础](/linux/basic.md)
     - [网络](/linux/iproute2.md)
     - [路由 - FRRouting](/linux/frrouting.md)
     - [虚拟文件系统](/linux/vfs.md)
