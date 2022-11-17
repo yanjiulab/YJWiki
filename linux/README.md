@@ -35,3 +35,11 @@
 - 用户和内核通信 - netlink
 - 主备- keepalived
 
+
+
+
+
+详细内容可见 {% button /2020/07/18/linux-lvs/, Linux Virtual Server, book fa-fw fa-lg %} 
+
+
+
