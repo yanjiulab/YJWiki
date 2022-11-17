@@ -5,6 +5,9 @@ Linux Virtual Server (lvs)  是一个虚拟的服务器集群系统，是 Linux 
 在 LVS 中，节点分为 Director Server 和 Real Server 两个角色，其中 Director Server 是负载均衡器所在节点，而 Real Server 则是后端服务节点。
 
 ## 基本概念
+
+在没有负载均衡器时，客户端向服务端直接请求服务。在有
+
 |         术语/缩写         | 解释                                                         |
 | :-----------------------: | ------------------------------------------------------------ |
 |      Client Computer      | 请求服务的客户端                                             |
