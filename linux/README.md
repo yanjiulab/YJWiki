@@ -2,48 +2,45 @@
 
 本部分是 Linux 笔记，计划编写章节如下。
 
-
-
-
-
-- ostep
-
-- [ ] Linux 是如何开机的
+- [ ] 操作系统基础 OSTEP
+- [ ] Linux 基础操作 basic
+    - [ ] 用户和内核通信 - netlink
+    - [ ] Linux 是如何开机的
 - [ ] 开机自启动 - systemd
-- [ ] 路由 - frr
-- [ ] VFS - mount
+- [ ] 网络命令：iproute2
+- [ ] 路由 - frrout
+- [ ] 虚拟文件系统 VFS - mount
 - [ ] 进程查看 - ps
 - [ ] 隔离 - namespace
 - [ ] 网络 - iproute2
 - [ ] 资源限制 - cgroups
-- [ ]  容器 - docker
+- [ ] 容器 - docker
 - [ ] 虚拟机 - KVM
+- [ ] 流量控制 - tc
+- [ ] 负载均衡 - lvs
+- [ ] 主备- keepalived
+- [ ] KVM
+- [ ] 隔离机制：namespace
+- [ ] 资源限制：cgroups
 
 
 
-- 开机过程，各种软硬组件
-- 开机自启动：systemd
-- 网络命令：iproute2
-- ~~用户态与内核态：netlink~~
-- 内核防火墙：netfilter/iptables/nftables
-- 隔离机制：namespace
-- 物理资源隔离：cgroups
-- 虚拟文件系统 VFS：mount
-- KVM：
-- PS查看
-- 查看TCP
-- 流量控制 - tc
-- 负载均衡 - lvs
-- 内核模块 - lsmod
+书籍
 
-- 用户和内核通信 - netlink
-- 主备- keepalived
+- [Operating Systems: Three Easy Pieces](http://pages.cs.wisc.edu/~remzi/OSTEP/)
+- [操作系统导论](http://pages.cs.wisc.edu/~remzi/OSTEP/Chinese/01.pdf)
+- [Advanced Programming in the UNIX® Environment, Third Edition](http://www.apuebook.com/about3e.html)
+- [UNIX Network Programming - Volume 1 Socket Programming, Third Edition](http://www.unpbook.com/)
+- UNIX Network Programming - volume 2 IPC, Second Edition
 
+文章
 
+- [Process state](https://en.wikipedia.org/wiki/Process_state)
+- [CPU Scheduling in Operating Systems](https://www.geeksforgeeks.org/cpu-scheduling-in-operating-systems/)
 
+问答
 
-
-详细内容可见 {% button /2020/07/18/linux-lvs/, Linux Virtual Server, book fa-fw fa-lg %} 
+- [What does the Kernel Virtual Memory of each process contain?](https://stackoverflow.com/questions/2445242/what-does-the-kernel-virtual-memory-of-each-process-contain)
 
 
 
