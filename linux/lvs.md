@@ -18,8 +18,8 @@ Linux Virtual Server (lvs)  是一个虚拟的服务器集群系统，是 Linux 
 | DIP (Director IP address) | Director 用于和 RS 通信的 IP 地址                            |
 |  CIP (Client IP address)  | 客户端的 IP 地址                                             |
 
-## 调度器 (Scheduler)
-LVS 实现了多种负载均衡调度器，常用的包括：
+## 调度器
+LVS 实现了多种**负载均衡调度器 (Scheduler)**，常用的包括：
 - Round-robin (ip_vs_rr.c)：轮询将收到的访问请求按照顺序轮流调度到不同的服务器上，不管后端真实服务器的实际连接数和系统负载。
 - Weighted round-robin (ip_vs_wrr.c)：加权轮询给 RS 设置权重，权重越高，那么分发的请求数越多，权重的取值范围0–100。根据每台服务器的性能，给每台服务器添加权值，如果 RS1 的权值为 1，RS2 的权值为 2，那么调度到 RS2 的请求会是 RS1 的 2 倍。权值越高的服务器，处理的请求越多。这种算法是对 rr 算法的一种优化和补充。
 - Least-connection (ip_vs_lc.c)：最少链接根据后端 RS 的连接数来决定把请求分发给谁，RS1 连接数比 RS2 连接数少，那么请求就优先发给 RS1。
@@ -33,7 +33,7 @@ LVS 实现了多种负载均衡调度器，常用的包括：
 - Shortest expected delay (ip_vs_sed.c)
 - Never queue (ip_vs_nq.c)
 
-# 转发模式
+## 转发模式
 LVS 可以基于多种方式工作，主要包括：
 - 直接路由 (DR)
 - 网络地址转换 (NAT)
@@ -42,7 +42,7 @@ LVS 可以基于多种方式工作，主要包括：
 
 LVS 不同的转发方式具有不同的网络架构，也导致了不同的性能。
 
-## Virtual Server via Direct Routing
+### Virtual Server via Direct Routing
 直接路由 (DR) 的特点是：LVS 和 RS 在同一个 LAN/VLAN，多个 RS 和 LVS 共用同一个 VIP，然后依据 MAC 地址来在 LVS 和多个 RS 之间转发。
 
 具体流程为：入站请求走 LVS，LVS 修改目的 MAC，将其转发给真正的 RS，RS 的回复报文绕过 LVS 直接发给 Client。具体数据包流向如下图所示。其中 LVS 和 RS 虽然有虚线连接，但只表示逻辑上的连接，实际数据包是通过交换机转发的。
@@ -57,7 +57,7 @@ LVS 不同的转发方式具有不同的网络架构，也导致了不同的性�
 - 配置比较复杂（需要将 VIP 配置到 lo 接口，避免直接将请求发到 RS）。
 - 不支持端口映射。
 
-## Virtual Server via NAT
+### Virtual Server via NAT
 NAT 模式基于 NAT 技术完成转发，类似于 NAT 路由器的功能，只不过多了负载均衡的过程，这种方式配置简单，支持端口映射（看名字就知道），并且 RIP 一般是私有地址。其数据包流向如下图所示：
 
 ![lvs-nat](lvs.assets/lvs-nat.png)
@@ -67,7 +67,7 @@ NAT 模式基于 NAT 技术完成转发，类似于 NAT 路由器的功能，只
 - 进出流量都要走 LVS 转发，LVS 容易成为瓶颈。
 - 一般而言需要将 LVS 配置成 RS 的网关。
 
-## Virtual Server via FullNAT
+### Virtual Server via FullNAT
 完全 NAT 模式是 NAT 模式的一个变种，与 NAT 模式不同，FullNAT 模式不仅将目的 IP 修改为 RIP，并且将源 IP 修改为 DIP，这样 DIP 和 RIP 不必非得在同一个二层网络之中，两者只需要 IP 互通即可。
 
 ![lvs-fullnat](lvs.assets/lvs-fullnat.png)
