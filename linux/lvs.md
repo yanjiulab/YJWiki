@@ -76,9 +76,9 @@ NAT 模式基于 NAT 技术完成转发，类似于 NAT 路由器的功能，只
 - RS 看不到 CIP（NAT 模式下可以看到）。
 - 进出流量还是都走的 LVS，容易成为瓶颈（跟 NAT 一样都有这个问题）。
 
-{% note info %}
+```
 因为 CIP 被修改掉了，RS 只能看到 LVS 的 DIP，可将 CIP 放入 TCP 包的 Option 中传递给 RS，RS 上一般部署自己写的模块来从 Options 中读取 CIP，这样 RS 能看到 CIP 了, 当然这不是一个开源的通用方案。
-{% endnote %}
+```
 
 ### Virtual Server via IP Tunneling
 IP 隧道模式利用了 IP 隧道技术来打通 LVS 和 RS 之间的通信。当请求包到达 LVS 后，LVS 将请求包封装成一个新的 IP 报文，新的 IP 包的目的 IP 是某一 RS 的 IP，然后转发给 RS，RS 收到报文后 IPIP 内核模块解封装，取出用户的请求报文发现目的 IP 是 VIP，而自己的 tun 虚拟网卡上配置了这个 IP，从而愉快地处理请求并将结果直接发送给客户。
