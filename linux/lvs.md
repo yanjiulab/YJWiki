@@ -57,7 +57,7 @@ LVS 不同的转发方式具有不同的网络架构，也导致了不同的性�
 ## Virtual Server via NAT
 NAT 模式基于 NAT 技术完成转发，类似于 NAT 路由器的功能，只不过多了负载均衡的过程，这种方式配置简单，支持端口映射（看名字就知道），并且 RIP 一般是私有地址。其数据包流向如下图所示：
 
-![lvs-nat](lvs-nat.png)
+![lvs-nat](lvs.asserts/lvs-nat.png)
 
 这种模式的缺点为：
 - LVS 必须有一个接口和所有 RS 在同一个 LAN/VLAN。
