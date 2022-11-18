@@ -299,7 +299,7 @@ chown
 
 ## 标准 I/O
 
-
+TODO
 
 ## 进程环境
 
@@ -378,7 +378,9 @@ int atexit(void (*func)(void));
 
 ### C 程序存储空间布局
 
-[图]
+TODO
+
+![image-20221118132606791](apue.assets/image-20221118132606791.png)
 
 ### 共享库
 
@@ -607,7 +609,210 @@ $ proc3 | proc4 | proc5
 - 机制
 - 可重入
 
-## 线程
+## 线程基础
+
+### 线程简介
+
+典型的 Unix 进程可以看成只有一个控制线程：一个进程在某一时刻只能做一件事情。有了多个控制线程以后，在程序设计时就可以把进程设计成在某一时刻能够做不止一件事，每个线程处理各自独立的任务。
+
+线程带来了很多好处：
+
+- 通过为每种事件类型分配单独的处理线程，可以简化处理异步事件的代码。**每个线程在进行事件处理时可以采用同步编程模式**，同步编程模式要比异步编程模式简单得多。
+- 多个进程必须使用操作系统提供的复杂机制才能实现内存和文件描述符的共享，而多个**线程自动地可以访问相同的存储地址空间和文件描述符**。
+- 单控制线程情况下，完成多任务只能串行进行。但有多个控制线程时，**相互独立的任务处理就可以交叉进行**，从而提高整个程序的吞吐量。
+- 通过使用多线程将处理用户输入输出的部分与其他部分分开，从而改善程序响应时间。
+
+**多线程**代码与**多处理器**或**多核系统**并不是绑定的，尽管多核处理器能够充分发挥多线程的优势。但即使程序运行在单处理器上，也能得到多线程编程模型的好处。所以不管处理器的个数多少，程序都可以通过使用线程得以简化。而且由于某些线程在阻塞的时候还有另外一些线程可以运行，所以多线程程序在单处理器上运行还是可以改善响应时间和吞吐量。
+
+每个线程都包含有表示执行环境所必需的信息，其中包括：进程中标识线程的线程 ID、一组寄存器值、栈、调度优先级和策略、信号屏蔽字、errno 变量以及线程私有数据。一个进程的所有信息对该进程的所有线程都是共享的，包括可执行程序的代码、程序的全局内存和堆内存、栈以及文件描述符。
+
+这里主要讨论 POSIX 线程，即 pthread 线程，头文件为 `<pthread.h>`。
+
+### 线程标识
+
+就像每个进程有一个进程 ID 一样，每个线程也有一个线程 ID。进程 ID 在整个系统中是唯一的，但线程 ID 只有在它所属的进程上下文中才有意义。
+
+- 进程 ID 使用 pid_t 数据类型来表示
+- 线程 ID 使用 pthread_t 数据类型来表示
+
+Linux 上 pthread_t 使用 unsigned long int 实现，有时候打印线程 ID 很有用。而其他 Unix 变种系统却不一定，因此打印 ID 代码移植起来需要特别注意。
+
+| 函数                                               | 解释            |
+| -------------------------------------------------- | --------------- |
+| pthread_t pthread_self(void);                      | 获得自身线程 ID |
+| int pthread_equal(pthread_t tid1, pthread_t tid2); | 线程 ID 比较    |
+
+### 线程创建
+
+在传统 Unix 进程模型中，每个进程只有一个控制线程。程序开始运行时，它也是以单进程中的单个控制线程启动的。在创建多个控制线程以前，程序的行为与传统的进程并没有什么区别。
+
+新增的线程可以通过调用 `pthread_create()` 函数创建，执行成功时返回 0，失败时返回错误码。
+
+```
+int pthread_create(pthread_t *thread, 
+                const pthread_attr_t *attr, 
+                void * (*start_routine)(void *), 
+                void *arg);
+```
+
+其中参数为：
+
+- 第一个参数为该线程 ID 的指针
+- 第二个参数为线程属性
+- 第三个参数为该线程执行的任务函数指针
+- 第四个参数为任务函数参数指针
+
+以下是一个创建线程代码的简单示例，每个线程简单的打印自身的线程 ID 和 任务 ID 后就退出。
+
+```c
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define NUM_THREADS 5
+
+void *print_hello(void *taskid) {
+    printf("Hello World! It's me, thread (tid:%ld) #%ld!\n", pthread_self(), (long) taskid);
+    pthread_exit(NULL);
+}
+
+int main(int argc, char *argv[]) {
+    pthread_t threads[NUM_THREADS];
+    int rc;
+    long t;
+    for (t = 0; t < NUM_THREADS; t++) {
+        printf("In main: creating thread %ld\n", t);
+        rc = pthread_create(&threads[t], NULL, print_hello, (void *)t);
+        if (rc) {
+            printf("ERROR; return code from pthread_create() is %d\n", rc);
+            exit(-1);
+        }
+    }
+
+    /* Last thing that main() should do */
+    pthread_exit(NULL);
+}
+```
+
+上述程序输出结果如下，每次输出的结果并不相同。
+
+```
+In main: creating thread 0
+In main: creating thread 1
+Hello World! It's me, thread (tid:140491234883328) #0!
+In main: creating thread 2
+Hello World! It's me, thread (tid:140491226490624) #1!
+In main: creating thread 3
+Hello World! It's me, thread (tid:140491218097920) #2!
+In main: creating thread 4
+Hello World! It's me, thread (tid:140491131713280) #3!
+Hello World! It's me, thread (tid:140491209594624) #4!
+```
+
+线程也可以传入参数。
+
+```
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define NUM_THREADS 3
+
+struct thread_data {
+    int task_id;
+    char *name;
+};
+
+struct thread_data thread_data_array[NUM_THREADS];
+
+void *print_hello(void *threadarg) {
+    struct thread_data *my_data;
+    long taskid;
+    char *name;
+    my_data = (struct thread_data *)threadarg;
+    taskid = my_data->task_id;
+    name = my_data->name;
+    printf("Hello World! It's me, thread #%ld, my name is %s!\n", taskid, name);
+    pthread_exit(NULL);
+}
+
+int main(int argc, char *argv[]) {
+    pthread_t threads[NUM_THREADS];
+    char *thread_names[NUM_THREADS];
+    thread_names[0] = "Alice";
+    thread_names[1] = "Bob";
+    thread_names[2] = "Tom";
+
+    int rc;
+    long t;
+
+    for (t = 0; t < NUM_THREADS; t++) {
+        thread_data_array[t].task_id = t;
+        thread_data_array[t].name = thread_names[t];
+        printf("In main: creating thread #%ld\n", t);
+        rc = pthread_create(&threads[t], NULL, print_hello,
+                            (void *)&thread_data_array[t]);
+        if (rc) {
+            printf("ERROR; return code from pthread_create() is %d\n", rc);
+            exit(-1);
+        }
+    }
+
+    /* Last thing that main() should do */
+    pthread_exit(NULL);
+}
+```
+
+上述程序输出结果如下，每次输出的结果并不相同。
+
+```
+In main: creating thread #0
+In main: creating thread #1
+Hello World! It's me, thread #0, my name is Alice!
+In main: creating thread #2
+Hello World! It's me, thread #1, my name is Bob!
+Hello World! It's me, thread #2, my name is Tom!
+```
+
+### 线程管理
+
+如果进程中的任意线程调用了exit, Exit 或者 _exit，那么**整个进程就会终止**。单个线程可以通过 3 种方式退出，因此可以在不终止整个进程的情况下，停止它的控制流。
+
+- 线程可以简单地从启动例程中返回，返回值是线程的退出码。
+- 线程可以被同一进程中的其他线程取消。
+- 线程调用 pthread_exit() 函数。
+
+```
+void pthread_exit(void *retval);
+```
+
+通过 pthread_exit() 函数终止调用线程，并且如果该线程是 joinable 的话，还可以通过 retval 返回值给同进程的其他线程。注意 retval 指针指向的值不能存在于栈中，因为线程结束后栈会被销毁。
+
+**当进程的所有的线程都终止后，则进程退出**。因此 main 线程最后应该调用 pthread_exit() 明确指出退出主线程，如若不然，main 将会隐式的调用 exit，从而退出整个进程，从而导致其他线程被终止。
+
+```
+int pthread_join(pthread_t thread, void **retval);
+```
+
+pthread_join() 使得调用线程将一直阻塞，直到指定的线程调用 pthread_exit()、从启动线程中返回或者被取消。
+
+如果对线程的返回值并不感兴趣，那么可以把 retval 指针设置为 NULL。在这种情况下，调用 pthread_join() 函数可以等待指定的线程终止，但并不获取线程的终止状态。
+
+
+
+### 线程 API 总结
+
+| 函数                                               | 解释                                     |
+| -------------------------------------------------- | ---------------------------------------- |
+| pthread_t pthread_self(void);                      | 获得自身线程 ID                          |
+| int pthread_equal(pthread_t tid1, pthread_t tid2); | 线程 ID 比较                             |
+| void pthread_exit(void *retval);                   | 退出调用线程，并可能传出返回值到其他线程 |
+
+## 线程同步
+
+## 线程控制
+
+
 
 ## 守护进程
 
