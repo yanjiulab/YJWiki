@@ -601,55 +601,55 @@ $ proc3 | proc4 | proc5
 
 以下是信号的具体解释。
 
-|   信号名   |               英文解释               | 触发条件 |
-| :--------: | :----------------------------------: | :------: |
-|  SIGABRT   |     abnormal termination (abort)     |          |
-|  SIGALRM   |        timer expired (alarm)         |          |
-|   SIGBUS   |            hardware fault            |          |
-| SIGCANCEL  |     threads library internal use     |          |
-|  SIGCHLD   |      change in status of child       |          |
-|  SIGCONT   |       continue stopped process       |          |
-|   SIGEMT   |            hardware fault            |          |
-|   SIGFPE   |         arithmetic exception         |          |
-| SIGFREEZE  |          checkpoint freeze           |          |
-|   SIGHUP   |                hangup                |          |
-|   SIGILL   |         illegal instruction          |          |
-|  SIGINFO   |     status request from keyboard     |          |
-|   SIGINT   |     terminal interrupt character     |          |
-|   SIGIO    |           asynchronous I/O           |          |
-|   SIGIOT   |            hardware fault            |          |
-|  SIGJVM1   |  Java virtual machine internal use   |          |
-|  SIGJVM2   |  Java virtual machine internal use   |          |
-|  SIGKILL   |             termination              |          |
-|  SIGLOST   |            resource lost             |          |
-|   SIGLWP   |     threads library internal use     |          |
-|  SIGPIPE   |    write to pipe with no readers     |          |
-|  SIGPOLL   |        pollable event (poll)         |          |
-|  SIGPROF   |   profiling time alarm (setitimer)   |          |
-|   SIGPWR   |          power fail/restart          |          |
-|  SIGQUIT   |       terminal quit character        |          |
-|  SIGSEGV   |       invalid memory reference       |          |
-| SIGSTKFLT  |       coprocessor stack fault        |          |
-|  SIGSTOP   |                 stop                 |          |
-|   SIGSYS   |         invalid system call          |          |
-|  SIGTERM   |             termination              |          |
-|  SIGTHAW   |           checkpoint thaw            |          |
-|   SIGTHR   |     threads library internal use     |          |
-|  SIGTRAP   |            hardware fault            |          |
-|  SIGTSTP   |       terminal stop character        |          |
-|  SIGTTIN   |   background read from control tty   |          |
-|  SIGTTOU   |   background write to control tty    |          |
-|   SIGURG   |      urgent condition (sockets)      |          |
-|  SIGUSR1   |         user-defined signal          |          |
-|  SIGUSR2   |         user-defined signal          |          |
-| SIGVTALRM  |    virtual time alarm (setitimer)    |          |
-| SIGWAITING |     threads library internal use     |          |
-|  SIGWINCH  |     terminal window size change      |          |
-|  SIGXCPU   |    CPU limit exceeded (setrlimit)    |          |
-|  SIGXFSZ   | file size limit exceeded (setrlimit) |          |
-|  SIGXRES   |      resource control exceeded       |          |
+|   信号名   |               英文解释               |                             说明                             |
+| :--------: | :----------------------------------: | :----------------------------------------------------------: |
+|  SIGABRT   |     abnormal termination (abort)     |                                                              |
+|  SIGALRM   |        timer expired (alarm)         |                                                              |
+|   SIGBUS   |            hardware fault            |                                                              |
+| SIGCANCEL  |     threads library internal use     |                                                              |
+|  SIGCHLD   |      change in status of child       |                                                              |
+|  SIGCONT   |       continue stopped process       |                                                              |
+|   SIGEMT   |            hardware fault            |                                                              |
+|   SIGFPE   |         arithmetic exception         |                                                              |
+| SIGFREEZE  |          checkpoint freeze           |                                                              |
+|   SIGHUP   |                hangup                |                                                              |
+|   SIGILL   |         illegal instruction          |                                                              |
+|  SIGINFO   |     status request from keyboard     |                                                              |
+|   SIGINT   |     terminal interrupt character     | 用户按中断键（`DEL` 或 `CTRL+C`）时，终端驱动向前台进程组所有进程发送中断信号。 |
+|   SIGIO    |           asynchronous I/O           | 用户按退出键（`CTRL+\`）发送 QUIT 字符时，进程收到该信号时会产生core文件，类似于一个程序错误信号。 |
+|   SIGIOT   |            hardware fault            |                                                              |
+|  SIGJVM1   |  Java virtual machine internal use   |                                                              |
+|  SIGJVM2   |  Java virtual machine internal use   |                                                              |
+|  SIGKILL   |             termination              |                         杀死任意进程                         |
+|  SIGLOST   |            resource lost             |                                                              |
+|   SIGLWP   |     threads library internal use     |                                                              |
+|  SIGPIPE   |    write to pipe with no readers     |                                                              |
+|  SIGPOLL   |        pollable event (poll)         |                                                              |
+|  SIGPROF   |   profiling time alarm (setitimer)   |                                                              |
+|   SIGPWR   |          power fail/restart          |                                                              |
+|  SIGQUIT   |       terminal quit character        |                                                              |
+|  SIGSEGV   |       invalid memory reference       |                                                              |
+| SIGSTKFLT  |       coprocessor stack fault        |                                                              |
+|  SIGSTOP   |                 stop                 |                                                              |
+|   SIGSYS   |         invalid system call          |                                                              |
+|  SIGTERM   |             termination              |               kill 命令发送系统默认终止信号。                |
+|  SIGTHAW   |           checkpoint thaw            |                                                              |
+|   SIGTHR   |     threads library internal use     |                                                              |
+|  SIGTRAP   |            hardware fault            |                                                              |
+|  SIGTSTP   |       terminal stop character        |                                                              |
+|  SIGTTIN   |   background read from control tty   |                                                              |
+|  SIGTTOU   |   background write to control tty    |                                                              |
+|   SIGURG   |      urgent condition (sockets)      |                                                              |
+|  SIGUSR1   |         user-defined signal          |                        用户自定义信号                        |
+|  SIGUSR2   |         user-defined signal          |                        用户自定义信号                        |
+| SIGVTALRM  |    virtual time alarm (setitimer)    |                                                              |
+| SIGWAITING |     threads library internal use     |                                                              |
+|  SIGWINCH  |     terminal window size change      |                                                              |
+|  SIGXCPU   |    CPU limit exceeded (setrlimit)    |                                                              |
+|  SIGXFSZ   | file size limit exceeded (setrlimit) |                                                              |
+|  SIGXRES   |      resource control exceeded       |                                                              |
 
-### 信号函数
+### 信号设置
 
 Unix 信号机制最简单的接口是 signal 函数。
 
@@ -673,7 +673,22 @@ typedef void Sigfunc(int);
 Sigfunc *signal(int signo, Sigfunc *func);
 ```
 
-可靠性
+
+
+```
+$ ./sig &										# 启动程序
+[1] 17497										# shell 打印作业编号和进程 ID
+$ kill -USR1 17497								# 使用 kill 命令向进程发送 USR1 信号
+received SIGUSR1
+$ kill -USR2 17497								# 使用 kill 命令向进程发送 USR2 信号
+received SIGUSR2
+$ kill 17497									# 使用 kill 命令向进程发送 SIGTERM 信号
+[1]+  Terminated              ./sig
+```
+
+
+
+### 信号可靠性
 
 - 机制
 - 可重入
@@ -682,8 +697,8 @@ Sigfunc *signal(int signo, Sigfunc *func);
 
 程序可以主动触发信号：
 
-- kill 函数将信号发送给进程或进程组。
-- raise 函数将信号发送给自己。
+- `kill` 函数将信号发送给进程或进程组。
+- `raise` 函数将信号发送给自己。
 
 ```
 #include <signal.h>
