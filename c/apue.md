@@ -582,32 +582,123 @@ $ proc3 | proc4 | proc5
 
 ## 信号
 
-信号=软件中断，处理异步事件
-
 ### 信号概念
 
-信号名字 和 signal.h常量
+信号是一种软件中断，提供了一种处理异步事件的方法。
 
-- 列表
+每个信号都有一个名字，定义在头文件 `<signal.h>` 中。信号的产生可以由多种方式，例如：
 
-信号的产生
+- 某些按键被按下，触发信号。
+- 硬件异常（除 0，内存无效等）触发信号。
+- 某些条件产生时，触发信号。
+- 进程调用函数主动触发信号。
 
-- 终端按键
-- 硬件异常：除0，内存无效
-- 进程调用kill函数发送信号
-- 用户使用kill命令
-- 某种软件条件发生，需要通知进程产生信号
+当信号出现时，内核按照以下三种方式之一进行处理。
 
-信号的处理
+- 捕捉信号：**通知内核在某种信号发生时，执行用户函数（signal handler）**。
+- 执行默认动作：大多数信号的默认动作时终止进程。
+- 忽略信号：大多数信号都被忽略了，但 SIGKILL 和 SIGSTOP 不能忽略。
 
-- 忽略
-- 捕捉信号，执行用户函数
-- 执行默认动作
+以下是信号的具体解释。
+
+|   信号名   |               英文解释               | 触发条件 |
+| :--------: | :----------------------------------: | :------: |
+|  SIGABRT   |     abnormal termination (abort)     |          |
+|  SIGALRM   |        timer expired (alarm)         |          |
+|   SIGBUS   |            hardware fault            |          |
+| SIGCANCEL  |     threads library internal use     |          |
+|  SIGCHLD   |      change in status of child       |          |
+|  SIGCONT   |       continue stopped process       |          |
+|   SIGEMT   |            hardware fault            |          |
+|   SIGFPE   |         arithmetic exception         |          |
+| SIGFREEZE  |          checkpoint freeze           |          |
+|   SIGHUP   |                hangup                |          |
+|   SIGILL   |         illegal instruction          |          |
+|  SIGINFO   |     status request from keyboard     |          |
+|   SIGINT   |     terminal interrupt character     |          |
+|   SIGIO    |           asynchronous I/O           |          |
+|   SIGIOT   |            hardware fault            |          |
+|  SIGJVM1   |  Java virtual machine internal use   |          |
+|  SIGJVM2   |  Java virtual machine internal use   |          |
+|  SIGKILL   |             termination              |          |
+|  SIGLOST   |            resource lost             |          |
+|   SIGLWP   |     threads library internal use     |          |
+|  SIGPIPE   |    write to pipe with no readers     |          |
+|  SIGPOLL   |        pollable event (poll)         |          |
+|  SIGPROF   |   profiling time alarm (setitimer)   |          |
+|   SIGPWR   |          power fail/restart          |          |
+|  SIGQUIT   |       terminal quit character        |          |
+|  SIGSEGV   |       invalid memory reference       |          |
+| SIGSTKFLT  |       coprocessor stack fault        |          |
+|  SIGSTOP   |                 stop                 |          |
+|   SIGSYS   |         invalid system call          |          |
+|  SIGTERM   |             termination              |          |
+|  SIGTHAW   |           checkpoint thaw            |          |
+|   SIGTHR   |     threads library internal use     |          |
+|  SIGTRAP   |            hardware fault            |          |
+|  SIGTSTP   |       terminal stop character        |          |
+|  SIGTTIN   |   background read from control tty   |          |
+|  SIGTTOU   |   background write to control tty    |          |
+|   SIGURG   |      urgent condition (sockets)      |          |
+|  SIGUSR1   |         user-defined signal          |          |
+|  SIGUSR2   |         user-defined signal          |          |
+| SIGVTALRM  |    virtual time alarm (setitimer)    |          |
+| SIGWAITING |     threads library internal use     |          |
+|  SIGWINCH  |     terminal window size change      |          |
+|  SIGXCPU   |    CPU limit exceeded (setrlimit)    |          |
+|  SIGXFSZ   | file size limit exceeded (setrlimit) |          |
+|  SIGXRES   |      resource control exceeded       |          |
+
+### 信号函数
+
+Unix 信号机制最简单的接口是 signal 函数。
+
+```c
+#include <signal.h>
+void (*signal(int signo, void (*func)(int)))(int);
+```
+
+`signal` 函数要求两个参数
+
+- signo 为感兴趣的信号名。
+- func 为信号处理程序指针，表示该信号发生时的动作，
+    - 常量 SIG_IGN 表示忽略此信号。
+    - 常量 SIG_DFL 表示执行默认动作。
+    - 函数地址表示在信号发生时调用该函数。
+
+**信号处理函数要求一个整形参数，并且返回值为 void。**当调用 signal 设置信号处理程序时，返回该函数的指针。简化一下 signal 的声明如下：
+
+```
+typedef void Sigfunc(int);
+Sigfunc *signal(int signo, Sigfunc *func);
+```
 
 可靠性
 
 - 机制
 - 可重入
+
+### 发送信号
+
+程序可以主动触发信号：
+
+- kill 函数将信号发送给进程或进程组。
+- raise 函数将信号发送给自己。
+
+```
+#include <signal.h>
+int kill(pid_t pid, int signo);
+int raise(int signo);
+```
+
+kill 函数中，pid 参数有以下几种情况：
+
+- pid > 0：发送给进程 pid。
+- pid == 0：发送给同一进程组所有进程。
+- pid < 0：发送给进程组 pid 的所有进程（发送进程具有权限向其发送信号的进程）。
+- pid == -1：发送给所有进程（发送进程具有权限向其发送信号的进程）。
+
+进程将信号发送给另一进程需要权限。
 
 ## 线程基础
 
@@ -814,7 +905,7 @@ pthread_join() 使得调用线程将一直阻塞，直到指定的线程调用 p
 
 
 
-## 守护进程
+## 守护进程（完成）
 
 ### 守护进程特征
 
@@ -828,9 +919,9 @@ pthread_join() 使得调用线程将一直阻塞，直到指定的线程调用 p
 - cron：定时任务。
 - ....
 
-### 守护进程编码规则
+### 守护进程规则
 
-创建一个守护进程需要最好遵从以下原则：
+首先，创建一个守护进程需要最好遵从**以下基本原则**：
 
 1. 调用 umask
 2. 调用 fork，然后使父进程 exit。
@@ -839,7 +930,241 @@ pthread_join() 使得调用线程将一直阻塞，直到指定的线程调用 p
 5. 关闭不再需要的文件描述符。
 6. 将文件描述符 0，1，2 重写到 `/dev/null`。
 
+其次，守护进程没有控制终端，不能将错误写到标准错误中。每个守护进程将它自己的出错信息写到一个单独的文件中，会导致管理复杂。**因此需要一个集中的守护进程出错记录程序，`syslog` 系统就是一个广泛应用的系统。**
 
+![image-20221119013700706](apue.assets/image-20221119013700706.png)
+
+三种产生日志消息的方法：
+
+- 内核例程可以调用 log 函数。任何一个用户进程通过打开（open）然后读（read）`/dev/klog` 设备就可以读取这些消息。
+- 大多数用户进程（守护进程）调用 `syslog` 函数以产生日志消息。
+- 其他进程通过 TCP/IP 网络可将日志消息发往 UDP 514 端口。
+
+通常， `syslogd` 守护进程读取所有 3 种格式的日志消息。
+
+最后，**守护进程通常要求是单实例的**。如果同一个守护进程同时有多个实例运行，那么造成重复执行操作，可能引发错误。文件记录和锁机制可以保证一个守护进程只有一个副本在运行。
+
+同时，**守护进程应当遵循以下惯例**：
+
+- 若守护进程使用锁文件，则通常为 `/var/run/[name].pid`。
+- 若守护进程支持配置文件，则通常为 `/etc/[name].conf`。
+- 若守护进程可用命令行启动，则通常由系统初始化脚本完成，且进程终止时，应当自动重启，可以通过 `/etc/inittab` 中添加 `respawn` 记录项。
+
+### 守护进程示例
+
+```c
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/resource.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <syslog.h>
+#include <unistd.h>
+
+#define LOCKFILE "/var/run/daemon.pid"
+#define LOCKMODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
+
+int lockfile(int fd) {
+    struct flock fl;
+
+    fl.l_type = F_WRLCK;
+    fl.l_start = 0;
+    fl.l_whence = SEEK_SET;
+    fl.l_len = 0;
+    return (fcntl(fd, F_SETLK, &fl));
+}
+
+int already_running(void) {
+    int fd;
+    char buf[16];
+
+    fd = open(LOCKFILE, O_RDWR | O_CREAT, LOCKMODE);
+    if (fd < 0) {
+        syslog(LOG_ERR, "can’t open %s: %s", LOCKFILE, strerror(errno));
+        exit(1);
+    }
+    if (lockfile(fd) < 0) {
+        if (errno == EACCES || errno == EAGAIN) {
+            close(fd);
+            return (1);
+        }
+        syslog(LOG_ERR, "can’t lock %s: %s", LOCKFILE, strerror(errno));
+        exit(1);
+    }
+    ftruncate(fd, 0);
+    sprintf(buf, "%ld", (long)getpid());
+    write(fd, buf, strlen(buf) + 1);
+    return (0);
+}
+
+void daemonize(const char *cmd) {
+    int i, fd0, fd1, fd2;
+    pid_t pid;
+    struct rlimit rl;
+    struct sigaction sa;
+
+    /*
+     * Clear file creation mask.
+     */
+    umask(0);
+
+    /*
+     * Get maximum number of file descriptors.
+     */
+    if (getrlimit(RLIMIT_NOFILE, &rl) < 0)
+        printf("%s: can't get file limit", cmd);
+
+    /*
+     * Become a session leader to lose controlling TTY.
+     */
+    if ((pid = fork()) < 0)
+        printf("%s: can't fork", cmd);
+    else if (pid != 0) /* parent */
+        exit(0);
+    setsid();
+
+    /*
+     * Ensure future opens won’t allocate controlling TTYs.
+     */
+    sa.sa_handler = SIG_IGN;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    if (sigaction(SIGHUP, &sa, NULL) < 0)
+        printf("%s: can't ignore SIGHUP", cmd);
+    if ((pid = fork()) < 0)
+        printf("%s: can't fork", cmd);
+    else if (pid != 0) /* parent */
+        exit(0);
+
+    /*
+     * Change the current working directory to the root so
+     * we won’t prevent file systems from being unmounted.
+     */
+    if (chdir("/") < 0)
+        printf("%s: can't change directory to /", cmd);
+
+    /*
+     * Close all open file descriptors.
+     */
+    if (rl.rlim_max == RLIM_INFINITY)
+        rl.rlim_max = 1024;
+    for (i = 0; i < rl.rlim_max; i++)
+        close(i);
+
+    /*
+     * Attach file descriptors 0, 1, and 2 to /dev/null.
+     */
+    fd0 = open("/dev/null", O_RDWR);
+    fd1 = dup(0);
+    fd2 = dup(0);
+
+    /*
+     * Initialize the log file.
+     */
+    openlog(cmd, LOG_CONS, LOG_DAEMON);
+    if (fd0 != 0 || fd1 != 1 || fd2 != 2) {
+        syslog(LOG_ERR, "unexpected file descriptors %d %d %d",
+               fd0, fd1, fd2);
+        exit(1);
+    }
+}
+
+void reread(void) {
+    /* ... */
+}
+
+void sigterm(int signo) {
+    syslog(LOG_INFO, "got SIGTERM; exiting");
+    exit(0);
+}
+
+void sighup(int signo) {
+    syslog(LOG_INFO, "Re-reading configuration file");
+    reread();
+}
+
+int main(int argc, char *argv[]) {
+    char *cmd;
+    struct sigaction sa;
+
+    if ((cmd = strrchr(argv[0], '/')) == NULL)
+        cmd = argv[0];
+    else
+        cmd++;
+
+    /*
+     * Become a daemon.
+     */
+    daemonize(cmd);
+
+    /*
+     * Make sure only one copy of the daemon is running.
+     */
+    if (already_running()) {
+        syslog(LOG_ERR, "daemon already running");
+        exit(1);
+    }
+
+    /*
+     * Handle signals of interest.
+     */
+    sa.sa_handler = sigterm;
+    sigemptyset(&sa.sa_mask);
+    sigaddset(&sa.sa_mask, SIGHUP);
+    sa.sa_flags = 0;
+    if (sigaction(SIGTERM, &sa, NULL) < 0) {
+        syslog(LOG_ERR, "can't catch SIGTERM: %s", strerror(errno));
+        exit(1);
+    }
+    sa.sa_handler = sighup;
+    sigemptyset(&sa.sa_mask);
+    sigaddset(&sa.sa_mask, SIGTERM);
+    sa.sa_flags = 0;
+    if (sigaction(SIGHUP, &sa, NULL) < 0) {
+        syslog(LOG_ERR, "can't catch SIGHUP: %s", strerror(errno));
+        exit(1);
+    }
+
+    /*
+     * Proceed with the rest of the daemon.
+     */
+    /* ... */
+    while (1) {
+        sleep(10);
+    }
+
+    exit(0);
+}
+```
+
+编译并多次运行上述程序。
+
+```
+# gcc daemon.c -o daemon
+# ./daemon
+# ./daemon
+# ./daemon
+```
+
+此时 `ps -axj` 查看发现只有一个守护进程被执行了。通常情况下 PPID 为 1，但许多 Linux 发行版中 systemd 会接管 init。
+
+```
+PPID     PID    PGID     SID TTY        TPGID STAT   UID   TIME COMMAND
+   1    1050    1050    1050 ?             -1 Ss    1000   0:01 /lib/systemd/systemd --user
+1050   85898   85897   85897 ?             -1 S        0   0:00 ./daemon
+```
+
+最后我们杀死这个进程，并 `cat /var/log/syslog | grep daemon` 查看日志。
+
+```
+Nov 19 02:37:38 msi-ryzen3600 daemon: daemon already running
+Nov 19 02:38:29 msi-ryzen3600 daemon: message repeated 2 times: [ daemon already running]
+Nov 19 02:45:19 msi-ryzen3600 daemon: got SIGTERM; exiting
+```
 
 ## 终端/伪终端
 
