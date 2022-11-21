@@ -596,69 +596,108 @@ $ proc3 | proc4 | proc5
 当信号出现时，内核按照以下三种方式之一进行处理。
 
 - 捕捉信号：**通知内核在某种信号发生时，执行用户函数（signal handler）**。
-- 执行默认动作：大多数信号的默认动作时终止进程。
-- 忽略信号：大多数信号都被忽略了，但 SIGKILL 和 SIGSTOP 不能忽略。
+- 执行默认动作：大多数信号的**默认动作是终止进程**。
+- 忽略信号：大多数信号都可以被忽略，**但 `SIGKILL` 和 `SIGSTOP` 不能忽略**。
 
-以下是信号的具体解释。
+信号具有编号，一般而言用宏定义表示。其中用户可以使用的为 1-31，实时信号一般是内核使用的。
 
-|   信号名   |               英文解释               |                             说明                             |
-| :--------: | :----------------------------------: | :----------------------------------------------------------: |
-|  SIGABRT   |     abnormal termination (abort)     |                                                              |
-|  SIGALRM   |        timer expired (alarm)         |                                                              |
-|   SIGBUS   |            hardware fault            |                                                              |
-| SIGCANCEL  |     threads library internal use     |                                                              |
-|  SIGCHLD   |      change in status of child       |                                                              |
-|  SIGCONT   |       continue stopped process       |                                                              |
-|   SIGEMT   |            hardware fault            |                                                              |
-|   SIGFPE   |         arithmetic exception         |                                                              |
-| SIGFREEZE  |          checkpoint freeze           |                                                              |
-|   SIGHUP   |                hangup                |                                                              |
-|   SIGILL   |         illegal instruction          |                                                              |
-|  SIGINFO   |     status request from keyboard     |                                                              |
-|   SIGINT   |     terminal interrupt character     | 用户按中断键（`DEL` 或 `CTRL+C`）时，终端驱动向前台进程组所有进程发送中断信号。 |
-|   SIGIO    |           asynchronous I/O           | 用户按退出键（`CTRL+\`）发送 QUIT 字符时，进程收到该信号时会产生core文件，类似于一个程序错误信号。 |
-|   SIGIOT   |            hardware fault            |                                                              |
-|  SIGJVM1   |  Java virtual machine internal use   |                                                              |
-|  SIGJVM2   |  Java virtual machine internal use   |                                                              |
-|  SIGKILL   |             termination              |                         杀死任意进程                         |
-|  SIGLOST   |            resource lost             |                                                              |
-|   SIGLWP   |     threads library internal use     |                                                              |
-|  SIGPIPE   |    write to pipe with no readers     |                                                              |
-|  SIGPOLL   |        pollable event (poll)         |                                                              |
-|  SIGPROF   |   profiling time alarm (setitimer)   |                                                              |
-|   SIGPWR   |          power fail/restart          |                                                              |
-|  SIGQUIT   |       terminal quit character        |                                                              |
-|  SIGSEGV   |       invalid memory reference       |                                                              |
-| SIGSTKFLT  |       coprocessor stack fault        |                                                              |
-|  SIGSTOP   |                 stop                 |                                                              |
-|   SIGSYS   |         invalid system call          |                                                              |
-|  SIGTERM   |             termination              |               kill 命令发送系统默认终止信号。                |
-|  SIGTHAW   |           checkpoint thaw            |                                                              |
-|   SIGTHR   |     threads library internal use     |                                                              |
-|  SIGTRAP   |            hardware fault            |                                                              |
-|  SIGTSTP   |       terminal stop character        |                                                              |
-|  SIGTTIN   |   background read from control tty   |                                                              |
-|  SIGTTOU   |   background write to control tty    |                                                              |
-|   SIGURG   |      urgent condition (sockets)      |                                                              |
-|  SIGUSR1   |         user-defined signal          |                        用户自定义信号                        |
-|  SIGUSR2   |         user-defined signal          |                        用户自定义信号                        |
-| SIGVTALRM  |    virtual time alarm (setitimer)    |                                                              |
-| SIGWAITING |     threads library internal use     |                                                              |
-|  SIGWINCH  |     terminal window size change      |                                                              |
-|  SIGXCPU   |    CPU limit exceeded (setrlimit)    |                                                              |
-|  SIGXFSZ   | file size limit exceeded (setrlimit) |                                                              |
-|  SIGXRES   |      resource control exceeded       |                                                              |
+```
+ 1) SIGHUP	     2) SIGINT	     3) SIGQUIT	     4) SIGILL	     5) SIGTRAP
+ 6) SIGABRT	     7) SIGBUS	     8) SIGFPE	     9) SIGKILL	    10) SIGUSR1
+11) SIGSEGV 	12) SIGUSR2	    13) SIGPIPE	    14) SIGALRM	    15) SIGTERM
+16) SIGSTKFLT	17) SIGCHLD 	18) SIGCONT	    19) SIGSTOP	    20) SIGTSTP
+21) SIGTTIN 	22) SIGTTOU 	23) SIGURG	    24) SIGXCPU	    25) SIGXFSZ
+26) SIGVTALRM	27) SIGPROF 	28) SIGWINCH	29) SIGIO	    30) SIGPWR
+31) SIGSYS	    34) SIGRTMIN	35) SIGRTMIN+1	36) SIGRTMIN+2	37) SIGRTMIN+3
+38) SIGRTMIN+4	39) SIGRTMIN+5	40) SIGRTMIN+6	41) SIGRTMIN+7	42) SIGRTMIN+8
+43) SIGRTMIN+9	44) SIGRTMIN+10	45) SIGRTMIN+11	46) SIGRTMIN+12	47) SIGRTMIN+13
+48) SIGRTMIN+14	49) SIGRTMIN+15	50) SIGRTMAX-14	51) SIGRTMAX-13	52) SIGRTMAX-12
+53) SIGRTMAX-11	54) SIGRTMAX-10	55) SIGRTMAX-9	56) SIGRTMAX-8	57) SIGRTMAX-7
+58) SIGRTMAX-6	59) SIGRTMAX-5	60) SIGRTMAX-4	61) SIGRTMAX-3	62) SIGRTMAX-2
+63) SIGRTMAX-1	64) SIGRTMAX
+```
+
+大部分 Unix 系统都提供了编号到信号名的映射数组，数组下标为信号编号，数组元素为指向信号名字符串的指针。通常使用 `strsignal` 函数取出其描述内容，类似于 `strerror`。
+
+```c
+#include <signal.h>
+extern const char *const sys_siglist[];
+
+#include <string.h>
+char *strsignal(int sig);
+```
+
+如果需要将其输出到标准错误，可以使用 `psignal`，类似于 `perror`。
+```c
+#include <signal.h>
+
+void psignal(int sig, const char *s);
+void psiginfo(const siginfo_t *pinfo, const char *s);
+```
+
+以下是一个代码片段示例。
+
+```c
+// signal.c
+int i = 9;
+printf("signal %d : %s\n", i, strsignal(i));
+psignal(i, "error");
+// result
+$ gcc signal.c
+$ ./a.out 2>&1
+signal 9 : Killed
+error: Killed
+```
+
+### 信号发送
+
+某些软件/硬件在中断或异常时，或是用户按下某些键位时，内核或驱动将会自动产生信号，发送给相应的进程。除此之外，程序也可以通过**信号发送函数**来主动发送信号。
+
+- `kill` 函数将信号发送给进程或进程组。
+- `raise` 函数允许进程将信号发送给自己。
+
+```
+#include <signal.h>
+int kill(pid_t pid, int signo);
+int raise(int signo);
+```
+
+`kill` 函数中，pid 参数有以下几种情况：
+
+- pid > 0：发送给进程 pid。
+- pid == 0：发送给同一进程组所有进程。
+- pid < 0：发送给进程组 pid 的所有进程（发送进程具有权限向其发送信号的进程）。
+- pid == -1：发送给所有进程（发送进程具有权限向其发送信号的进程）。
+
+注意：进程将信号发送给另一进程需要权限。
+
+通过 `kill` 命令行工具可以发送信号给指定进程。其格式为
+
+```
+kill -<signal> <pid> [...]
+```
+
+其中 signal 可以是编号、名称或简写。即： `-9, -SIGKILL or -KILL`。
+
+例如：
+
+```shell
+kill -SIGUSR1 18742		# send SIGUSR1
+kill -USR2 18742		# send SIGUSR2
+kill 18742				# send SIGTERM
+kill -9 18742			# send SIGKILL
+```
 
 ### 信号设置
 
-Unix 信号机制最简单的接口是 signal 函数。
+Unix 中，如果进程没有设置感兴趣的信号，当进程收到信号时，则会使用默认的处理动作。如果进程希望捕获某种信号，则可以使用 `signal` 函数来设置信号处理函数。
 
 ```c
 #include <signal.h>
 void (*signal(int signo, void (*func)(int)))(int);
 ```
 
-`signal` 函数要求两个参数
+`signal` 函数要求两个参数：
 
 - signo 为感兴趣的信号名。
 - func 为信号处理程序指针，表示该信号发生时的动作，
@@ -673,47 +712,114 @@ typedef void Sigfunc(int);
 Sigfunc *signal(int signo, Sigfunc *func);
 ```
 
+以下是一个设置信号的示例：
 
+```c
+#include <signal.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+
+/* one handler for both signals, argument is signal number */
+static void sig_usr(int signo) {
+    printf("received %s (%d)\n", strsignal(signo), signo);
+}
+
+int main(void) {
+    if (signal(SIGUSR1, sig_usr) == SIG_ERR)
+        printf("can't catch SIGUSR1");
+    if (signal(SIGUSR2, sig_usr) == SIG_ERR)
+        printf("can't catch SIGUSR2");
+    if (signal(SIGQUIT, sig_usr) == SIG_ERR)
+        printf("can't catch SIGQUIT");
+    for (;;)
+        pause();
+}
+```
+
+当我们执行时，对于已经设置过的信号，会执行 sig_usr 函数，否则执行默认动作。
 
 ```
 $ ./sig &										# 启动程序
 [1] 17497										# shell 打印作业编号和进程 ID
 $ kill -USR1 17497								# 使用 kill 命令向进程发送 USR1 信号
-received SIGUSR1
+received User defined signal 1 (10)
 $ kill -USR2 17497								# 使用 kill 命令向进程发送 USR2 信号
-received SIGUSR2
+received User defined signal 2 (12)
 $ kill 17497									# 使用 kill 命令向进程发送 SIGTERM 信号
 [1]+  Terminated              ./sig
 ```
 
+### 常用信号说明
 
+以下是信号的具体解释。
 
-### 信号可靠性
+|    信号    |               英文解释               |                           信号产生                           | 默认动作 |
+| :--------: | :----------------------------------: | :----------------------------------------------------------: | -------- |
+|            |                                      |                                                              |          |
+|            |                                      |                                                              |          |
+|            |                                      |                                                              |          |
+|            |                                      |                                                              |          |
+|            |                                      |                                                              |          |
+|            |                                      |                                                              |          |
+|  SIGABRT   |     abnormal termination (abort)     |                                                              |          |
+|  SIGALRM   |        timer expired (alarm)         |                                                              |          |
+|   SIGBUS   |            hardware fault            |                                                              |          |
+| SIGCANCEL  |     threads library internal use     |                                                              |          |
+|  SIGCHLD   |      change in status of child       |                                                              |          |
+|  SIGCONT   |       continue stopped process       |                                                              |          |
+|   SIGEMT   |            hardware fault            |                                                              |          |
+|   SIGFPE   |         arithmetic exception         |                                                              |          |
+| SIGFREEZE  |          checkpoint freeze           |                                                              |          |
+|   SIGHUP   |                hangup                |                                                              |          |
+|   SIGILL   |         illegal instruction          |                                                              |          |
+|  SIGINFO   |     status request from keyboard     |                                                              |          |
+|   SIGINT   |     terminal interrupt character     | 用户按中断键（`DEL` 或 `CTRL+C`）时，终端驱动向前台进程组所有进程发送中断信号。 |          |
+|   SIGIO    |           asynchronous I/O           |                              用                              |          |
+|   SIGIOT   |            hardware fault            |                                                              |          |
+|  SIGJVM1   |  Java virtual machine internal use   |                                                              |          |
+|  SIGJVM2   |  Java virtual machine internal use   |                                                              |          |
+|  SIGKILL   |             termination              |                         杀死任意进程                         |          |
+|  SIGLOST   |            resource lost             |                                                              |          |
+|   SIGLWP   |     threads library internal use     |                                                              |          |
+|  SIGPIPE   |    write to pipe with no readers     |                                                              |          |
+|  SIGPOLL   |        pollable event (poll)         |                                                              |          |
+|  SIGPROF   |   profiling time alarm (setitimer)   |                                                              |          |
+|   SIGPWR   |          power fail/restart          |                                                              |          |
+|  SIGQUIT   |       terminal quit character        | 户按退出键（`CTRL+\`）发送 QUIT 字符时，进程收到该信号时会产生core文件，类似于一个程序错误信号。 |          |
+|  SIGSEGV   |       invalid memory reference       |                                                              |          |
+| SIGSTKFLT  |       coprocessor stack fault        |                                                              |          |
+|  SIGSTOP   |                 stop                 |                                                              |          |
+|   SIGSYS   |         invalid system call          |                                                              |          |
+|  SIGTERM   |             termination              |               kill 命令发送系统默认终止信号。                |          |
+|  SIGTHAW   |           checkpoint thaw            |                                                              |          |
+|   SIGTHR   |     threads library internal use     |                                                              |          |
+|  SIGTRAP   |            hardware fault            |                                                              |          |
+|  SIGTSTP   |       terminal stop character        |                                                              |          |
+|  SIGTTIN   |   background read from control tty   |                                                              |          |
+|  SIGTTOU   |   background write to control tty    |                                                              |          |
+|   SIGURG   |      urgent condition (sockets)      |                                                              |          |
+|  SIGUSR1   |         user-defined signal          |                        用户自定义信号                        |          |
+|  SIGUSR2   |         user-defined signal          |                        用户自定义信号                        |          |
+| SIGVTALRM  |    virtual time alarm (setitimer)    |                                                              |          |
+| SIGWAITING |     threads library internal use     |                                                              |          |
+|  SIGWINCH  |     terminal window size change      |                                                              |          |
+|  SIGXCPU   |    CPU limit exceeded (setrlimit)    |                                                              |          |
+|  SIGXFSZ   | file size limit exceeded (setrlimit) |                                                              |          |
+|  SIGXRES   |      resource control exceeded       |                                                              |          |
 
-- 机制
-- 可重入
-
-### 发送信号
-
-程序可以主动触发信号：
-
-- `kill` 函数将信号发送给进程或进程组。
-- `raise` 函数将信号发送给自己。
+### 信号相关函数
 
 ```
-#include <signal.h>
-int kill(pid_t pid, int signo);
-int raise(int signo);
+#include <unistd.h>
+unsigned int alarm(unsigned int seconds);
 ```
 
-kill 函数中，pid 参数有以下几种情况：
 
-- pid > 0：发送给进程 pid。
-- pid == 0：发送给同一进程组所有进程。
-- pid < 0：发送给进程组 pid 的所有进程（发送进程具有权限向其发送信号的进程）。
-- pid == -1：发送给所有进程（发送进程具有权限向其发送信号的进程）。
 
-进程将信号发送给另一进程需要权限。
+### 信号屏蔽
+
+
 
 ## 线程基础
 
