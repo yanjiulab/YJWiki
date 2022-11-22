@@ -2,9 +2,59 @@
 
 ## IPC 简介
 
+### 概述
+
+进程间通信（Inter Process communication, IPC）具有两种基本方式：
+
+- **消息传递（Message Passing）**：不同进程之间通过传递消息来获取信息。
+    - 匿名管道 (Anonymous pipe)
+    - 命名管道 (Named pipe)
+    - 信号 (Signal)
+    - 消息队列 (Message queue)
+        - POISX
+        - System V
+    - 网络套接字 (Socket)  
+    - Unix 域套接字 (Unix domain socket)、
+    - 远程过程调用 (Remote Process Calls, RPCs)
+- **同步（Synchronization）**：不同进程之间通过共享对象来获取信息。
+    - 共享内存 (Shared memory)
+    - 内存映射文件 (Memory-mapped file)
+
+Synchronization
+
+- System V semaphore
+- Posix semaphore
+- Mutexes and Conditional variable
+- Read-write locks
+
 ### Unix 共享信息模型
 
+在 Unix 中，每个进程都有各自的地址空间，进程间信息共享的方式有以下三种：
+
+1. **共享文件系统文件中信息**：要访问此数据，每个进程都**必须经过内核**（读、写等），在更新文件时，**需要某种形式的同步**，防止读写串扰。
+2. **共享驻留在内核中的信息**：访问共享信息的每个操作都**涉及对内核的系统调用**。例如管道、消息队列、信号量。
+3. **共享内存区域**：进程通过设置共享内存即可共享信息，**完全不需要内核**，共享内存的进程**需要某种形式的同步**。
+    以上所有的 IPC 技术都不止局限于两个进程。
+
+![image-20221122221636621](ipc.assets/image-20221122221636621.png)
+
+以上是进程的概念，
+
+尽管 Unix 系统中的进程概念已经使用了很长时间，但是给定进程中的多个线程的概念相对较新。Posix.1 线程标准（称为Pthreads）于 1995 年获得批准。从 IPC 的角度来看，同一进程中的所有线程共享相同的全局变量，这使得共享内存的概念称为线程模型的固有属性，正因如此，多个线程访问这些全局变量必须使用同步手段，事实上，同步虽然不是明确的 IPC 形式，但与许多形式的 IPC 一起使用来控制对某些共享数据的访问。
+
+IPC 对象的持久化
+
+| 持久化方式                | 生存周期                                  |
+| ------------------------- | ----------------------------------------- |
+| process-persistent IPC    | 直到打开 IPC 对象的最后一个进程关闭该对象 |
+| kernel-persistent IPC     | 直到内核重启或 IPC 对象被显式删除         |
+| filesystem-persistent IPC | 直到 IPC 对象被显式删除。                 |
+
+> 没有任何一种 IPC 是使用文件系统持久化的，但确实是有一些 IPC 依赖于文件系统的实现。文件提供了文件系统的持久化属性，但 IPC 通常不使用这种方式，大多数 IPC 对象在内核重启之后就会消失，这是因为进程在重启之后也会消失，进程都消失了，IPC 也失去了意义。同时，使用文件系统持久化可能会降低 IPC 的性能，然而 IPC 的设计目标就是高性能，否则为何不直接使用文件进行信息传递呢？
+
 ### IPC 对象持久性
+
+
 
 ### IPC 名字和标识
 
@@ -34,28 +84,7 @@
 
 
 
-进程间通信（Inter Process communication, IPC）具有两种基本方式：
-
-- **消息传递（Message Passing）**：不同进程之间通过传递消息来获取信息。
-    - 匿名管道 (Anonymous pipe)
-    - 命名管道 (Named pipe)
-    - 信号 (Signal)
-    - 消息队列 (Message queue)
-        - POISX
-        - System V
-    - 网络套接字 (Socket)  
-    - Unix 域套接字 (Unix domain socket)、
-    - 远程过程调用 (Remote Process Calls, RPCs)
-- **同步（Synchronization）**：不同进程之间通过共享对象来获取信息。
-    - 共享内存 (Shared memory)
-    - 内存映射文件 (Memory-mapped file)
-
-Synchronization
-
-- System V semaphore
-- Posix semaphore
-- Mutexes and Conditional variable
-- Read-write locks
+- 
 
 
 | 方法                                                     | 简述                                                         | 特点                                                         | 适用场景 |
@@ -73,28 +102,7 @@ Synchronization
 
 ## Processes, Threads, and the Sharing of Information
 
-三种共享信息的方式
-![share-information](share-information.png)
-
-1. 左侧的两个进程正在**共享驻留在文件系统文件中的某些信息**。要访问此数据，每个进程都**必须经过内核**（读、写等），在更新文件时，**需要某种形式的同步**，既可以保护多个编写者彼此之间，又可以保护一个或多个读取者免受编写者的侵害。
-2. 中间的两个进程共享一些驻留在内核中的信息。管道是这种共享类型的一个示例，System V 消息队列和 System V 信号量也是如此。访问共享信息的每个操作都**涉及对内核的系统调用**。
-3. 右侧的两个进程具有每个进程可以引用的共享内存区域。一旦每个进程设置了共享内存，这些进程就可以访问共享内存中的数据，而完全**不需要内核**。共享内存的进程**需要某种形式的同步**。
-
-{% note info %}
-以上所有的 IPC 技术都不止局限于两个进程。
-{% endnote %}
-
-尽管 Unix 系统中的进程概念已经使用了很长时间，但是给定进程中的多个线程的概念相对较新。Posix.1 线程标准（称为Pthreads）于 1995 年获得批准。从 IPC 的角度来看，同一进程中的所有线程共享相同的全局变量，这使得共享内存的概念称为线程模型的固有属性，正因如此，多个线程访问这些全局变量必须使用同步手段，事实上，同步虽然不是明确的 IPC 形式，但与许多形式的 IPC 一起使用来控制对某些共享数据的访问。
-
-IPC 对象的持久化
-
-| 持久化方式                | 生存周期                                  |
-| ------------------------- | ----------------------------------------- |
-| process-persistent IPC    | 直到打开 IPC 对象的最后一个进程关闭该对象 |
-| kernel-persistent IPC     | 直到内核重启或 IPC 对象被显式删除         |
-| filesystem-persistent IPC | 直到 IPC 对象被显式删除。                 |
-
-> 没有任何一种 IPC 是使用文件系统持久化的，但确实是有一些 IPC 依赖于文件系统的实现。文件提供了文件系统的持久化属性，但 IPC 通常不使用这种方式，大多数 IPC 对象在内核重启之后就会消失，这是因为进程在重启之后也会消失，进程都消失了，IPC 也失去了意义。同时，使用文件系统持久化可能会降低 IPC 的性能，然而 IPC 的设计目标就是高性能，否则为何不直接使用文件进行信息传递呢？
+> 
 
 
 ## 命名空间 (Name Space)
