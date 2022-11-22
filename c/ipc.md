@@ -4,11 +4,19 @@
 
 ### IPC 简介
 
-IPC 对象持久性
+### Unix 共享信息模型
 
-IPC 名字和标识
+### IPC 对象持久性
 
-### POSIX IPC 
+### IPC 名字和标识
+
+### POSIX IPC
+
+管道
+
+FIFO
+
+POSIX
 
 进程间通信（Inter Process communication, IPC）具有两种基本方式：
 
