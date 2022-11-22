@@ -16,7 +16,11 @@
 
 FIFO
 
-POSIX
+消息队列
+
+
+
+
 
 进程间通信（Inter Process communication, IPC）具有两种基本方式：
 
