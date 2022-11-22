@@ -61,8 +61,8 @@ IPC 对象具有名字和标识符，这样一个进程创建 IPC 对象，另�
 | POSIX 互斥锁         | 没有名字       | `pthread_mutex_t` 指针  |
 | POSIX 条件变量       | 没有名字       | `pthread_cond_t` 指针   |
 | POSIX 读写锁         | 没有名字       | `pthread_rwlock_t` 指针 |
-| `fcntl` 记录上锁     | 路径名         |                         |
-| POSIX 消息队列       | POSIX IPC 名字 |                         |
+| `fcntl` 记录上锁     | 路径名         | 文件描述符              |
+| POSIX 消息队列       | POSIX IPC 名字 | `mqd_t` 值              |
 | POSIX 有名信号量     | POSIX IPC 名字 | `sem_t` 指针            |
 | POSIX 基于内存信号量 | 没有名字       | `sem_t` 指针            |
 | POSIX 共享内存区     | POSIX IPC 名字 | 文件描述符              |
