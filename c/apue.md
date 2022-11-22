@@ -505,7 +505,7 @@ int main() {
 
 
 
-## 进程基础
+## 进程
 
 ### 进程开始
 
@@ -1385,7 +1385,7 @@ Hello World! It's me, thread (tid:140491209594624) #4!
 
 线程也可以传入参数。
 
-```
+```c
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1486,4 +1486,5 @@ pthread_join() 使得调用线程将一直阻塞，直到指定的线程调用 p
 
 ## 线程控制
 
+## 进程间通信
 
