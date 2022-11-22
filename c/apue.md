@@ -265,9 +265,13 @@ chown
 
 ### 文件时间
 
+### 符号链接
 
+### 目录
 
-### 文件 I/O
+### 设备特殊文件
+
+## 文件 I/O
 
 | 函数名    | 说明                           | 函数体                                                       | Header     | Return                                              |
 | --------- | ------------------------------ | ------------------------------------------------------------ | ---------- | --------------------------------------------------- |
@@ -291,17 +295,217 @@ chown
 | fcntl     | 改变己经打开文件的属性                       | <fcntl.h>                                                |
 | ioctl     | I/O操作的杂货箱                              | <unistd.h> in System V <br><sys/ioctl.h> in BSD or Linux |
 
-### 符号链接
 
-### 目录
-
-### 设备特殊文件
 
 ## 标准 I/O
 
-TODO
+### 格式化 I/O 输入
 
-## 进程环境
+C 语言的输入函数家族主要包括三个函数，其区别在于**输入源**不同，分别是
+
+- `scanf`：从标准输入流 `stdin` 读入。
+- `fscanf`：从文件流指针 `steam` 读入。
+- `sscanf`：从字符串指针 `str` 读入。 
+
+```c
+#include <stdio.h>
+int scanf(const char *format, ...);
+int fscanf(FILE *stream, const char *format, ...);
+int sscanf(const char *str, const char *format, ...);
+```
+
+输入函数主要构成参数为**格式化字符串**以及**可变参数列表**。其中，格式化字符串包括一系列指令，输入函数将会按照指令的规则来解析输入，并将结果按照顺序存入到指针参数指向的变量中。
+
+实际上，输入函数简单易用。然而，格式化字符串的内容才是其精髓，通过精妙的组合可以实现许多效果。
+
+**格式化字符串**包括一系列**指令**，它们有：
+
+- 一串空白字符：包括空格、换行、制表符等，它们可以匹配输入源中任意数量的空白字符。
+- **转换格式符**：由 `%` 开头的字符，将会按照格式匹配输入源，并将结果存储到对应的变量中。
+- 常规字符： 除了以上两种字符以外常规的字符，必须精确匹配输入中对应的字符。
+
+因此，输入函数族的处理过程大致如下：
+
+1. 从输入源的第一个位置，尝试匹配第一个指令，如果匹配成功，则进行下一个指令匹配，如果匹配失败，则函数返回。
+2. 由于前一个指令已经“消耗了”一定的输入，因此下一个指令将继续匹配剩余输入源。
+3. 如果输入不够或者错误，则引发 `input failure` 退出；如果匹配错误，则引发 `match failure` 退出；如果匹配完毕，则函数返回成功匹配的个数。
+
+> 实际上，输入输出真正复杂多变的地方在于转换格式符的规则，详细内容请查阅 man 手册，此文不再一一列出。
+
+**转换说明符**是 `%` 后面的字符，以下是两个不常用但十分有用的说明符号。常用的说明符在示例程序中有展示，不再赘述。
+
+- `%n`：返回到目前为止，匹配消耗的输入字符数，并存储到下一个变量中，该变量类型必须为 int。
+- `%[`：匹配一系列非空字符，且字符必须属于方括号集合，如果第一个字符为 `^` 则表示除此之外任何字符。对于如果字符间有 `-` 则表示两字符间所有字符，如果要匹配字符 `]` 或 `-` 本身，则字符 `]` 必须位于 `[` 或 `^`之后，`-`必须位于最后一个，`%[^]0-9-]` 表示匹配除了 `[`、数字 `0` - `9` 以及 `-` 之外所有字符。
+
+以下是标准输入读取示例：
+
+`%[]`：匹配一系列非空字符，且字符必须属于方括号集合，如果第一个字符为 `^` 则表示除此之外任何字符。对于如果字符间有 `-` 则表示两字符间所有字符，如果要匹配字符 `]` 或 `-` 本身，则字符 `]` 必须位于 `[` 或 `^`之后，`-`必须位于最后一个，`%[^]0-9-]` 表示匹配除了 `[`、数字 `0` - `9` 以及 `-` 之外所有字符。
+
+```c
+char* p;
+int n;
+n = scanf("%m[^]0-9-]", &p);
+if (n == 1) {
+    printf("read: %s\n", p);
+    free(p);
+} else {
+    fprintf(stderr, "No matching characters\n");
+}
+```
+
+以下是文件读取读取示例：
+
+```c
+#include <stdio.h>
+
+int main()
+{
+    int i;
+    unsigned int u;
+    unsigned int x;
+    float f;
+    double lf;
+    char s[10] = { '\0' };
+    char str[128] = { '\0' };
+
+    FILE* fp = fopen("value.txt", "r");
+    int len = fscanf(fp, "%i %u %x %f %s %lf %[^\n]", &i, &u, &x, &f, s, &lf, str);
+    printf("len: %d\n", len);
+    printf("data: %i %u %x %f %s %lf %s\n", i, u, x, f, s, lf, str);
+}
+```
+
+以下是字符串读取示例：
+
+`%n`：返回到目前为止，匹配消耗的输入字符数，并存储到下一个变量中，该变量类型必须为 int。
+
+以下代码将文本文件中 x 行 y 列的浮点数读取到二维数组中。
+
+```c
+#include <stdio.h>
+
+int main()
+{
+    int row = 3;
+    int column = 4;
+    double data[row][column];
+
+    FILE* f = fopen("data.txt", "r");
+    if (f == NULL) {
+        printf("File can not be read!");
+        return 1;
+    }
+
+    char line_buffer[1024] = { '\0' };
+    int r = 0;
+    while (fgets(line_buffer, 1024, f)) {
+        int c = 0, offset = 0, len;
+        double tmp;
+        while (sscanf(line_buffer + offset, "%lf%n", &tmp, &len) != EOF) {
+            data[r][c++] = tmp;
+            offset += len;
+        }
+        r++;
+    }
+
+    for (int i = 0; i < row; i++) {
+        for (int j = 0; j < column; j++) {
+            printf("%lf ", data[i][j]);
+        }
+        printf("\n");
+    }
+
+    pclose(f); // 关闭文件
+    return 0;
+}
+```
+
+### 格式化 I/O 输出
+
+C 语言的输入函数家族主要包括五个函数，其区别在于**输出源**不同，分别是
+
+- `printf`：输出至标准输入流 `stdin` 。
+- `fprintf`：输出至文件流指针 `steam` 。
+- `dprintf`：输出至文件描述符 `fd` 。 
+- `sprintf`：输出至字符串指针 `str` 。 
+- `snprintf`：输出至字符串指针 `str` 。 
+
+```c
+#include <stdio.h>
+
+int printf(const char *format, ...);
+int fprintf(FILE *stream, const char *format, ...);
+int dprintf(int fd, const char *format, ...);
+int sprintf(char *str, const char *format, ...);
+int snprintf(char *str, size_t size, const char *format, ...);
+```
+
+输出函数主要构成参数为**格式化字符串**以及**可变参数列表**，其中，格式化字符串包括一系列指令，输出函数将会按照指令的规则依次将参数的值格式化输出。
+
+输出函数格式化字符串包括一系列**指令**，它们有：
+
+- 常规字符： 直接输出，不做任何改变。
+- **转换格式符** (conversion specifications)：由 `%` 开头的字符，将会按照格式格式化变量，并将结果输出。
+
+**转换格式符**中的**转换说明符** (conversion specifier) 同输入函数一样，但转换格式符提供了一些额外的选项，格式如下：
+
+```
+%[flags][field width][precision][length modifier]conversion specifier
+```
+
+**标志符号 (flags)** 有四个比较常用：
+
+- `#` ：标准形式，例如十六进制数字会以 `0x` 开头等。
+- `0` ：空位补零，默认是空格填充。
+- `-` ：左对齐，默认是右对齐。
+- `+` ：正数符号显示，默认正数不显示符号。
+
+**宽度 (field width)** 字段使用**非负数字**描述了这个变量占用的**最小宽度**，如果变量的输出结果宽度小于该值，则进行填充。
+
+**精度 (precision)** 使用 `.dig` 表示，dig 为非负数字。精度和宽度有一定冲突。
+
+- 对于整数，指示显示的位数。
+- 对于浮点书，指示小数点后位数。
+- 对于字符串指示最大显示个数。
+
+**转换说明符**是格式符中最重要的部分，主要包括：
+
+- `d, i` : int 输出为 signed decimal 格式。
+- `o, u, x, X` : unsigned int 输出为 unsigned octal/decimal/hex 格式。
+- `f` ：double 输出为小数形式，精度表示小数点位数，默认后 6 位。
+- `e, E`:  double 输出为科学计数格式。
+- `g, G`: double 输出为去除多余 0 格式，精度表示有效数字位数。
+- `c`: int 输出为 unsigned char。
+- `s`: char * 输出为字符串。
+- `p`:  void * 指针输出为十六进制地址。
+
+以下是一个输出示例代码。
+
+```c
+#include <stdio.h>
+
+int main() {
+    int i = 47;
+    double f = 314.1592653;
+    char str[] = "hello world";
+    printf("i:\tdec: %d, oct: %o, HEX: %#X, hex: %04x\n", i, i, i, i);
+    printf("f:\tbasic: %f, e: %.2e, E: %.10E, g: %.8g\n", f, f, f, f);
+    printf("c:\t%c\n", i);
+    printf("s:\t%s\n", str);
+    printf("p:\t%p\n", str);
+    return 0;
+}
+// output:
+// i:      dec: 47, oct: 57, HEX: 0X2F, hex: 002f
+// f:      basic: 314.159265, e: 3.14e+02, E: 3.1415926530E+02, g: 314.15927
+// c:      /
+// s:      hello world
+// p:      0x7ffc9df49a5c
+```
+
+
+
+## 进程基础
 
 ### 进程开始
 
@@ -580,452 +784,6 @@ $ proc3 | proc4 | proc5
 
 ![job-control](index/job-control.png)
 
-## 信号
-
-### 信号概念
-
-信号是一种软件中断，提供了一种处理异步事件的方法。
-
-每个信号都有一个名字，定义在头文件 `<signal.h>` 中。信号的产生可以由多种方式，例如：
-
-- 某些按键被按下，触发信号。
-- 硬件异常（除 0，内存无效等）触发信号。
-- 某些条件产生时，触发信号。
-- 进程调用函数主动触发信号。
-
-当信号出现时，内核按照以下三种方式之一进行处理。
-
-- 捕捉信号：**通知内核在某种信号发生时，执行用户函数（signal handler）**。
-- 执行默认动作：大多数信号的**默认动作是终止进程**。
-- 忽略信号：大多数信号都可以被忽略，**但 `SIGKILL` 和 `SIGSTOP` 不能忽略**。
-
-信号具有编号，一般而言用宏定义表示。其中用户可以使用的为 1-31，实时信号一般是内核使用的。
-
-```
- 1) SIGHUP	     2) SIGINT	     3) SIGQUIT	     4) SIGILL	     5) SIGTRAP
- 6) SIGABRT	     7) SIGBUS	     8) SIGFPE	     9) SIGKILL	    10) SIGUSR1
-11) SIGSEGV 	12) SIGUSR2	    13) SIGPIPE	    14) SIGALRM	    15) SIGTERM
-16) SIGSTKFLT	17) SIGCHLD 	18) SIGCONT	    19) SIGSTOP	    20) SIGTSTP
-21) SIGTTIN 	22) SIGTTOU 	23) SIGURG	    24) SIGXCPU	    25) SIGXFSZ
-26) SIGVTALRM	27) SIGPROF 	28) SIGWINCH	29) SIGIO	    30) SIGPWR
-31) SIGSYS	    34) SIGRTMIN	35) SIGRTMIN+1	36) SIGRTMIN+2	37) SIGRTMIN+3
-38) SIGRTMIN+4	39) SIGRTMIN+5	40) SIGRTMIN+6	41) SIGRTMIN+7	42) SIGRTMIN+8
-43) SIGRTMIN+9	44) SIGRTMIN+10	45) SIGRTMIN+11	46) SIGRTMIN+12	47) SIGRTMIN+13
-48) SIGRTMIN+14	49) SIGRTMIN+15	50) SIGRTMAX-14	51) SIGRTMAX-13	52) SIGRTMAX-12
-53) SIGRTMAX-11	54) SIGRTMAX-10	55) SIGRTMAX-9	56) SIGRTMAX-8	57) SIGRTMAX-7
-58) SIGRTMAX-6	59) SIGRTMAX-5	60) SIGRTMAX-4	61) SIGRTMAX-3	62) SIGRTMAX-2
-63) SIGRTMAX-1	64) SIGRTMAX
-```
-
-大部分 Unix 系统都提供了编号到信号名的映射数组，数组下标为信号编号，数组元素为指向信号名字符串的指针。通常使用 `strsignal` 函数取出其描述内容，类似于 `strerror`。
-
-```c
-#include <signal.h>
-extern const char *const sys_siglist[];
-
-#include <string.h>
-char *strsignal(int sig);
-```
-
-如果需要将其输出到标准错误，可以使用 `psignal`，类似于 `perror`。
-```c
-#include <signal.h>
-
-void psignal(int sig, const char *s);
-void psiginfo(const siginfo_t *pinfo, const char *s);
-```
-
-以下是一个代码片段示例。
-
-```c
-// signal.c
-int i = 9;
-printf("signal %d : %s\n", i, strsignal(i));
-psignal(i, "error");
-// result
-$ gcc signal.c
-$ ./a.out 2>&1
-signal 9 : Killed
-error: Killed
-```
-
-### 信号发送
-
-某些软件/硬件在中断或异常时，或是用户按下某些键位时，内核或驱动将会自动产生信号，发送给相应的进程。除此之外，程序也可以通过**信号发送函数**来主动发送信号。
-
-- `kill` 函数将信号发送给进程或进程组。
-- `raise` 函数允许进程将信号发送给自己。
-
-```
-#include <signal.h>
-int kill(pid_t pid, int signo);
-int raise(int signo);
-```
-
-`kill` 函数中，pid 参数有以下几种情况：
-
-- pid > 0：发送给进程 pid。
-- pid == 0：发送给同一进程组所有进程。
-- pid < 0：发送给进程组 pid 的所有进程（发送进程具有权限向其发送信号的进程）。
-- pid == -1：发送给所有进程（发送进程具有权限向其发送信号的进程）。
-
-注意：进程将信号发送给另一进程需要权限。
-
-通过 `kill` 命令行工具可以发送信号给指定进程。其格式为
-
-```
-kill -<signal> <pid> [...]
-```
-
-其中 signal 可以是编号、名称或简写。即： `-9, -SIGKILL or -KILL`。
-
-例如：
-
-```shell
-kill -SIGUSR1 18742		# send SIGUSR1
-kill -USR2 18742		# send SIGUSR2
-kill 18742				# send SIGTERM
-kill -9 18742			# send SIGKILL
-```
-
-### 信号设置
-
-Unix 中，如果进程没有设置感兴趣的信号，当进程收到信号时，则会使用默认的处理动作。如果进程希望捕获某种信号，则可以使用 `signal` 函数来设置信号处理函数。
-
-```c
-#include <signal.h>
-void (*signal(int signo, void (*func)(int)))(int);
-```
-
-`signal` 函数要求两个参数：
-
-- signo 为感兴趣的信号名。
-- func 为信号处理程序指针，表示该信号发生时的动作，
-    - 常量 SIG_IGN 表示忽略此信号。
-    - 常量 SIG_DFL 表示执行默认动作。
-    - 函数地址表示在信号发生时调用该函数。
-
-**信号处理函数要求一个整形参数，并且返回值为 void。**当调用 signal 设置信号处理程序时，返回该函数的指针。简化一下 signal 的声明如下：
-
-```
-typedef void Sigfunc(int);
-Sigfunc *signal(int signo, Sigfunc *func);
-```
-
-以下是一个设置信号的示例：
-
-```c
-#include <signal.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-
-/* one handler for both signals, argument is signal number */
-static void sig_usr(int signo) {
-    printf("received %s (%d)\n", strsignal(signo), signo);
-}
-
-int main(void) {
-    if (signal(SIGUSR1, sig_usr) == SIG_ERR)
-        printf("can't catch SIGUSR1");
-    if (signal(SIGUSR2, sig_usr) == SIG_ERR)
-        printf("can't catch SIGUSR2");
-    if (signal(SIGQUIT, sig_usr) == SIG_ERR)
-        printf("can't catch SIGQUIT");
-    for (;;)
-        pause();
-}
-```
-
-当我们执行时，对于已经设置过的信号，会执行 sig_usr 函数，否则执行默认动作。
-
-```
-$ ./sig &										# 启动程序
-[1] 17497										# shell 打印作业编号和进程 ID
-$ kill -USR1 17497								# 使用 kill 命令向进程发送 USR1 信号
-received User defined signal 1 (10)
-$ kill -USR2 17497								# 使用 kill 命令向进程发送 USR2 信号
-received User defined signal 2 (12)
-$ kill 17497									# 使用 kill 命令向进程发送 SIGTERM 信号
-[1]+  Terminated              ./sig
-```
-
-### 常用信号说明
-
-以下是信号的具体解释。
-
-|    信号    |               英文解释               |                           信号产生                           | 默认动作 |
-| :--------: | :----------------------------------: | :----------------------------------------------------------: | -------- |
-|            |                                      |                                                              |          |
-|            |                                      |                                                              |          |
-|            |                                      |                                                              |          |
-|            |                                      |                                                              |          |
-|            |                                      |                                                              |          |
-|            |                                      |                                                              |          |
-|  SIGABRT   |     abnormal termination (abort)     |                                                              |          |
-|  SIGALRM   |        timer expired (alarm)         |                                                              |          |
-|   SIGBUS   |            hardware fault            |                                                              |          |
-| SIGCANCEL  |     threads library internal use     |                                                              |          |
-|  SIGCHLD   |      change in status of child       |                                                              |          |
-|  SIGCONT   |       continue stopped process       |                                                              |          |
-|   SIGEMT   |            hardware fault            |                                                              |          |
-|   SIGFPE   |         arithmetic exception         |                                                              |          |
-| SIGFREEZE  |          checkpoint freeze           |                                                              |          |
-|   SIGHUP   |                hangup                |                                                              |          |
-|   SIGILL   |         illegal instruction          |                                                              |          |
-|  SIGINFO   |     status request from keyboard     |                                                              |          |
-|   SIGINT   |     terminal interrupt character     | 用户按中断键（`DEL` 或 `CTRL+C`）时，终端驱动向前台进程组所有进程发送中断信号。 |          |
-|   SIGIO    |           asynchronous I/O           |                              用                              |          |
-|   SIGIOT   |            hardware fault            |                                                              |          |
-|  SIGJVM1   |  Java virtual machine internal use   |                                                              |          |
-|  SIGJVM2   |  Java virtual machine internal use   |                                                              |          |
-|  SIGKILL   |             termination              |                         杀死任意进程                         |          |
-|  SIGLOST   |            resource lost             |                                                              |          |
-|   SIGLWP   |     threads library internal use     |                                                              |          |
-|  SIGPIPE   |    write to pipe with no readers     |                                                              |          |
-|  SIGPOLL   |        pollable event (poll)         |                                                              |          |
-|  SIGPROF   |   profiling time alarm (setitimer)   |                                                              |          |
-|   SIGPWR   |          power fail/restart          |                                                              |          |
-|  SIGQUIT   |       terminal quit character        | 户按退出键（`CTRL+\`）发送 QUIT 字符时，进程收到该信号时会产生core文件，类似于一个程序错误信号。 |          |
-|  SIGSEGV   |       invalid memory reference       |                                                              |          |
-| SIGSTKFLT  |       coprocessor stack fault        |                                                              |          |
-|  SIGSTOP   |                 stop                 |                                                              |          |
-|   SIGSYS   |         invalid system call          |                                                              |          |
-|  SIGTERM   |             termination              |               kill 命令发送系统默认终止信号。                |          |
-|  SIGTHAW   |           checkpoint thaw            |                                                              |          |
-|   SIGTHR   |     threads library internal use     |                                                              |          |
-|  SIGTRAP   |            hardware fault            |                                                              |          |
-|  SIGTSTP   |       terminal stop character        |                                                              |          |
-|  SIGTTIN   |   background read from control tty   |                                                              |          |
-|  SIGTTOU   |   background write to control tty    |                                                              |          |
-|   SIGURG   |      urgent condition (sockets)      |                                                              |          |
-|  SIGUSR1   |         user-defined signal          |                        用户自定义信号                        |          |
-|  SIGUSR2   |         user-defined signal          |                        用户自定义信号                        |          |
-| SIGVTALRM  |    virtual time alarm (setitimer)    |                                                              |          |
-| SIGWAITING |     threads library internal use     |                                                              |          |
-|  SIGWINCH  |     terminal window size change      |                                                              |          |
-|  SIGXCPU   |    CPU limit exceeded (setrlimit)    |                                                              |          |
-|  SIGXFSZ   | file size limit exceeded (setrlimit) |                                                              |          |
-|  SIGXRES   |      resource control exceeded       |                                                              |          |
-
-### 信号相关函数
-
-```
-#include <unistd.h>
-unsigned int alarm(unsigned int seconds);
-```
-
-
-
-### 信号屏蔽
-
-
-
-## 线程基础
-
-### 线程简介
-
-典型的 Unix 进程可以看成只有一个控制线程：一个进程在某一时刻只能做一件事情。有了多个控制线程以后，在程序设计时就可以把进程设计成在某一时刻能够做不止一件事，每个线程处理各自独立的任务。
-
-线程带来了很多好处：
-
-- 通过为每种事件类型分配单独的处理线程，可以简化处理异步事件的代码。**每个线程在进行事件处理时可以采用同步编程模式**，同步编程模式要比异步编程模式简单得多。
-- 多个进程必须使用操作系统提供的复杂机制才能实现内存和文件描述符的共享，而多个**线程自动地可以访问相同的存储地址空间和文件描述符**。
-- 单控制线程情况下，完成多任务只能串行进行。但有多个控制线程时，**相互独立的任务处理就可以交叉进行**，从而提高整个程序的吞吐量。
-- 通过使用多线程将处理用户输入输出的部分与其他部分分开，从而改善程序响应时间。
-
-**多线程**代码与**多处理器**或**多核系统**并不是绑定的，尽管多核处理器能够充分发挥多线程的优势。但即使程序运行在单处理器上，也能得到多线程编程模型的好处。所以不管处理器的个数多少，程序都可以通过使用线程得以简化。而且由于某些线程在阻塞的时候还有另外一些线程可以运行，所以多线程程序在单处理器上运行还是可以改善响应时间和吞吐量。
-
-每个线程都包含有表示执行环境所必需的信息，其中包括：进程中标识线程的线程 ID、一组寄存器值、栈、调度优先级和策略、信号屏蔽字、errno 变量以及线程私有数据。一个进程的所有信息对该进程的所有线程都是共享的，包括可执行程序的代码、程序的全局内存和堆内存、栈以及文件描述符。
-
-这里主要讨论 POSIX 线程，即 pthread 线程，头文件为 `<pthread.h>`。
-
-### 线程标识
-
-就像每个进程有一个进程 ID 一样，每个线程也有一个线程 ID。进程 ID 在整个系统中是唯一的，但线程 ID 只有在它所属的进程上下文中才有意义。
-
-- 进程 ID 使用 pid_t 数据类型来表示
-- 线程 ID 使用 pthread_t 数据类型来表示
-
-Linux 上 pthread_t 使用 unsigned long int 实现，有时候打印线程 ID 很有用。而其他 Unix 变种系统却不一定，因此打印 ID 代码移植起来需要特别注意。
-
-| 函数                                               | 解释            |
-| -------------------------------------------------- | --------------- |
-| pthread_t pthread_self(void);                      | 获得自身线程 ID |
-| int pthread_equal(pthread_t tid1, pthread_t tid2); | 线程 ID 比较    |
-
-### 线程创建
-
-在传统 Unix 进程模型中，每个进程只有一个控制线程。程序开始运行时，它也是以单进程中的单个控制线程启动的。在创建多个控制线程以前，程序的行为与传统的进程并没有什么区别。
-
-新增的线程可以通过调用 `pthread_create()` 函数创建，执行成功时返回 0，失败时返回错误码。
-
-```
-int pthread_create(pthread_t *thread, 
-                const pthread_attr_t *attr, 
-                void * (*start_routine)(void *), 
-                void *arg);
-```
-
-其中参数为：
-
-- 第一个参数为该线程 ID 的指针
-- 第二个参数为线程属性
-- 第三个参数为该线程执行的任务函数指针
-- 第四个参数为任务函数参数指针
-
-以下是一个创建线程代码的简单示例，每个线程简单的打印自身的线程 ID 和 任务 ID 后就退出。
-
-```c
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#define NUM_THREADS 5
-
-void *print_hello(void *taskid) {
-    printf("Hello World! It's me, thread (tid:%ld) #%ld!\n", pthread_self(), (long) taskid);
-    pthread_exit(NULL);
-}
-
-int main(int argc, char *argv[]) {
-    pthread_t threads[NUM_THREADS];
-    int rc;
-    long t;
-    for (t = 0; t < NUM_THREADS; t++) {
-        printf("In main: creating thread %ld\n", t);
-        rc = pthread_create(&threads[t], NULL, print_hello, (void *)t);
-        if (rc) {
-            printf("ERROR; return code from pthread_create() is %d\n", rc);
-            exit(-1);
-        }
-    }
-
-    /* Last thing that main() should do */
-    pthread_exit(NULL);
-}
-```
-
-上述程序输出结果如下，每次输出的结果并不相同。
-
-```
-In main: creating thread 0
-In main: creating thread 1
-Hello World! It's me, thread (tid:140491234883328) #0!
-In main: creating thread 2
-Hello World! It's me, thread (tid:140491226490624) #1!
-In main: creating thread 3
-Hello World! It's me, thread (tid:140491218097920) #2!
-In main: creating thread 4
-Hello World! It's me, thread (tid:140491131713280) #3!
-Hello World! It's me, thread (tid:140491209594624) #4!
-```
-
-线程也可以传入参数。
-
-```
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#define NUM_THREADS 3
-
-struct thread_data {
-    int task_id;
-    char *name;
-};
-
-struct thread_data thread_data_array[NUM_THREADS];
-
-void *print_hello(void *threadarg) {
-    struct thread_data *my_data;
-    long taskid;
-    char *name;
-    my_data = (struct thread_data *)threadarg;
-    taskid = my_data->task_id;
-    name = my_data->name;
-    printf("Hello World! It's me, thread #%ld, my name is %s!\n", taskid, name);
-    pthread_exit(NULL);
-}
-
-int main(int argc, char *argv[]) {
-    pthread_t threads[NUM_THREADS];
-    char *thread_names[NUM_THREADS];
-    thread_names[0] = "Alice";
-    thread_names[1] = "Bob";
-    thread_names[2] = "Tom";
-
-    int rc;
-    long t;
-
-    for (t = 0; t < NUM_THREADS; t++) {
-        thread_data_array[t].task_id = t;
-        thread_data_array[t].name = thread_names[t];
-        printf("In main: creating thread #%ld\n", t);
-        rc = pthread_create(&threads[t], NULL, print_hello,
-                            (void *)&thread_data_array[t]);
-        if (rc) {
-            printf("ERROR; return code from pthread_create() is %d\n", rc);
-            exit(-1);
-        }
-    }
-
-    /* Last thing that main() should do */
-    pthread_exit(NULL);
-}
-```
-
-上述程序输出结果如下，每次输出的结果并不相同。
-
-```
-In main: creating thread #0
-In main: creating thread #1
-Hello World! It's me, thread #0, my name is Alice!
-In main: creating thread #2
-Hello World! It's me, thread #1, my name is Bob!
-Hello World! It's me, thread #2, my name is Tom!
-```
-
-### 线程管理
-
-如果进程中的任意线程调用了exit, Exit 或者 _exit，那么**整个进程就会终止**。单个线程可以通过 3 种方式退出，因此可以在不终止整个进程的情况下，停止它的控制流。
-
-- 线程可以简单地从启动例程中返回，返回值是线程的退出码。
-- 线程可以被同一进程中的其他线程取消。
-- 线程调用 pthread_exit() 函数。
-
-```
-void pthread_exit(void *retval);
-```
-
-通过 pthread_exit() 函数终止调用线程，并且如果该线程是 joinable 的话，还可以通过 retval 返回值给同进程的其他线程。注意 retval 指针指向的值不能存在于栈中，因为线程结束后栈会被销毁。
-
-**当进程的所有的线程都终止后，则进程退出**。因此 main 线程最后应该调用 pthread_exit() 明确指出退出主线程，如若不然，main 将会隐式的调用 exit，从而退出整个进程，从而导致其他线程被终止。
-
-```
-int pthread_join(pthread_t thread, void **retval);
-```
-
-pthread_join() 使得调用线程将一直阻塞，直到指定的线程调用 pthread_exit()、从启动线程中返回或者被取消。
-
-如果对线程的返回值并不感兴趣，那么可以把 retval 指针设置为 NULL。在这种情况下，调用 pthread_join() 函数可以等待指定的线程终止，但并不获取线程的终止状态。
-
-
-
-### 线程 API 总结
-
-| 函数                                               | 解释                                     |
-| -------------------------------------------------- | ---------------------------------------- |
-| pthread_t pthread_self(void);                      | 获得自身线程 ID                          |
-| int pthread_equal(pthread_t tid1, pthread_t tid2); | 线程 ID 比较                             |
-| void pthread_exit(void *retval);                   | 退出调用线程，并可能传出返回值到其他线程 |
-
-## 线程同步
-
-## 线程控制
-
-
-
 ## 守护进程（完成）
 
 ### 守护进程特征
@@ -1287,9 +1045,445 @@ Nov 19 02:38:29 msi-ryzen3600 daemon: message repeated 2 times: [ daemon already
 Nov 19 02:45:19 msi-ryzen3600 daemon: got SIGTERM; exiting
 ```
 
-## 终端/伪终端
+## 信号
 
-## 数据库
+### 信号概念
 
-TODO
+信号是一种软件中断，提供了一种处理异步事件的方法。
+
+每个信号都有一个名字，定义在头文件 `<signal.h>` 中。信号的产生可以由多种方式，例如：
+
+- 某些按键被按下，触发信号。
+- 硬件异常（除 0，内存无效等）触发信号。
+- 某些条件产生时，触发信号。
+- 进程调用函数主动触发信号。
+
+当信号出现时，内核按照以下三种方式之一进行处理。
+
+- 捕捉信号：**通知内核在某种信号发生时，执行用户函数（signal handler）**。
+- 执行默认动作：大多数信号的**默认动作是终止进程**。
+- 忽略信号：大多数信号都可以被忽略，**但 `SIGKILL` 和 `SIGSTOP` 不能忽略**。
+
+信号具有编号，一般而言用宏定义表示。其中用户可以使用的为 1-31，实时信号一般是内核使用的。
+
+```
+ 1) SIGHUP	     2) SIGINT	     3) SIGQUIT	     4) SIGILL	     5) SIGTRAP
+ 6) SIGABRT	     7) SIGBUS	     8) SIGFPE	     9) SIGKILL	    10) SIGUSR1
+11) SIGSEGV 	12) SIGUSR2	    13) SIGPIPE	    14) SIGALRM	    15) SIGTERM
+16) SIGSTKFLT	17) SIGCHLD 	18) SIGCONT	    19) SIGSTOP	    20) SIGTSTP
+21) SIGTTIN 	22) SIGTTOU 	23) SIGURG	    24) SIGXCPU	    25) SIGXFSZ
+26) SIGVTALRM	27) SIGPROF 	28) SIGWINCH	29) SIGIO	    30) SIGPWR
+31) SIGSYS	    34) SIGRTMIN	35) SIGRTMIN+1	36) SIGRTMIN+2	37) SIGRTMIN+3
+38) SIGRTMIN+4	39) SIGRTMIN+5	40) SIGRTMIN+6	41) SIGRTMIN+7	42) SIGRTMIN+8
+43) SIGRTMIN+9	44) SIGRTMIN+10	45) SIGRTMIN+11	46) SIGRTMIN+12	47) SIGRTMIN+13
+48) SIGRTMIN+14	49) SIGRTMIN+15	50) SIGRTMAX-14	51) SIGRTMAX-13	52) SIGRTMAX-12
+53) SIGRTMAX-11	54) SIGRTMAX-10	55) SIGRTMAX-9	56) SIGRTMAX-8	57) SIGRTMAX-7
+58) SIGRTMAX-6	59) SIGRTMAX-5	60) SIGRTMAX-4	61) SIGRTMAX-3	62) SIGRTMAX-2
+63) SIGRTMAX-1	64) SIGRTMAX
+```
+
+大部分 Unix 系统都提供了编号到信号名的映射数组，数组下标为信号编号，数组元素为指向信号名字符串的指针。通常使用 `strsignal` 函数取出其描述内容，类似于 `strerror`。
+
+```c
+#include <signal.h>
+extern const char *const sys_siglist[];
+
+#include <string.h>
+char *strsignal(int sig);
+```
+
+如果需要将其输出到标准错误，可以使用 `psignal`，类似于 `perror`。
+```c
+#include <signal.h>
+
+void psignal(int sig, const char *s);
+void psiginfo(const siginfo_t *pinfo, const char *s);
+```
+
+以下是一个代码片段示例。
+
+```c
+// signal.c
+int i = 9;
+printf("signal %d : %s\n", i, strsignal(i));
+psignal(i, "error");
+// result
+$ gcc signal.c
+$ ./a.out 2>&1
+signal 9 : Killed
+error: Killed
+```
+
+### 信号发送
+
+某些软件/硬件在中断或异常时，或是用户按下某些键位时，内核或驱动将会自动产生信号，发送给相应的进程。除此之外，程序也可以通过**信号发送函数**来主动发送信号。
+
+- `kill` 函数将信号发送给进程或进程组。
+- `raise` 函数允许进程将信号发送给自己。
+
+```
+#include <signal.h>
+int kill(pid_t pid, int signo);
+int raise(int signo);
+```
+
+`kill` 函数中，pid 参数有以下几种情况：
+
+- pid > 0：发送给进程 pid。
+- pid == 0：发送给同一进程组所有进程。
+- pid < 0：发送给进程组 pid 的所有进程（发送进程具有权限向其发送信号的进程）。
+- pid == -1：发送给所有进程（发送进程具有权限向其发送信号的进程）。
+
+注意：进程将信号发送给另一进程需要权限。
+
+通过 `kill` 命令行工具可以发送信号给指定进程。其格式为
+
+```
+kill -<signal> <pid> [...]
+```
+
+其中 signal 可以是编号、名称或简写。即： `-9, -SIGKILL or -KILL`。
+
+例如：
+
+```shell
+kill -SIGUSR1 18742		# send SIGUSR1
+kill -USR2 18742		# send SIGUSR2
+kill 18742				# send SIGTERM
+kill -9 18742			# send SIGKILL
+```
+
+### 信号设置
+
+Unix 中，如果进程没有设置感兴趣的信号，当进程收到信号时，则会使用默认的处理动作。如果进程希望捕获某种信号，则可以使用 `signal` 函数来设置信号处理函数。
+
+```c
+#include <signal.h>
+void (*signal(int signo, void (*func)(int)))(int);
+```
+
+`signal` 函数要求两个参数：
+
+- signo 为感兴趣的信号名。
+- func 为信号处理程序指针，表示该信号发生时的动作，
+    - 常量 SIG_IGN 表示忽略此信号。
+    - 常量 SIG_DFL 表示执行默认动作。
+    - 函数地址表示在信号发生时调用该函数。
+
+**信号处理函数要求一个整形参数，并且返回值为 void。**当调用 signal 设置信号处理程序时，返回该函数的指针。简化一下 signal 的声明如下：
+
+```
+typedef void Sigfunc(int);
+Sigfunc *signal(int signo, Sigfunc *func);
+```
+
+以下是一个设置信号的示例：
+
+```c
+#include <signal.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+
+/* one handler for both signals, argument is signal number */
+static void sig_usr(int signo) {
+    printf("received %s (%d)\n", strsignal(signo), signo);
+}
+
+int main(void) {
+    if (signal(SIGUSR1, sig_usr) == SIG_ERR)
+        printf("can't catch SIGUSR1");
+    if (signal(SIGUSR2, sig_usr) == SIG_ERR)
+        printf("can't catch SIGUSR2");
+    if (signal(SIGQUIT, sig_usr) == SIG_ERR)
+        printf("can't catch SIGQUIT");
+    for (;;)
+        pause();
+}
+```
+
+当我们执行时，对于已经设置过的信号，会执行 sig_usr 函数，否则执行默认动作。
+
+```
+$ ./sig &										# 启动程序
+[1] 17497										# shell 打印作业编号和进程 ID
+$ kill -USR1 17497								# 使用 kill 命令向进程发送 USR1 信号
+received User defined signal 1 (10)
+$ kill -USR2 17497								# 使用 kill 命令向进程发送 USR2 信号
+received User defined signal 2 (12)
+$ kill 17497									# 使用 kill 命令向进程发送 SIGTERM 信号
+[1]+  Terminated              ./sig
+```
+
+### 信号可靠性（TODO）
+
+当信号产生时，内核通常在进程表中以某种形式设置一个标志，这个过程称为信号递送（delivery）。在信号产生之后，信号递送之前，这段时间内信号是未知的（pending）。如果在 pending 之间信号重复产生，一般只能递送一次。
+
+```c
+int sigpending(sigset_t *set);
+```
+
+返回当前进程未知的信号集合。
+
+信号集数据类型可以表示多个信号，信号集的操作函数包括以下五个。
+
+```c
+#include <signal.h>
+int sigemptyset(sigset_t *set);
+int sigfillset(sigset_t *set);
+int sigaddset(sigset_t *set, int signo);
+int sigdelset(sigset_t *set, int signo);
+int sigismember(const sigset_t *set, int signo);
+```
+
+分别为：
+
+- 清除信号集中所有信号
+- 信号集中包括所有信号
+- 在信号集中添加特定信号
+- 在信号集中删除特定信号
+- 信号集中是否具有特定信号
+
+每个进程都有一个信号屏蔽字（signal mask），表示当前要阻塞传递到该进程的信号集。`sigprocmask` 函数可以检测或更改进程的信号屏蔽字。
+
+### 常用信号说明
+
+以下是信号的具体解释。
+
+|  信号   |             英文解释             |                           信号产生                           | 默认动作 |
+| :-----: | :------------------------------: | :----------------------------------------------------------: | -------- |
+| SIGSTOP |               stop               |             停止进程但不退出，不可被捕捉或忽略。             |          |
+| SIGKILL |           termination            |   系统管理员可以使用该信号杀死任意进程，不可被捕捉或忽略。   |          |
+| SIGTERM |           termination            | kill 命令发送系统默认终止信号。程序正常退出，可以做一些清理工作然后优雅退出进程。 |          |
+| SIGABRT |   abnormal termination (abort)   |          abort 函数调用时产生此信号，程序异常退出。          |          |
+| SIGINT  |   terminal interrupt character   | 用户按中断键（`DEL` 或 `CTRL+C`）时，终端驱动向前台进程组所有进程发送信号。 |          |
+| SIGQUIT |     terminal quit character      | 用户按退出键（`CTRL+\`）发送 QUIT 字符时，类似 SIGINT，但会产生core文件。 |          |
+| SIGTSTP |     terminal stop character      | 用户按挂起键（`CTRL+Z`）时，终端驱动向前台进程组所有进程发送信号，类似 STOP。 |          |
+| SIGCONT |     continue stopped process     |                                                              |          |
+|         |                                  |                                                              |          |
+| SIGCHLD |    change in status of child     |                                                              |          |
+| SIGHUP  |              hangup              |                                                              |          |
+| SIGPIPE |  write to pipe with no readers   |                                                              |          |
+| SIGPOLL |      pollable event (poll)       |                                                              |          |
+| SIGTTIN | background read from control tty |                                                              |          |
+| SIGTTOU | background write to control tty  |                                                              |          |
+| SIGURG  |    urgent condition (sockets)    |                                                              |          |
+| SIGUSR1 |       user-defined signal        |                        用户自定义信号                        |          |
+| SIGUSR2 |       user-defined signal        |                        用户自定义信号                        |          |
+| SIGFPE  |       arithmetic exception       |                                                              |          |
+| SIGABRT |   abnormal termination (abort)   |          abort 函数调用时产生此信号，程序异常退出。          |          |
+| SIGALRM |      timer expired (alarm)       |                 time 函数超时时产生此信号。                  |          |
+
+### 信号相关函数
+
+```
+#include <unistd.h>
+unsigned int alarm(unsigned int seconds);
+```
+
+
+
+## 线程基础
+
+### 线程简介
+
+典型的 Unix 进程可以看成只有一个控制线程：一个进程在某一时刻只能做一件事情。有了多个控制线程以后，在程序设计时就可以把进程设计成在某一时刻能够做不止一件事，每个线程处理各自独立的任务。
+
+线程带来了很多好处：
+
+- 通过为每种事件类型分配单独的处理线程，可以简化处理异步事件的代码。**每个线程在进行事件处理时可以采用同步编程模式**，同步编程模式要比异步编程模式简单得多。
+- 多个进程必须使用操作系统提供的复杂机制才能实现内存和文件描述符的共享，而多个**线程自动地可以访问相同的存储地址空间和文件描述符**。
+- 单控制线程情况下，完成多任务只能串行进行。但有多个控制线程时，**相互独立的任务处理就可以交叉进行**，从而提高整个程序的吞吐量。
+- 通过使用多线程将处理用户输入输出的部分与其他部分分开，从而改善程序响应时间。
+
+**多线程**代码与**多处理器**或**多核系统**并不是绑定的，尽管多核处理器能够充分发挥多线程的优势。但即使程序运行在单处理器上，也能得到多线程编程模型的好处。所以不管处理器的个数多少，程序都可以通过使用线程得以简化。而且由于某些线程在阻塞的时候还有另外一些线程可以运行，所以多线程程序在单处理器上运行还是可以改善响应时间和吞吐量。
+
+每个线程都包含有表示执行环境所必需的信息，其中包括：进程中标识线程的线程 ID、一组寄存器值、栈、调度优先级和策略、信号屏蔽字、errno 变量以及线程私有数据。一个进程的所有信息对该进程的所有线程都是共享的，包括可执行程序的代码、程序的全局内存和堆内存、栈以及文件描述符。
+
+这里主要讨论 POSIX 线程，即 pthread 线程，头文件为 `<pthread.h>`。
+
+### 线程标识
+
+就像每个进程有一个进程 ID 一样，每个线程也有一个线程 ID。进程 ID 在整个系统中是唯一的，但线程 ID 只有在它所属的进程上下文中才有意义。
+
+- 进程 ID 使用 pid_t 数据类型来表示
+- 线程 ID 使用 pthread_t 数据类型来表示
+
+Linux 上 pthread_t 使用 unsigned long int 实现，有时候打印线程 ID 很有用。而其他 Unix 变种系统却不一定，因此打印 ID 代码移植起来需要特别注意。
+
+| 函数                                               | 解释            |
+| -------------------------------------------------- | --------------- |
+| pthread_t pthread_self(void);                      | 获得自身线程 ID |
+| int pthread_equal(pthread_t tid1, pthread_t tid2); | 线程 ID 比较    |
+
+### 线程创建
+
+在传统 Unix 进程模型中，每个进程只有一个控制线程。程序开始运行时，它也是以单进程中的单个控制线程启动的。在创建多个控制线程以前，程序的行为与传统的进程并没有什么区别。
+
+新增的线程可以通过调用 `pthread_create()` 函数创建，执行成功时返回 0，失败时返回错误码。
+
+```
+int pthread_create(pthread_t *thread, 
+                const pthread_attr_t *attr, 
+                void * (*start_routine)(void *), 
+                void *arg);
+```
+
+其中参数为：
+
+- 第一个参数为该线程 ID 的指针
+- 第二个参数为线程属性
+- 第三个参数为该线程执行的任务函数指针
+- 第四个参数为任务函数参数指针
+
+以下是一个创建线程代码的简单示例，每个线程简单的打印自身的线程 ID 和 任务 ID 后就退出。
+
+```c
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define NUM_THREADS 5
+
+void *print_hello(void *taskid) {
+    printf("Hello World! It's me, thread (tid:%ld) #%ld!\n", pthread_self(), (long) taskid);
+    pthread_exit(NULL);
+}
+
+int main(int argc, char *argv[]) {
+    pthread_t threads[NUM_THREADS];
+    int rc;
+    long t;
+    for (t = 0; t < NUM_THREADS; t++) {
+        printf("In main: creating thread %ld\n", t);
+        rc = pthread_create(&threads[t], NULL, print_hello, (void *)t);
+        if (rc) {
+            printf("ERROR; return code from pthread_create() is %d\n", rc);
+            exit(-1);
+        }
+    }
+
+    /* Last thing that main() should do */
+    pthread_exit(NULL);
+}
+```
+
+上述程序输出结果如下，每次输出的结果并不相同。
+
+```
+In main: creating thread 0
+In main: creating thread 1
+Hello World! It's me, thread (tid:140491234883328) #0!
+In main: creating thread 2
+Hello World! It's me, thread (tid:140491226490624) #1!
+In main: creating thread 3
+Hello World! It's me, thread (tid:140491218097920) #2!
+In main: creating thread 4
+Hello World! It's me, thread (tid:140491131713280) #3!
+Hello World! It's me, thread (tid:140491209594624) #4!
+```
+
+线程也可以传入参数。
+
+```
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define NUM_THREADS 3
+
+struct thread_data {
+    int task_id;
+    char *name;
+};
+
+struct thread_data thread_data_array[NUM_THREADS];
+
+void *print_hello(void *threadarg) {
+    struct thread_data *my_data;
+    long taskid;
+    char *name;
+    my_data = (struct thread_data *)threadarg;
+    taskid = my_data->task_id;
+    name = my_data->name;
+    printf("Hello World! It's me, thread #%ld, my name is %s!\n", taskid, name);
+    pthread_exit(NULL);
+}
+
+int main(int argc, char *argv[]) {
+    pthread_t threads[NUM_THREADS];
+    char *thread_names[NUM_THREADS];
+    thread_names[0] = "Alice";
+    thread_names[1] = "Bob";
+    thread_names[2] = "Tom";
+
+    int rc;
+    long t;
+
+    for (t = 0; t < NUM_THREADS; t++) {
+        thread_data_array[t].task_id = t;
+        thread_data_array[t].name = thread_names[t];
+        printf("In main: creating thread #%ld\n", t);
+        rc = pthread_create(&threads[t], NULL, print_hello,
+                            (void *)&thread_data_array[t]);
+        if (rc) {
+            printf("ERROR; return code from pthread_create() is %d\n", rc);
+            exit(-1);
+        }
+    }
+
+    /* Last thing that main() should do */
+    pthread_exit(NULL);
+}
+```
+
+上述程序输出结果如下，每次输出的结果并不相同。
+
+```
+In main: creating thread #0
+In main: creating thread #1
+Hello World! It's me, thread #0, my name is Alice!
+In main: creating thread #2
+Hello World! It's me, thread #1, my name is Bob!
+Hello World! It's me, thread #2, my name is Tom!
+```
+
+### 线程管理
+
+如果进程中的任意线程调用了exit, Exit 或者 _exit，那么**整个进程就会终止**。单个线程可以通过 3 种方式退出，因此可以在不终止整个进程的情况下，停止它的控制流。
+
+- 线程可以简单地从启动例程中返回，返回值是线程的退出码。
+- 线程可以被同一进程中的其他线程取消。
+- 线程调用 pthread_exit() 函数。
+
+```
+void pthread_exit(void *retval);
+```
+
+通过 pthread_exit() 函数终止调用线程，并且如果该线程是 joinable 的话，还可以通过 retval 返回值给同进程的其他线程。注意 retval 指针指向的值不能存在于栈中，因为线程结束后栈会被销毁。
+
+**当进程的所有的线程都终止后，则进程退出**。因此 main 线程最后应该调用 pthread_exit() 明确指出退出主线程，如若不然，main 将会隐式的调用 exit，从而退出整个进程，从而导致其他线程被终止。
+
+```
+int pthread_join(pthread_t thread, void **retval);
+```
+
+pthread_join() 使得调用线程将一直阻塞，直到指定的线程调用 pthread_exit()、从启动线程中返回或者被取消。
+
+如果对线程的返回值并不感兴趣，那么可以把 retval 指针设置为 NULL。在这种情况下，调用 pthread_join() 函数可以等待指定的线程终止，但并不获取线程的终止状态。
+
+
+
+### 线程 API 总结
+
+| 函数                                               | 解释                                     |
+| -------------------------------------------------- | ---------------------------------------- |
+| pthread_t pthread_self(void);                      | 获得自身线程 ID                          |
+| int pthread_equal(pthread_t tid1, pthread_t tid2); | 线程 ID 比较                             |
+| void pthread_exit(void *retval);                   | 退出调用线程，并可能传出返回值到其他线程 |
+
+## 线程同步
+
+## 线程控制
+
 
