@@ -30,7 +30,9 @@
 消息传递经历了如下的发展阶段：
 
 - 管道 (Anonymous pipe) 是第一个广泛使用的 IPC 形式。
-- FIFO/命名管道 (FIFO/Named pipe) 的出现解决了
+- FIFO/命名管道 (FIFO/Named pipe) 的出现解决了管道的问题。
+- 消息队列
+- 远程过程调用 (Remote Process Calls, RPCs)
 
 ### 概述
 
