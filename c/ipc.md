@@ -29,7 +29,8 @@
 
 消息传递经历了如下的发展阶段：
 
-- 管道是第一个广泛使用的 IPC 
+- 匿名管道 (Anonymous pipe) 是第一个广泛使用的 IPC 形式。
+- FIFO/命名管道 (FIFO/Named pipe) 的
 
 ### 概述
 
