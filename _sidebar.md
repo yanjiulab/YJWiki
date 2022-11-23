@@ -12,6 +12,7 @@
   - [构建系统](/c/build.md)
   - [语言特性](/c/language.md)
   - [Unix 系统编程](/c/apue.md)
+  - [Unix 进程间通信](/c/ipc.md)
   - [Unix 网络编程](/c/unp.md)
 - [数据结构与算法](/algorithm/)
     - [图论](/algorithm/graph.md)
