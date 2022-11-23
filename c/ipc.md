@@ -4,7 +4,7 @@
 
 ### Unix 共享信息模型
 
-进程间通信（Inter Process communication, IPC）即进程间交互信息。狭义上来讲，IPC 广义上来讲，IPC 不仅包括进程间通信，还包括线程间通信。
+进程间通信（Inter Process communication, IPC）即进程间交互信息。狭义上来讲，IPC 代表进程之间交互信息的方式。广义上来讲，IPC 不仅包括进程间通信，还包括线程间通信。
 
 在 Unix 中，每个进程都有各自的地址空间，进程间信息共享的方式有以下三种：
 
