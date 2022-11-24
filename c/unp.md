@@ -2,9 +2,35 @@
 
 ## 网络编程概述
 
-### 通信模型
+### 网络通信模型
 
-### 编程接口
+### 套接字编程接口
+
+tcp
+
+udp
+
+raw
+
+....
+
+### 网络编程头文件
+
+| 头文件         | 标准  | 简介                    | 主要内容                                                     | 应用场景                     |
+| -------------- | ----- | ----------------------- | ------------------------------------------------------------ | ---------------------------- |
+| `sys/socket.h` | POSIX | 主要套接字库            | 主要套接字的结构体、函数定义。                               | 常规引入                     |
+| `sys/un.h`     | POSIX | Unix 域（本地）套接字库 | Unix 域套接字的结构体、函数定义。                            | 需要 Unix 域套接字时引入     |
+| `netinet/in.h` | POSIX | 套接字地址结构定义      | 各种套接字地址结构、字节序转换函数等定义。                   | 常规引入                     |
+| `netinet/*.h`  | POSIX | Internet 协议族包结构   | 包括主要协议（Ethernet、IP、ARP、IGMP、ICMP、TCP、UDP 等）的包结构以及相关变量函数的定义。 | 需要操作协议头时需要引入     |
+| `arpa/inet.h`  | POSIX | Internet 协议族地址转换 | 各种 IP 地址的格式转换函数。                                 | 常规引入                     |
+| `strings.h`    | ISO C | 字符串、内存操作        | 各种内存操作，例如内存清零、拷贝等。                         | 常规引入                     |
+| `unistd.h`     | ISO C | unix 系统调用接口       | read，write, close，fork，exec 等                            | 常规引入                     |
+| `signal.h`     | ISO C | 信号函数                | POSIX 信号相关函数                                           | 需要软件中断时引入           |
+| `sys/select`.h | POSIX | IO 复用                 | selec 相关函数                                               | 需要 IO 复用时引入           |
+| `poll.h`       | POSIX | IO 复用                 | poll 相关函数                                                | 需要 IO 复用时引入           |
+| `fcntl.h`      | POSIX | file control 文件控制   | 各种描述符控制操作                                           | 需要设置描述符控制属性时引入 |
+| `netdb.h`      | POSIX | 域名相关                | 与域名和 IP 地址转换相关的函数                               | 需要域名解析时引入           |
+|                |       |                         |                                                              |                              |
 
 
 
@@ -121,7 +147,9 @@ struct sockaddr_in6 {
 };
 ```
 
-## 字节操作函数
+## 基本套接字编程
+
+### 字节操作函数
 
 `string.h` 头文件定义了以 `mem` 开头的操作内存字节的函数，在网络编程时，经常使用该系列函数对内存字节进行操作。
 
@@ -133,7 +161,7 @@ struct sockaddr_in6 {
 
 
 
-## 字节序函数
+### 字节序函数
 
 内存存储 16 位整数有两种形式：
 
@@ -153,111 +181,265 @@ struct sockaddr_in6 {
 | `ntohs` | 16位短整形数据主机序转网络序 |
 | `ntohl` | 32位长整形数据主机序转网络序 |
 
-## 
+### 地址转换函数
+
+以下函数包含在头文件  `#include<arpa/inet.h>` 中。
+
+|   函数名    |                           主要功能                           |
+| :---------: | :----------------------------------------------------------: |
+| `inet_aton` | 点分十进制数字符串转换为 32 位网络字节序二进制值 (`struct in_addr`) |
+| `inet_ntoa` | 32 位网络字节序二进制值 (`struct in_addr`) 转换为点分十进制数字符串 |
+| `inet_pton` |      表达式格式 (presentation) 转换为数值格式 (numeric)      |
+| `inet_ntop` |      数值格式 (numeric) 转换为表达式格式 (presentation)      |
+
+### 数据读写函数
+
+## TCP 套接字编程
+
+### 基本函数
+
+|   函数名   |             主要功能              |
+| :--------: | :-------------------------------: |
+|  `socket`  |            创建套接字             |
+|   `bind`   |         为套接字绑定地址          |
+| `connect`  |         主动发起 TCP 连接         |
+|  `listen`  |      标记该 TCP 套接字为被动      |
+|  `accept`  | 从 TCP 连接队列取出一个已完成连接 |
+|  `close`   |           关闭 TCP 连接           |
+|   `read`   |            TCP 读字节             |
+|  `write`   |            TCP 写字节             |
+| `recvfrom` |           UDP 接收数据            |
+|  `sendto`  |           UDP 发送数据            |
 
 
 
-## ========头文件总结
+## UDP 套接字编程
 
-| 头文件         | 标准  | 简介                    | 主要内容                                                     | 应用场景                     |
-| -------------- | ----- | ----------------------- | ------------------------------------------------------------ | ---------------------------- |
-| `sys/socket.h` | POSIX | 主要套接字库            | 主要套接字的结构体、函数定义。                               | 常规引入                     |
-| `sys/un.h`     | POSIX | Unix 域（本地）套接字库 | Unix 域套接字的结构体、函数定义。                            | 需要 Unix 域套接字时引入     |
-| `netinet/in.h` | POSIX | 套接字地址结构定义      | 各种套接字地址结构、字节序转换函数等定义。                   | 常规引入                     |
-| `netinet/*.h`  | POSIX | Internet 协议族包结构   | 包括主要协议（Ethernet、IP、ARP、IGMP、ICMP、TCP、UDP 等）的包结构以及相关变量函数的定义。 | 需要操作协议头时需要引入     |
-| `arpa/inet.h`  | POSIX | Internet 协议族地址转换 | 各种 IP 地址的格式转换函数。                                 | 常规引入                     |
-| `strings.h`    | ISO C | 字符串、内存操作        | 各种内存操作，例如内存清零、拷贝等。                         | 常规引入                     |
-| `unistd.h`     | ISO C | unix 系统调用接口       | read，write, close，fork，exec 等                            | 常规引入                     |
-| `signal.h`     | ISO C | 信号函数                | POSIX 信号相关函数                                           | 需要软件中断时引入           |
-| `sys/select`.h | POSIX | IO 复用                 | selec 相关函数                                               | 需要 IO 复用时引入           |
-| `poll.h`       | POSIX | IO 复用                 | poll 相关函数                                                | 需要 IO 复用时引入           |
-| `fcntl.h`      | POSIX | file control 文件控制   | 各种描述符控制操作                                           | 需要设置描述符控制属性时引入 |
-| `netdb.h`      | POSIX | 域名相关                | 与域名和 IP 地址转换相关的函数                               | 需要域名解析时引入           |
-|                |       |                         |                                                              |                              |
+## Unix 域套接字编程
 
-## 各种函数
+## 套接字选项
 
-`sys/ioctl.h`  POSIX  各种 IO 接口操作函数  获取接口信息、访问路由表、ARP 缓存等函数  
+|    函数名     |        主要功能        |
+| :-----------: | :--------------------: |
+| `getsockname` | 获取套接字本地协议地址 |
+| `getpeername` | 获取套接字对端协议地址 |
+| `getsockopt`  |     获取套接字选项     |
+| `setsockopt`  |     设置套接字选项     |
 
-## 路由套接字
+## 名字与地址转换
 
-创建一个路由套接字后，进程可以通过写该套接字，向内核发送命令，通过读自该套接字，从内核接收信息。
+### 域名系统
 
-### sysctl
+通常情况下，我们会使用数值地址（32 位 IP 地址）来表示主机，例如 `206.6.22.3`，用数值端口号（16 位数）来表示服务器，例如 80 号端口通常表示主机上的一个 Web 服务器。然而，许多情况下我们应该使用域名来代替地址，因为域名容易记忆又输入方便。因此网络编程需要在地址和域名之间进行转换的函数。
 
-使用 sysctl 获取：
+我们知道，域名和 IP 地址转换由 DNS 协议来完成，实际中转换由 DNS 服务器来完成，那么我们编写的代码如何与 DNS 服务器打交道呢？答案是通过解析器（resolver）来完成，解析器代码通常位于系统库函数中，构造应用程序时被 link-editing 到应用程序中。
 
-- 路由表
-- 接口表
-- ARP 缓存
+![resolver](unp.assets/resolver.png)
 
-注：Linux很多没有
+### netdb
 
-### 接口名字和索引函数
+### IPv4 转换函数
 
-- if_nametoindex()
-- if_indextoname()
-- if_nameindex()
-- if_freenameindex()
+### 通用转换函数
 
-    #include <net/if.h>
-    #include <stdio.h>
-    #include <stdlib.h>
-    #include <unistd.h>
-    
-    int
-    main(int argc, char *argv[])
-    {
-        struct if_nameindex *if_ni, *i;
-    
-        if_ni = if_nameindex();
-        if (if_ni == NULL) {
-        	perror("if_nameindex");
-            exit(EXIT_FAILURE);
+以下函数包含在头文件  `#include<netdb.h>` 中。
+
+|     函数名      |                  主要功能                  |
+| :-------------: | :----------------------------------------: |
+| `gethostbyname` |           根据域名查找 IPv4 地址           |
+| `gethostbyaddr` |           根据 IPv4 地址查找域名           |
+| `getservbyname` |             根据服务名查找端口             |
+| `getservbyport` |             根据端口查找服务名             |
+|  `getaddrinfo`  | 根据域名查找 IP 地址<br>根据服务名查找端口 |
+|  `getnameinfo`  | 根据 IP 地址查找域名<br>根据端口查找服务名 |
+
+### `gethostbyname` 函数
+
+```c
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int argc, char** argv)
+{
+    char* hostname = NULL;
+    struct hostent* hptr = NULL;
+    char ip[16] = { '\0' };
+
+    while (--argc > 0) {
+        hostname = *++argv;
+        if ((hptr = gethostbyname(hostname)) == NULL) {
+            printf("Error for host %s: %s\n", hostname, hstrerror(h_errno));
+            exit(1);
         }
-        
-        for (i = if_ni; ! (i->if_index == 0 && i->if_name == NULL); i++)
-        	printf("%u: %s\n", i->if_index, i->if_name);
-        
-        if_freenameindex(if_ni);
-        
-        exit(EXIT_SUCCESS);
+
+        printf("Official hostname: %s\n", hptr->h_name);
+        for (char** palias = hptr->h_aliases; *palias != NULL; palias++) {
+            printf("\tAlias name: %s\n", *palias);
+        }
+        if (hptr->h_addrtype == AF_INET) {
+            for (char** paddr = hptr->h_addr_list; *paddr != NULL; paddr++) {
+                printf("\tIPv4 address: %s\n", inet_ntop(hptr->h_addrtype, *paddr, ip, sizeof(ip)));
+            }
+        } else {
+            printf("Unknow address type\n");
+        }
     }
 
-### 最长掩码匹配实现
+    return 0;
+}
+```
 
-路由三要素：
+测试：
 
-- 目的网段
-- 掩码
-- 下一跳
-
-注意，没有输出端口
-
-路由通过两种方式进入内核：
-
-- 主机自动发现
-- 静态配置
-- 路由协议进程
-
-实现算法：
-
-- 哈希表
-- trie树
-- PC-trie树
-- LC-trie树
-- 256-way-mtrie树
-- LPM
+```
+$ ./test_gethostbyname dns.google
+Official hostname: dns.google
+        IPv4 address: 8.8.8.8
+        IPv4 address: 8.8.4.4
+```
 
 
 
+### `gethostbyaddr` 函数
+
+```c
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int argc, char** argv)
+{
+    char* ipv4 = NULL; // input
+    struct hostent* hptr = NULL;
+    struct in_addr sa = { 0 };
+
+    while (--argc > 0) {
+        ipv4 = *++argv;
+
+        if (inet_pton(AF_INET, ipv4, &sa) <= 0) {
+            printf("input error\n");
+            exit(1);
+        }
+
+        if ((hptr = gethostbyaddr(&sa, 4, AF_INET)) == NULL) {
+            printf("Error for ip %s: %s\n", ipv4, hstrerror(h_errno));
+            exit(1);
+        }
+        printf("IPv4 addr: %s\n", ipv4);
+        printf("Official hostname: %s\n", hptr->h_name);
+    }
+
+    return 0;
+}
+```
+
+测试
+
+```
+$ ./test_gethostbyaddr 8.8.8.8
+IPv4 addr: 8.8.8.8
+Official hostname: dns.google
+```
+
+### `getservbyname` 函数
+
+TODO
+
+### `getservbyport` 函数
+
+TODO
+
+### `getaddrinfo` 函数
+
+名字到地址，以及服务到端口
+
+```c
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int argc, char** argv)
+{
+    struct addrinfo* result = NULL;
+    struct addrinfo* ptr = NULL;
+    struct addrinfo hints = { 0 };
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags |= AI_CANONNAME;
+
+    char* host = NULL;
+
+    while (--argc > 0) {
+        host = *++argv;
+
+        int n;
+        if ((n = getaddrinfo(host, NULL, &hints, &result)) != 0) {
+            perror("getaddrinfo");
+            printf("getaddrinfo: %s\n", gai_strerror(n));
+            exit(1);
+        }
+        printf("Host: %s\n", host);
+
+        for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
+            char addrstr[INET6_ADDRSTRLEN];
+            void* p = NULL;
+            inet_ntop(ptr->ai_family, ptr->ai_addr->sa_data, addrstr, sizeof(addrstr));
+
+            switch (ptr->ai_family) {
+            case AF_INET:
+                p = &((struct sockaddr_in*)ptr->ai_addr)->sin_addr;
+                break;
+            case AF_INET6:
+                p = &((struct sockaddr_in6*)ptr->ai_addr)->sin6_addr;
+                break;
+            }
+
+            inet_ntop(ptr->ai_family, p, addrstr, sizeof(addrstr));
+            printf("IPv%d address: %s (%s)\n", ptr->ai_family == AF_INET6 ? 6 : 4,
+                addrstr, ptr->ai_canonname);
+
+            printf("flag: %d\n", ptr->ai_flags);
+            printf("protocol: %d\n", ptr->ai_protocol);
+            printf("socket type: %d\n", ptr->ai_socktype);
+            printf("addr len: %d\n", ptr->ai_addrlen);
+        }
+
+        freeaddrinfo(result);
+    }
+}
+```
+
+### `getnameinfo` 函数
+
+TODO
+
+### 打包我们自己的函数
 
 
 
+## Unix I/O 模型
 
-- 
+### 阻塞式 I/O
+
+fork、线程、
+
+### 非阻塞式 I/O
+
+### I/O 复用
+
+### 编程模型
+
+### 异步 I/O
+
+## I/O 复用
 
 ## ioctl - 设备控制
+
+`sys/ioctl.h`  POSIX  各种 IO 接口操作函数  获取接口信息、访问路由表、ARP 缓存等函数  
 
 `ioctl` 是 IO Control 的缩写，而 IO 可以理解为广义上的输入输出设备，因此该函数提供了多种对于设备的控制功能。
 
@@ -285,54 +467,7 @@ int ioctl(int fd, unsigned long request, ...);
 
 其中，最为常用的是接口操作，其请求码格式为 `SIOCGIFxxx` 和 `SIOCSIFxxx`，分别表示对于接口的 Get 操作和 Set 操作。
 
-## ====
-
-计划编写整理的章节：
-
-- [ ] 基础
-- [ ] TCP
-- [ ] UDP
-- [ ] Unix 域
-- [ ] 原始
-- [ ] 路由
-- [ ] IO复用
-- [ ] 
-
-
-
-其他待学习的高级内容：
-
-- [ ] 套接字选项
-- [ ] ioctl fcntl 等
-
-
-
-## 地址转换函数
-
-以下函数包含在头文件  `#include<arpa/inet.h>` 中。
-
-|   函数名    |                           主要功能                           |
-| :---------: | :----------------------------------------------------------: |
-| `inet_aton` | 点分十进制数字符串转换为 32 位网络字节序二进制值 (`struct in_addr`) |
-| `inet_ntoa` | 32 位网络字节序二进制值 (`struct in_addr`) 转换为点分十进制数字符串 |
-| `inet_pton` |      表达式格式 (presentation) 转换为数值格式 (numeric)      |
-| `inet_ntop` |      数值格式 (numeric) 转换为表达式格式 (presentation)      |
-
-## 名字与地址转换
-
-通常情况下，我们会使用数值地址（32 位 IP 地址）来表示主机，例如 `206.6.22.3`，用数值端口号（16 位数）来表示服务器，例如 80 号端口通常表示主机上的一个 Web 服务器。然而，许多情况下我们应该使用域名来代替地址，因为域名容易记忆又输入方便。因此网络编程需要在地址和域名之间进行转换的函数。
-
-我们知道，域名和 IP 地址转换由 DNS 协议来完成，实际中转换由 DNS 服务器来完成，那么我们编写的代码如何与 DNS 服务器打交道呢？答案是通过解析器（resolver）来完成，解析器代码通常位于系统库函数中，构造应用程序时被 link-editing 到应用程序中。
-
-![resolver](unp.assets/resolver.png)
-
-### netdb
-
-### IPv4 转换函数
-
-### 通用转换函数
-
-### 打包我们自己的函数
+### 接口操作
 
 `ifconf` structure
 
@@ -406,226 +541,89 @@ struct ifreq {
 #define ifr_settings ifr_ifru.ifru_settings   /* Device/proto settings*/
 ```
 
-# 函数速查表
 
-## 基本函数
 
-|   函数名   |             主要功能              |
-| :--------: | :-------------------------------: |
-|  `socket`  |            创建套接字             |
-|   `bind`   |         为套接字绑定地址          |
-| `connect`  |         主动发起 TCP 连接         |
-|  `listen`  |      标记该 TCP 套接字为被动      |
-|  `accept`  | 从 TCP 连接队列取出一个已完成连接 |
-|  `close`   |           关闭 TCP 连接           |
-|   `read`   |            TCP 读字节             |
-|  `write`   |            TCP 写字节             |
-| `recvfrom` |           UDP 接收数据            |
-|  `sendto`  |           UDP 发送数据            |
+## 路由套接字
 
-## 字节序
+创建一个路由套接字后，进程可以通过写该套接字，向内核发送命令，通过读自该套接字，从内核接收信息。
 
-以下函数包含在头文件  `#include<arpa/inet.h>` 中。
+### sysctl
 
-|    函数名     |                           主要功能                           |
-| :-----------: | :----------------------------------------------------------: |
-| `[x]to[y][t]` | x 和 y 取值为 n 或 h，分别表示主机和网络。 <br> t 取值 s 或 l，表示 16/32 位数据。 |
-|  `inet_aton`  | 点分十进制数字符串转换为 32 位网络字节序二进制值 (`struct in_addr`) |
-|  `inet_ntoa`  | 32 位网络字节序二进制值 (`struct in_addr`) 转换为点分十进制数字符串 |
-|  `inet_pton`  |      表达式格式 (presentation) 转换为数值格式 (numeric)      |
-|  `inet_ntop`  |      数值格式 (numeric) 转换为表达式格式 (presentation)      |
+使用 sysctl 获取：
 
-## 套接字选项
+- 路由表
+- 接口表
+- ARP 缓存
 
-|    函数名     |        主要功能        |
-| :-----------: | :--------------------: |
-| `getsockname` | 获取套接字本地协议地址 |
-| `getpeername` | 获取套接字对端协议地址 |
-| `getsockopt`  |     获取套接字选项     |
-| `setsockopt`  |     设置套接字选项     |
+注：Linux很多没有
 
-## 地址
+### 接口名字和索引函数
 
-以下函数包含在头文件  `#include<netdb.h>` 中。
+- if_nametoindex()
+- if_indextoname()
+- if_nameindex()
+- if_freenameindex()
 
-|     函数名      |                  主要功能                  |
-| :-------------: | :----------------------------------------: |
-| `gethostbyname` |           根据域名查找 IPv4 地址           |
-| `gethostbyaddr` |           根据 IPv4 地址查找域名           |
-| `getservbyname` |             根据服务名查找端口             |
-| `getservbyport` |             根据端口查找服务名             |
-|  `getaddrinfo`  | 根据域名查找 IP 地址<br>根据服务名查找端口 |
-|  `getnameinfo`  | 根据 IP 地址查找域名<br>根据端口查找服务名 |
-
-# 地址
-
-## `gethostbyname` 函数
-
-```c
-#include <arpa/inet.h>
-#include <netdb.h>
+```
+#include <net/if.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
-int main(int argc, char** argv)
+int
+main(int argc, char *argv[])
 {
-    char* hostname = NULL;
-    struct hostent* hptr = NULL;
-    char ip[16] = { '\0' };
+    struct if_nameindex *if_ni, *i;
 
-    while (--argc > 0) {
-        hostname = *++argv;
-        if ((hptr = gethostbyname(hostname)) == NULL) {
-            printf("Error for host %s: %s\n", hostname, hstrerror(h_errno));
-            exit(1);
-        }
-
-        printf("Official hostname: %s\n", hptr->h_name);
-        for (char** palias = hptr->h_aliases; *palias != NULL; palias++) {
-            printf("\tAlias name: %s\n", *palias);
-        }
-        if (hptr->h_addrtype == AF_INET) {
-            for (char** paddr = hptr->h_addr_list; *paddr != NULL; paddr++) {
-                printf("\tIPv4 address: %s\n", inet_ntop(hptr->h_addrtype, *paddr, ip, sizeof(ip)));
-            }
-        } else {
-            printf("Unknow address type\n");
-        }
+    if_ni = if_nameindex();
+    if (if_ni == NULL) {
+        perror("if_nameindex");
+        exit(EXIT_FAILURE);
     }
 
-    return 0;
+    for (i = if_ni; ! (i->if_index == 0 && i->if_name == NULL); i++)
+		printf("%u: %s\n", i->if_index, i->if_name);
+
+    if_freenameindex(if_ni);
+
+    exit(EXIT_SUCCESS);
 }
 ```
 
-测试：
+### 最长掩码匹配实现
 
-```
-$ ./test_gethostbyname dns.google
-Official hostname: dns.google
-        IPv4 address: 8.8.8.8
-        IPv4 address: 8.8.4.4
-```
+路由三要素：
 
+- 目的网段
+- 掩码
+- 下一跳
 
+注意，没有输出端口
 
-## `gethostbyaddr` 函数
+路由通过两种方式进入内核：
 
-```c
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <stdio.h>
-#include <stdlib.h>
+- 主机自动发现
+- 静态配置
+- 路由协议进程
 
-int main(int argc, char** argv)
-{
-    char* ipv4 = NULL; // input
-    struct hostent* hptr = NULL;
-    struct in_addr sa = { 0 };
+实现算法：
 
-    while (--argc > 0) {
-        ipv4 = *++argv;
+- 哈希表
+- trie树
+- PC-trie树
+- LC-trie树
+- 256-way-mtrie树
+- LPM
 
-        if (inet_pton(AF_INET, ipv4, &sa) <= 0) {
-            printf("input error\n");
-            exit(1);
-        }
+## 广播
 
-        if ((hptr = gethostbyaddr(&sa, 4, AF_INET)) == NULL) {
-            printf("Error for ip %s: %s\n", ipv4, hstrerror(h_errno));
-            exit(1);
-        }
-        printf("IPv4 addr: %s\n", ipv4);
-        printf("Official hostname: %s\n", hptr->h_name);
-    }
-
-    return 0;
-}
-```
-
-测试
-
-```
-$ ./test_gethostbyaddr 8.8.8.8
-IPv4 addr: 8.8.8.8
-Official hostname: dns.google
-```
-
-## `getservbyname` 函数
-
-TODO
-
-## `getservbyport` 函数
-
-TODO
-
-## `getaddrinfo` 函数
-
-名字到地址，以及服务到端口
-
-```c
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-int main(int argc, char** argv)
-{
-    struct addrinfo* result = NULL;
-    struct addrinfo* ptr = NULL;
-    struct addrinfo hints = { 0 };
-    hints.ai_family = PF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags |= AI_CANONNAME;
-
-    char* host = NULL;
-
-    while (--argc > 0) {
-        host = *++argv;
-
-        int n;
-        if ((n = getaddrinfo(host, NULL, &hints, &result)) != 0) {
-            perror("getaddrinfo");
-            printf("getaddrinfo: %s\n", gai_strerror(n));
-            exit(1);
-        }
-        printf("Host: %s\n", host);
-
-        for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
-            char addrstr[INET6_ADDRSTRLEN];
-            void* p = NULL;
-            inet_ntop(ptr->ai_family, ptr->ai_addr->sa_data, addrstr, sizeof(addrstr));
-
-            switch (ptr->ai_family) {
-            case AF_INET:
-                p = &((struct sockaddr_in*)ptr->ai_addr)->sin_addr;
-                break;
-            case AF_INET6:
-                p = &((struct sockaddr_in6*)ptr->ai_addr)->sin6_addr;
-                break;
-            }
-
-            inet_ntop(ptr->ai_family, p, addrstr, sizeof(addrstr));
-            printf("IPv%d address: %s (%s)\n", ptr->ai_family == AF_INET6 ? 6 : 4,
-                addrstr, ptr->ai_canonname);
-
-            printf("flag: %d\n", ptr->ai_flags);
-            printf("protocol: %d\n", ptr->ai_protocol);
-            printf("socket type: %d\n", ptr->ai_socktype);
-            printf("addr len: %d\n", ptr->ai_addrlen);
-        }
-
-        freeaddrinfo(result);
-    }
-}
-```
-
-## `getnameinfo` 函数
-
-TODO
+## 组播
 
 ## 原始套接字
 
 ## 数据链路套接字
+
+## C/S 架构程序设计范式
 
 ## 网络编程技巧
 
@@ -641,3 +639,4 @@ rtm->xxx = xxx;
 
 - TODO
 
+## 参考
