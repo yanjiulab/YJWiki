@@ -1482,9 +1482,62 @@ pthread_join() 使得调用线程将一直阻塞，直到指定的线程调用 p
 | int pthread_equal(pthread_t tid1, pthread_t tid2); | 线程 ID 比较                             |
 | void pthread_exit(void *retval);                   | 退出调用线程，并可能传出返回值到其他线程 |
 
+| 函数                                                         | 解释     |
+| ------------------------------------------------------------ | -------- |
+| int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void * (*start_routine)(void *), void *arg); | 线程创建 |
+| int pthread_join(pthread_t thread, void **retval);           | 线程等待 |
+
+
+
 ## 线程同步
+
+
+
+### 互斥锁
+
+int pthread_mutex_lock(pthread_mutex_t *mutex);
+int pthread_mutex_trylock(pthread_mutex_t *mutex);
+int pthread_mutex_unlock(pthread_mutex_t *mutex);
+int pthread_mutex_init(pthread_mutex_t *restrict mutex, const pthread_mutexattr_t *restrict attr);
+int pthread_mutex_destroy(pthread_mutex_t *mutex);
+
+### 条件变量
+
+很多情况下，线程需要检查某一条件满足之后，才会继续运行。
+
+
+
+int pthread_cond_wait(pthread_cond_t *restrict cond, pthread_mutex_t *restrict mutex);
+int pthread_cond_timedwait(pthread_cond_t *restrict cond, pthread_mutex_t *restrict mutex, const struct timespec *restrict abstime);
+int pthread_cond_signal(pthread_cond_t *cond);
+
+### 死锁
+
+为什么发生死锁？
+- 循环依赖
+- 封装
+
+产生死锁的条件：
+1. 互斥：线程对于需要的资源互斥的访问
+2. 持有并等待：线程持有了资源，同时又在等待其他资源
+3. 非抢占：线程获得的资源，不能被抢占
+4. 循环等待：线程之间存在一个环路，环路上每个线程都额外持有一个资源，而这个资源又是下一个线程要申请的。
+
+若 4 个条件任何一个没有满足，则死锁不会产生。
+
+预防死锁的方法：每个策略都设法阻止某一个条件，从而解决死锁问题。
+| 阻止的条件 | 策略                                          | 优点                                                    | 缺点                                                         |
+| ---------- | --------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------ |
+| 循环等待   | 获取锁时提供一个全局加锁顺序 (total ordering) | 最实用 (常用)                                           | 顺序的保证需要细致的锁策略，可能会被粗心的程序员忽略         |
+| 持有并等待 | 原子的抢占锁                                  | 简单，只需要一个额外的抢锁的锁                          | 需要一次抢到所有锁，降低了并发                               |
+| 非抢占     | 获取不到所有的资源时，便释放拥有的资源        | 许多线程库提供了灵活的接口，例如可以使用 trylock() 函数 | 可能导致活锁 (大家都抢不到所有锁，系统一直在运行这段代码) ，可以通过引入随机等待时间降低重复干扰 |
+| 互斥       | 通过硬件指令实现无等待数据结构                | 比较高级                                                | 实现复杂                                                     |
+
+除了死锁预防，某些场景更适合死锁避免。我们需要了解**全局信息**，包括不同线程在运行中对锁的需求情况，从而使得后续的调度中能够避免产生死锁。
 
 ## 线程控制
 
 ## 进程间通信
+
+## 命名空间
 

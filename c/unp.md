@@ -217,6 +217,80 @@ struct sockaddr_in6 {
 
 ## Unix 域套接字编程
 
+### CS示例
+
+服务端
+
+```c
+int sockfd;
+char* path = "/tmp/parent";
+struct sockaddr_un remoteaddr, localaddr;
+
+sockfd = socket(AF_LOCAL, SOCK_DGRAM, 0);
+unlink(path);
+bzero(&remoteaddr, sizeof(remoteaddr));
+bzero(&localaddr, sizeof(localaddr));
+
+localaddr.sun_family = AF_LOCAL;
+strcpy(localaddr.sun_path,path);
+
+bind(sockfd, (struct sockaddr *)&localaddr, sizeof(localaddr));
+printf("[main] bind success\n");
+
+int			n;
+socklen_t	len;
+char		mesg[MAXLINE];
+
+for ( ; ; ) {
+    len = sizeof(remoteaddr);
+    n = recvfrom(sockfd, mesg, MAXLINE, 0, &remoteaddr, &len);
+    printf("[main] recieve %s from server %s\n", (char *)mesg, remoteaddr.sun_path);
+    sendto(sockfd, mesg, n, 0, &remoteaddr, len);
+    printf("[main] send %s to server %s\n", (char *)mesg, remoteaddr.sun_path);
+}
+```
+
+
+
+## 客户端
+{% codeblock lang:c %}
+int sockfd;
+    char* server_path = "/tmp/parent";
+    char* path = "/tmp/child";
+    struct sockaddr_un remoteaddr, localaddr;
+    
+    sockfd = socket(AF_LOCAL, SOCK_DGRAM, 0);
+    printf("[child] %d\n",sockfd);
+    unlink(path);
+    bzero(&remoteaddr, sizeof(remoteaddr));
+    bzero(&localaddr, sizeof(localaddr));
+    
+    localaddr.sun_family = AF_LOCAL;
+    strcpy(localaddr.sun_path,path);
+    
+    bind(sockfd, (struct sockaddr *)&localaddr, sizeof(localaddr));
+    printf("[child] bind to %s success\n", path);
+    
+    remoteaddr.sun_family = AF_LOCAL;
+    strcpy(remoteaddr.sun_path, server_path);
+    
+    int			n;
+    socklen_t len = sizeof(remoteaddr);
+    char sendbuf[MAXLINE] = {'f', 'u', 'c', 'k', '\0'};
+    char recvbuf[MAXLINE];
+    
+    sendto(sockfd, sendbuf, strlen(sendbuf), 0, &remoteaddr, len);
+    printf("[child] send %s to server %s\n", (char *)sendbuf, remoteaddr.sun_path);
+    
+    n = recvfrom(sockfd, recvbuf, MAXLINE, 0, &remoteaddr, &len);
+    
+    printf("[child] recieve %s from server %s\n",(char *) recvbuf, remoteaddr.sun_path);
+    
+    return 0; 
+{% endcodeblock %}
+
+# Unix 域数据报客户/服务器实例
+
 ## 套接字选项
 
 |    函数名     |        主要功能        |
@@ -423,6 +497,15 @@ TODO
 
 ## Unix I/O 模型
 
+- 阻塞 IO
+- 非阻塞 IO 往往耗费大量 CPU 时间
+- IO Multiplexing (Event-driven IO) 与在多线程中使用阻塞式 IO 极为相似
+- Sigal-driven IO 开启套接字的信号驱动式 IO 功能，并通过sigaction 安装一个信号处理函数
+- 异步IO Asynchronous IO 信号驱动式 IO 是由内核通知我们何时可以启动一个 IO 操作，而异步 IO 模型是由内核通知我们 IO 操作何时完成。aio_read
+
+- https://eklitzke.org/blocking-io-nonblocking-io-and-epoll
+The multiplexing approach to concurrency is what I call “asynchronous I/O”. Sometimes people will call this same approach “nonblocking I/O”, which I believe comes from a confusion about what “nonblocking” means at the systems programming level. I suggest reserving the term “nonblocking” for referring to whether or not file descriptors are actually in nonblocking mode or not.
+
 ### 阻塞式 I/O
 
 fork、线程、
@@ -430,6 +513,10 @@ fork、线程、
 ### 非阻塞式 I/O
 
 ### I/O 复用
+
+基于事件的并发针对两方面问题：
+1. 多线程应用中，正确处理并发很有难度，忘记加锁、死锁和其他烦人的问题会发生。
+2. 开发者无法控制多线程在某一时刻的调度。程序员只是创建了线程，然后就依赖操作系统能够合理的调度。在某些时候操作系统的调度不是最优的。
 
 ### 编程模型
 

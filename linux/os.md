@@ -348,4 +348,33 @@ title: 线程
 
 # 线程概念
 
+## Mechanism - Address Translation
+- program has its own private memory
+- many programs are actually sharing memory at the same time
 
+dynamic relocation
+
+Sometimes people call the part of the processor that helps with address translation the memory management unit (MMU)
+
+base-and-bound 
+
+### 线程的创建
+糟糕点：
+- 执行顺序不确定
+- 共享数据
+
+核心问题：不可控的调度，通过分析汇编码得出结论
+
+### 原子性的愿望
+- 超级指令完成 3 条指令的效果
+- 提供同步机制，自定义构建超级指令
+
+关键术语|解释
+临界区 (critical Section)|访问共享资源的一段代码
+竞态条件 (race condition)|竞态条件出现在多个线程大致同时进入临界区时，都试图更新共享资源从而导致了不期望的结果
+不确定性 (indeterminate)|由于一个或多个竞态条件组成，导致执行结果不确定
+互斥 (mutual exclusion)|
+
+为了避免这些问题，线程应该使用某种**互斥原语**，保证只有一个线程进入**临界区**，从而避免出现**竞态**，并产生**确定**的程序输出。
+
+### 另一个问题：等待另一个线程
