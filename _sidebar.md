@@ -11,6 +11,7 @@
   - [编译系统](/c/compilation.md)
   - [构建系统](/c/build.md)
   - [语言特性](/c/language.md)
+  - [操作系统](/c/kernel.md)
   - [Unix 系统编程](/c/apue.md)
   - [Unix 进程间通信](/c/ipc.md)
   - [Unix 网络编程](/c/unp.md)
