@@ -1450,6 +1450,24 @@ Hello World! It's me, thread #2, my name is Tom!
 
 ### 线程等待
 
+如果需要等待一个线程执行完毕，可以使用 `pthread_join` 函数将调用线程将一直阻塞，直到指定的线程调用 pthread_exit()、从启动线程中返回或者被取消。如果对线程的返回值并不感兴趣，那么可以把 retval 指针设置为 NULL。
+
+```c
+int pthread_join(pthread_t thread, void **retval);
+```
+
+### 线程取消
+
+线程可以通过调用 `pthread_cancel` 函数来取消统一进程中的其他线程。
+
+```c
+int pthread_cancel(pthread_t tid);
+```
+
+注意，取消仅仅是向操作系统提出申请，并不立即执行。
+
+### 线程退出
+
 如果进程中的任意线程调用了exit, Exit 或者 _exit，那么**整个进程就会终止**。单个线程可以通过 3 种方式退出，因此可以在不终止整个进程的情况下，停止它的控制流。
 
 - 线程可以简单地从启动例程中返回，返回值是线程的退出码。
@@ -1464,46 +1482,81 @@ void pthread_exit(void *retval);
 
 **当进程的所有的线程都终止后，则进程退出**。因此 main 线程最后应该调用 pthread_exit() 明确指出退出主线程，如若不然，main 将会隐式的调用 exit，从而退出整个进程，从而导致其他线程被终止。
 
-```
-int pthread_join(pthread_t thread, void **retval);
-```
-
-pthread_join() 使得调用线程将一直阻塞，直到指定的线程调用 pthread_exit()、从启动线程中返回或者被取消。
-
-如果对线程的返回值并不感兴趣，那么可以把 retval 指针设置为 NULL。在这种情况下，调用 pthread_join() 函数可以等待指定的线程终止，但并不获取线程的终止状态。
-
-### 线程特征
-
 ### 线程 API 总结
 
-| 函数                                               | 解释                                     |
-| -------------------------------------------------- | ---------------------------------------- |
-| pthread_t pthread_self(void);                      | 获得自身线程 ID                          |
-| int pthread_equal(pthread_t tid1, pthread_t tid2); | 线程 ID 比较                             |
-| void pthread_exit(void *retval);                   | 退出调用线程，并可能传出返回值到其他线程 |
+以下是基本的线程 API。
 
-| 函数                                                         | 解释     |
-| ------------------------------------------------------------ | -------- |
-| int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void * (*start_routine)(void *), void *arg); | 线程创建 |
-| int pthread_join(pthread_t thread, void **retval);           | 线程等待 |
+| 进程函数 |       线程函数       |             解释             |
+| :------: | :------------------: | :--------------------------: |
+|   fork   |    pthread_create    |         创建新控制流         |
+|   exit   |     pthread_exit     |      从现有控制流中退出      |
+| waitpid  |     pthread_join     |    在控制流中得到退出状态    |
+|  atexit  | pthread_cleanup_push | 注册在控制流退出时的清理函数 |
+|  getpid  |     pthread_self     |        获取控制流 ID         |
+|  abort   |    pthread_cancel    |     请求控制流非正常退出     |
 
 ## 线程同步
 
+### 同步原语
+
+通过基本线程 API，就可以让线程运行起来了，但是其正确性却不能得到保障，其中有两个问题比较糟糕：
+
+- **更新共享数据错误**：不同线程同时更新共享数据时，可能发生竞争，从而丢失部分操作。
+- **执行顺序不确定**：不同线程之间执行的顺序是随机的，取决于操作系统调度。
+
+因此，编写正确的线程代码还需要有同步机制。
+
+| 场景         | 同步原语 |
+| ------------ | -------- |
+| 更新共享变量 | 互斥锁   |
+| 控制线程执行 | 条件变量 |
+
+### 互斥锁
+
+并发编程的一个基本问题：我们总是希望原子式 (atomic) 的执行一系列指令。但由于处理器的中断，我们总是做不到。对于 `balance = balance + 1;` 这行代码来讲，尽管看起来只有一行，但编译后却产生 3 条指令，是一个读-改-写模式，在其中任意一步发生线程调度，都可能造成错误的结果。
+
+为了避免这些问题，线程应该使用某种**互斥原语**，保证只有一个线程访问共享资源，从而避免出现多个线程同时更新共享资源，并产生**确定**的程序输出。能够直接解决这个问题的一个办法就是使用锁。程序员在源代码中加锁，放在需要保护的**关键区**周围，保证这些关键部分代码能够像单条原子指令一样执行。
+
+POSIX 库将锁称之为互斥量或互斥锁 (mutual exclusion, mutex)，有时也叫 Pthread 锁，被用来提供线程之间的互斥。锁的解决思路如下：
+
+```c
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER; 
+
+pthread_mutex_lock(&lock);
+balance = balance + 1;
+pthread_mutex_unlock(&lock); 
+```
+
+锁就是一个变量，这个变量主要保存了锁在某一时刻的状态，它
+
+- 要么是**可用的**，表示没有线程持有锁，
+- 要么是**被占用的**，表示有一个线程持有锁，并且正处于关键区。
+
+lock 和 unlock 的语义十分简单：
+
+- `pthread_mutex_lock()` 尝试获取锁，如果没有其他线程持有该锁，则该线程获取锁，并进入关键区。
+- `pthread_mutex_unlock()` 由持有锁的线程调用，一旦被释放，锁就变为可用状态。
+
+锁为程序员提供了最小的调度控制，使得程序员可以获得一些控制权，通过给关键区加锁，保证关键区内代码只有一个线程活跃，因此将原本由操作系统调度的混乱状态变得可控。
+
+API
+
+| 函数                                                         | 解释                                                        |
+| ------------------------------------------------------------ | ----------------------------------------------------------- |
+| int pthread_mutex_init(pthread_mutex_t *restrict mutex, const pthread_mutexattr_t *restrict attr); | 动态初始化                                                  |
+| int pthread_mutex_destroy(pthread_mutex_t *mutex);           | 动态释放                                                    |
+| int pthread_mutex_lock(pthread_mutex_t *mutex);              | 加锁。若已上锁，则阻塞直止解锁。                            |
+| int pthread_mutex_trylock(pthread_mutex_t *mutex);           | 尝试加锁。若已上锁，则失败返回 EBUSY。                      |
+| int pthread_mutex_timedlock(pthread_mutex_t *restrict mutex, const struct timespec *restrict tsptr); | 超时加锁。若已上锁，则等待直到绝对时间超时，返回 ETIMEOUT。 |
+| int pthread_mutex_unlock(pthread_mutex_t *mutex);            | 解锁。                                                      |
 
 
-### =====
-
-int pthread_mutex_lock(pthread_mutex_t *mutex);
-int pthread_mutex_trylock(pthread_mutex_t *mutex);
-int pthread_mutex_unlock(pthread_mutex_t *mutex);
-int pthread_mutex_init(pthread_mutex_t *restrict mutex, const pthread_mutexattr_t *restrict attr);
-int pthread_mutex_destroy(pthread_mutex_t *mutex);
 
 ### 条件变量
 
 很多情况下，线程需要检查某一条件满足之后，才会继续运行。
 
-
+见 OSTEP
 
 int pthread_cond_wait(pthread_cond_t *restrict cond, pthread_mutex_t *restrict mutex);
 int pthread_cond_timedwait(pthread_cond_t *restrict cond, pthread_mutex_t *restrict mutex, const struct timespec *restrict abstime);
@@ -1537,5 +1590,10 @@ int pthread_cond_signal(pthread_cond_t *cond);
 
 ## 进程间通信
 
+该部分单独描述。
+
 ## 命名空间
 
+## 参考
+
+- [OSTEP](https://pages.cs.wisc.edu/~remzi/OSTEP/Chinese/)

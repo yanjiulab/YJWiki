@@ -289,8 +289,6 @@ printf("%p\n", pa);     // 0x7fffd8f6e6d0
 printf("%p\n", &pa);    // 0x7fffd8f6e6c8
 ```
 
-
-
 ## 字符串
 
 ### 存储方式

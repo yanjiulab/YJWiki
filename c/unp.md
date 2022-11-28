@@ -219,7 +219,7 @@ struct sockaddr_in6 {
 
 ### CS示例
 
-服务端
+服务端部分如下：
 
 ```c
 int sockfd;
@@ -237,9 +237,9 @@ strcpy(localaddr.sun_path,path);
 bind(sockfd, (struct sockaddr *)&localaddr, sizeof(localaddr));
 printf("[main] bind success\n");
 
-int			n;
-socklen_t	len;
-char		mesg[MAXLINE];
+int n;
+socklen_t len;
+char mesg[MAXLINE];
 
 for ( ; ; ) {
     len = sizeof(remoteaddr);
@@ -250,46 +250,45 @@ for ( ; ; ) {
 }
 ```
 
+客户端部分如下：
 
-
-## 客户端
-{% codeblock lang:c %}
+```c
 int sockfd;
-    char* server_path = "/tmp/parent";
-    char* path = "/tmp/child";
-    struct sockaddr_un remoteaddr, localaddr;
-    
-    sockfd = socket(AF_LOCAL, SOCK_DGRAM, 0);
-    printf("[child] %d\n",sockfd);
-    unlink(path);
-    bzero(&remoteaddr, sizeof(remoteaddr));
-    bzero(&localaddr, sizeof(localaddr));
-    
-    localaddr.sun_family = AF_LOCAL;
-    strcpy(localaddr.sun_path,path);
-    
-    bind(sockfd, (struct sockaddr *)&localaddr, sizeof(localaddr));
-    printf("[child] bind to %s success\n", path);
-    
-    remoteaddr.sun_family = AF_LOCAL;
-    strcpy(remoteaddr.sun_path, server_path);
-    
-    int			n;
-    socklen_t len = sizeof(remoteaddr);
-    char sendbuf[MAXLINE] = {'f', 'u', 'c', 'k', '\0'};
-    char recvbuf[MAXLINE];
-    
-    sendto(sockfd, sendbuf, strlen(sendbuf), 0, &remoteaddr, len);
-    printf("[child] send %s to server %s\n", (char *)sendbuf, remoteaddr.sun_path);
-    
-    n = recvfrom(sockfd, recvbuf, MAXLINE, 0, &remoteaddr, &len);
-    
-    printf("[child] recieve %s from server %s\n",(char *) recvbuf, remoteaddr.sun_path);
-    
-    return 0; 
-{% endcodeblock %}
+char* server_path = "/tmp/parent";
+char* path = "/tmp/child";
+struct sockaddr_un remoteaddr, localaddr;
 
-# Unix 域数据报客户/服务器实例
+sockfd = socket(AF_LOCAL, SOCK_DGRAM, 0);
+printf("[child] %d\n",sockfd);
+unlink(path);
+bzero(&remoteaddr, sizeof(remoteaddr));
+bzero(&localaddr, sizeof(localaddr));
+
+localaddr.sun_family = AF_LOCAL;
+strcpy(localaddr.sun_path,path);
+
+bind(sockfd, (struct sockaddr *)&localaddr, sizeof(localaddr));
+printf("[child] bind to %s success\n", path);
+
+remoteaddr.sun_family = AF_LOCAL;
+strcpy(remoteaddr.sun_path, server_path);
+
+int n;
+socklen_t len = sizeof(remoteaddr);
+char sendbuf[MAXLINE] = {'f', 'u', 'c', 'k', '\0'};
+char recvbuf[MAXLINE];
+
+sendto(sockfd, sendbuf, strlen(sendbuf), 0, &remoteaddr, len);
+printf("[child] send %s to server %s\n", (char *)sendbuf, remoteaddr.sun_path);
+
+n = recvfrom(sockfd, recvbuf, MAXLINE, 0, &remoteaddr, &len);
+
+printf("[child] recieve %s from server %s\n",(char *) recvbuf, remoteaddr.sun_path);
+
+return 0; 
+```
+
+
 
 ## 套接字选项
 
@@ -497,6 +496,123 @@ TODO
 
 ## Unix I/O 模型
 
+Linux (Unix) 有一条规则就是一切资源都可视为文件，每个进程都有一个文件描述符表，文件描述符可能指向文件、套接字、设备或其他对象。通常情况下系统需要处理众多 I/O 资源，因此会进行一个初始化阶段，然后进入一个等待模式，等待 IO 客户端的请求然后响应它。
+
+由于 IO 通常是阻塞的，当我们等待一个 IO 的时候无法接收到其他 IO 的请求，简单的解决方案是通过多进程（线程）的方式为每一个 IO 客户端分配独立的进程（线程），该进程（线程）阻塞在某点保持阻塞状态，直到该客户端发来一个请求，才读取并回复它。这对于少量 IO 客户端来说是可以的，但是如果我们想将其扩展到数百个客户端，为每个客户端创建一个进程（线程）可不是一个好主意。
+<!-- more -->
+# I/O 多路复用
+
+
+# TCP 并发服务器
+我们通过一个 TCP 并发的 Echo Server 来验证 IO 复用，其中：
+- 客户端负责发送报文
+- 服务端接收报文并原封不动的将报文返回给客户端
+
+因此，需要一个程序来模拟多个客户端发送报文，这里采用多线程技术，每一个线程代表一个客户端。并且在所有线程发送完请求后，记录其中消耗的时间。
+
+{% include_code Multi Client Simulation socket/tcpcli11.c %}
+
+# Select 系统调用
+
+## select 函数
+
+
+## 服务器示例
+{% include_code Polling with select socket/tcpserv_select.c %}
+
+# Poll 系统调用
+## poll 函数
+{% codeblock wait for some event on a file descriptor lang:c %}
+#include <poll.h>
+int poll(struct pollfd *fds, nfds_t nfds, int timeout);
+{% endcodeblock %}
+
+第一个参数是指向一个结构数组第一个元素的指针。每个数组元素都是一个 pollfd 结构，用于测试每个描述符 fd 的条件。
+
+{% codeblock lang:c %}
+struct pollfd {
+    int fd;            /* File descriptor to poll.  */
+    short int events;  /* Types of events poller cares about.  */
+    short int revents; /* Types of events that actually occurred.  */
+};
+{% endcodeblock %}
+
+要测试的条件由 events 成员指定，函数在相应的 revents 成员中返回该描述符的状态。
+| 常值       | 可用于 events 设置 | 可用于 events 结果 | 解释                     |
+| ---------- | ------------------ | ------------------ | ------------------------ |
+| POLLIN     |                    | √                  | √                        |
+| POLLRDNORM | √                  | √                  | 普通数据可读             |
+| POLLRDBAND | √                  | √                  | 优先级带数据可读         |
+| POLLPRI    | √                  | √                  | 高优先级带数据可读       |
+| POLLOUT    | √                  | √                  | 普通数据可写             |
+| POLLRDNORM | √                  | √                  | 普通数据可写             |
+| POLLRDBAND | √                  | √                  | 优先级带数据可写         |
+| POLLERR    |                    | √                  | 发生错误                 |
+| POLLHUP    |                    | √                  | 发生挂起                 |
+| POLLNVAL   |                    | √                  | 描述符不是一个打开的文件 |
+
+结构数组中元素的个数是 nfds 参数指定。
+
+## 示例
+{% include_code Polling with poll socket/tcpserv_poll.c %}
+
+# Epoll* 系统调用
+{% codeblock epoll - I/O event notification facility lang:c %}
+#include <sys/epoll.h>
+int epoll_create(int size); // Since Linux 2.6.8, the size argument is ignored
+int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
+int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout);
+{% endcodeblock %}
+
+- 调用 `epoll_create` 在内核中建立一个 epoll 对象（在 epoll 文件系统中为这个句柄对象分配资源）。
+- 调用 `epoll_ctl` 向 epoll 对象中注册套接字，并设置监听的类型。
+- 调用 `epoll_wait` 收集发生的事件的连接。
+
+## 示例
+{% include_code Polling with epoll socket/tcpserv_epoll.c %}
+
+# 总结
+## 功能总结
+| 复用方式 | 用户态将文件描述符传入内核的方式                             |
+| -------- | ------------------------------------------------------------ |
+| select   | 创建 3 个文件描述符集并拷贝到内核中，分别监听读、写、异常动作。 |
+| poll     | 将传入的 struct pollfd 结构体数组拷贝到内核中进行监听。      |
+| epoll    | 执行 epoll_create 会在内核的高速 cache 区中建立一颗红黑树以及就绪链表 (该链表存储已经就绪的文件描述符)。接着用户执行的 epoll_ctl 函数添加文件描述符会在红黑树上增加相应的结点。 |
+
+| 复用方式 | 内核态检测文件描述符是否就绪                                 |
+| -------- | ------------------------------------------------------------ |
+| select   | 采用轮询方式。遍历所有 fd 并返回一个描述符读写操作是否就绪的 mask 掩码，根据这个掩码给 fd_set 赋值。 |
+| poll     | 采用轮询方式。查询每个 fd 的状态，如果就绪则在等待队列中加入一项并继续遍历。 |
+| epoll    | 采用回调机制。在执行 epoll_ctl 的 add 操作时，不仅将文件描述符放到红黑树上，而且也注册了回调函数，内核在检测到某文件描述符可读/可写时会调用回调函数，该回调函数将文件描述符放在就绪链表中。 |
+
+| 复用方式 | 用户态如何获取就绪的文件描述符                               |
+| -------- | ------------------------------------------------------------ |
+| select   | 将之前传入的 fd_set 拷贝传出到用户态并返回就绪的文件描述符总数。用户态并不知道是哪些文件描述符处于就绪态，需要遍历来判断。 |
+| poll     | 将之前传入的 fd 数组拷贝传出用户态并返回就绪的文件描述符总数。用户态并不知道是哪些文件描述符处于就绪态，需要遍历来判断。 |
+| epoll    | epoll_wait 只用观察就绪链表中有无数据即可，最后将链表的数据返回给数组并返回就绪的数量。内核将就绪的文件描述符放在传入的数组中，所以只用遍历依次处理即可。这里返回的文件描述符是通过 mmap 让内核和用户空间共享同一块内存实现传递的，减少了不必要的拷贝。 |
+
+| 复用方式 | 继续监听的需要的动作                                         |
+| -------- | ------------------------------------------------------------ |
+| select   | 将新的监听文件描述符集合拷贝传入内核中，继续以上步骤。       |
+| poll     | 将新的 struct pollfd 结构体数组拷贝传入内核中，继续以上步骤。 |
+| epoll    | 无需重新构建红黑树，直接沿用已存在的即可。                   |
+
+## 性能比较
+经过功能总结的话，其实 select 和 poll 的方式是类似的，两者的区别在于：
+- select 使用 3 个 fd_set 来指示描述符事件，并且 select 函数每次都会清空 fd_set 的值，而 poll 对于某个文件描述符有一个关联的结构，不需要每次都清空。
+- poll 没有文件描述符的数量限制。
+
+epoll 和 select/poll 主要区别在于：
+- epoll 减少了用户态和内核态之间的文件描述符拷贝。
+- epoll 减少了对就绪文件描述符的遍历，若 n 为 文件描述符总量，则 epoll 的该过程复杂度为 `O(1)`，而 select/poll 复杂度为 `O(n)`。
+
+# 参考
+- man page
+- [LINUX – IO MULTIPLEXING – SELECT VS POLL VS EPOLL](https://devarea.com/linux-io-multiplexing-select-vs-poll-vs-epoll)
+- [epoll 比 select 和 poll 高效的原因](https://blog.csdn.net/Move_now/article/details/71773965)
+
+# ====
+
 - 阻塞 IO
 - 非阻塞 IO 往往耗费大量 CPU 时间
 - IO Multiplexing (Event-driven IO) 与在多线程中使用阻塞式 IO 极为相似
@@ -523,6 +639,66 @@ fork、线程、
 ### 异步 I/O
 
 ## I/O 复用
+
+I/O 多路复用（I/O Multiplexing）是一种内核提供的对文件描述符进行轮询的机制，这是一种基于事件并发的思想。当内核一旦发现进程指定的一个或多个 IO 条件就绪（输入已经准备好读取，或者描述符已经能够承接更多输出），就通知进程。I/O 多路复用技术通过以下三组系统调用支持：
+
+- select(2)
+- poll(2)
+- epoll
+
+I/O 复用在以下典型的网络应用场合都发挥了巨大的作用：
+
+- 客户处理多个描述符，通常是交互式输入和网络套接字。
+- 一个 TCP 服务器既要处理监听套接字，又要处理已连接套接字。
+- 一个服务器既要处理 TCP，又要处理 UDP。
+- 一个服务器要处理多个服务或多个协议。
+
+### select
+
+`select` 函数允许进程指示内核等待多个事件中的任何一个发生，并只在有一个或多个事件发生或经过一段指定的时间后才唤醒它。
+
+也就是一说，我们调用 select 告知内核对哪些描述符 (可读、可写或异常) 感兴趣以及超时等待多长时间。其中感兴趣的描述符不局限于套接字，任何描述符都可以使用 select 来测试。
+
+```c
+#include <sys/select.h>
+#include <sys/time.h>
+int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+            struct timeval *timeout);
+```
+最后一个参数 timeout 指针用来设置**超时时间**，这可能有以下三种情况：
+
+- NULL：永远等待，直到有一个描述符准备好后而返回。
+- 设置一个结构体，其中包含一段时间：最多等待一段固定时间后返回，如果期间有描述符准备好则立即返回。
+- 设置一个结构体，其中设置为 0：不等待。
+
+中间的三个参数用来让我们指定内核测试的条件，异常条件使用不多，主要是读写条件。
+
+其中 fd_set 是一个文件描述符集，通常是一个整数数组，其中每个整数中的每一位对应一个描述符。形象的说，可以将 fd_set 看作是一个比特流，其中每一个比特位对应一个文件描述符：
+
+- 如果该比特位为 1，则表示将该位对应的文件描述符加入到这个描述符集。
+- 如果该比特位为 0，则表示将该位对应的文件描述符移出这个描述符集。
+
+以下用到四个宏来实现对 fd_set 的操作：
+{% codeblock lang:c %}
+void FD_ZERO(fd_set *fdset);            /* clear all bits in fdset */
+void FD_SET(int fd, fd_set *fdset);     /* turn on the bit for fd in fdset */
+void FD_CLR(int fd, fd_set *fdset);     /* turn off the bit for fd in fdset */
+int  FD_ISSET(int fd, fd_set *fdset);   /* is the bit for fd on in fdset? */
+{% endcodeblock %}
+
+nfds 参数指定待测试的描述符个数，通常设置为 `maxfd+1`，这是因为 select 要对 fd_set 的每一位进行检查，假设 fd_set 有 1024 位，但其实我们只有两个 fd，分别为 3 和 4，那么 select 不需要检测 1024 位，只需要检测 0-4 位即可，所以共 5 个。假设这两个 fd 分别为 100，200，那么很不幸，尽管我们只用到了两个 fd，但 0-200 描述符都需要被测试一遍！这是一个 O(n) 的算法。
+
+调用 select 函数时，我们指定所关心的描述符在该函数返回时，结果将指示哪些描述符就绪，并且任何未就绪的描述符位都清成 0，因此该函数返i可后，我们使用F} }SE}'F-}测试fd-}t数据类)tj-中的描述符。
+描述符集内任何一与未就绪描述符对应的位返回时均清成O。
+我们都得再次把所有描述符集内所关心的位均置为l口
+
+该函数的返回值表示跨所有描述符集的已就绪的总位数。
+
+### poll
+
+### epoll
+
+
 
 ## ioctl - 设备控制
 
