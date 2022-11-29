@@ -499,26 +499,10 @@ TODO
 Linux (Unix) 有一条规则就是一切资源都可视为文件，每个进程都有一个文件描述符表，文件描述符可能指向文件、套接字、设备或其他对象。通常情况下系统需要处理众多 I/O 资源，因此会进行一个初始化阶段，然后进入一个等待模式，等待 IO 客户端的请求然后响应它。
 
 由于 IO 通常是阻塞的，当我们等待一个 IO 的时候无法接收到其他 IO 的请求，简单的解决方案是通过多进程（线程）的方式为每一个 IO 客户端分配独立的进程（线程），该进程（线程）阻塞在某点保持阻塞状态，直到该客户端发来一个请求，才读取并回复它。这对于少量 IO 客户端来说是可以的，但是如果我们想将其扩展到数百个客户端，为每个客户端创建一个进程（线程）可不是一个好主意。
-<!-- more -->
-# I/O 多路复用
 
 
-# TCP 并发服务器
-我们通过一个 TCP 并发的 Echo Server 来验证 IO 复用，其中：
-- 客户端负责发送报文
-- 服务端接收报文并原封不动的将报文返回给客户端
-
-因此，需要一个程序来模拟多个客户端发送报文，这里采用多线程技术，每一个线程代表一个客户端。并且在所有线程发送完请求后，记录其中消耗的时间。
-
-{% include_code Multi Client Simulation socket/tcpcli11.c %}
-
-# Select 系统调用
-
-## select 函数
 
 
-## 服务器示例
-{% include_code Polling with select socket/tcpserv_select.c %}
 
 # Poll 系统调用
 ## poll 函数
@@ -642,9 +626,9 @@ fork、线程、
 
 I/O 多路复用（I/O Multiplexing）是一种内核提供的对文件描述符进行轮询的机制，这是一种基于事件并发的思想。当内核一旦发现进程指定的一个或多个 IO 条件就绪（输入已经准备好读取，或者描述符已经能够承接更多输出），就通知进程。I/O 多路复用技术通过以下三组系统调用支持：
 
-- select(2)
-- poll(2)
-- epoll
+- **select(2)**
+- **poll(2)**
+- **epoll**
 
 I/O 复用在以下典型的网络应用场合都发挥了巨大的作用：
 
@@ -652,6 +636,113 @@ I/O 复用在以下典型的网络应用场合都发挥了巨大的作用：
 - 一个 TCP 服务器既要处理监听套接字，又要处理已连接套接字。
 - 一个服务器既要处理 TCP，又要处理 UDP。
 - 一个服务器要处理多个服务或多个协议。
+
+### 验证模型
+
+我们通过一个 TCP 并发的 Echo Server 来验证 I/O 复用的功能和性能，其中：
+
+- 客户端负责发送报文
+- 服务端接收报文并原封不动的将报文返回给客户端
+
+因此，需要一个程序来模拟多个客户端发送报文，这里采用多线程技术实现。一个线程模拟一个客户端，每个客户端向服务端发送若干次消息，在所有客户端都收到回复消息后，记录消耗的时间。
+
+```c
+#include <arpa/inet.h>
+#include <errno.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <pthread.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <unistd.h>
+
+#define MAXBUF 256
+#define SERV_PORT 9877
+#define NUM_THREADS 50
+#define NUM_MSGS 10
+
+void error(char *msg) {
+    perror(msg);
+    exit(0);
+}
+
+// A normal C function that is executed as a thread
+// when its name is specified in pthread_create()
+void *thr_func(void *vargp) {
+    char msg[MAXBUF];
+    struct sockaddr_in addr = {0};
+    int sockfd;
+    int n;
+
+    /* Create socket and connect to server */
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(SERV_PORT);
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    connect(sockfd, (struct sockaddr *)&addr, sizeof(addr));
+    sprintf(msg, "Message from client %ld", (long)vargp);
+    for (int i = 0; i < NUM_MSGS; i++) {
+        /* write: send the message line to the server */
+        n = write(sockfd, msg, strlen(msg));
+        if (n < 0)
+            error("ERROR writing to socket");
+
+        /* read: print the server's reply */
+        bzero(msg, MAXBUF);
+        n = read(sockfd, msg, MAXBUF);
+        if (n < 0)
+            error("ERROR reading from socket");
+        // printf("Echo from server: %s\n", msg);
+    }
+    close(sockfd);
+    pthread_exit(NULL);
+}
+
+int main(int argc, char *argv[]) {
+    pthread_t threads[NUM_THREADS];
+
+    int rc;
+    long t;
+    struct timeval start, end;
+    long secs_used, micros_used;
+
+    gettimeofday(&start, NULL);
+    for (t = 0; t < NUM_THREADS; t++) {
+        // printf("In main: creating thread #%ld\n", t);
+        rc = pthread_create(&threads[t], NULL, thr_func, (void *)t);
+        if (rc) {
+            printf("ERROR; return code from pthread_create() is %d\n", rc);
+            exit(-1);
+        }
+    }
+
+    /* Last thing that main() should do */
+    for (t = 0; t < NUM_THREADS; t++) {
+        pthread_join(threads[t], NULL);
+    }
+    gettimeofday(&end, NULL);
+    secs_used =
+        (end.tv_sec - start.tv_sec);  // avoid overflow by subtracting first
+    micros_used = ((secs_used * 1000000) + end.tv_usec) - (start.tv_usec);
+
+    printf("%d client send %d*%d messages: %ld micros used\n", NUM_THREADS,
+           NUM_THREADS, NUM_MSGS, micros_used);
+    pthread_exit(NULL);
+}
+```
+
+通过如下方式编译并使用。其中相关打印已经注释掉，避免影响计时。
+
+```
+$ gcc tcpcli.c -o cli -lpthread
+$ ./cli
+```
 
 ### select
 
@@ -679,16 +770,16 @@ int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 - 如果该比特位为 0，则表示将该位对应的文件描述符移出这个描述符集。
 
 以下用到四个宏来实现对 fd_set 的操作：
-{% codeblock lang:c %}
+```c
 void FD_ZERO(fd_set *fdset);            /* clear all bits in fdset */
 void FD_SET(int fd, fd_set *fdset);     /* turn on the bit for fd in fdset */
 void FD_CLR(int fd, fd_set *fdset);     /* turn off the bit for fd in fdset */
 int  FD_ISSET(int fd, fd_set *fdset);   /* is the bit for fd on in fdset? */
-{% endcodeblock %}
+```
 
-nfds 参数指定待测试的描述符个数，通常设置为 `maxfd+1`，这是因为 select 要对 fd_set 的每一位进行检查，假设 fd_set 有 1024 位，但其实我们只有两个 fd，分别为 3 和 4，那么 select 不需要检测 1024 位，只需要检测 0-4 位即可，所以共 5 个。假设这两个 fd 分别为 100，200，那么很不幸，尽管我们只用到了两个 fd，但 0-200 描述符都需要被测试一遍！这是一个 O(n) 的算法。
+nfds 参数指定待测试的描述符个数，通常设置为 `maxfd+1`，这是因为 select 要对 fd_set 的每一位进行检查，假设 fd_set 有 1024 位，但其实我们只有两个 fd，分别为 3 和 4，那么 select 不需要检测 1024 位，只需要检测 0-4 位即可，所以共 5 个。假设这两个 fd 分别为 100，200，那么很不幸，尽管我们只用到了两个 fd，但 0-200 描述符都需要被测试一遍！这是一个 `O(n)` 的算法。
 
-调用 select 函数时，我们指定所关心的描述符在该函数返回时，结果将指示哪些描述符就绪，并且任何未就绪的描述符位都清成 0，因此该函数返i可后，我们使用F} }SE}'F-}测试fd-}t数据类)tj-中的描述符。
+调用 select 函数时，我们指定所关心的描述符在该函数返回时，结果将指示哪些描述符就绪，并且任何未就绪的描述符位都清成 0，因此该函数返回后，我们使用FD_ISSET 测试 fd_set 数据类)tj-中的描述符。
 描述符集内任何一与未就绪描述符对应的位返回时均清成O。
 我们都得再次把所有描述符集内所关心的位均置为l口
 
