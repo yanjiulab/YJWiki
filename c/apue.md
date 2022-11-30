@@ -1588,12 +1588,6 @@ int pthread_cond_signal(pthread_cond_t *cond);
 
 ## 线程控制
 
-## 进程间通信
-
-该部分单独描述。
-
-## 命名空间
-
 ## 参考
 
 - [OSTEP](https://pages.cs.wisc.edu/~remzi/OSTEP/Chinese/)

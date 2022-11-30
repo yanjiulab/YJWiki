@@ -7,12 +7,12 @@
     - [ ] 用户和内核通信 - netlink
     - [ ] Linux 是如何开机的
 - [ ] 开机自启动 - systemd
-- [ ] 网络命令：iproute2
-- [ ] 路由 - frrouting
+- [x] 网络命令：iproute2
+- [x] 路由 - frrouting
 - [ ] 虚拟文件系统 VFS - mount
 - [ ] 进程查看 - ps
-- [ ] 隔离 - namespace
-- [ ] 网络 - iproute2
+- [x] 隔离 - namespace
+- [x] 网络 - iproute2
 - [ ] 资源限制 - cgroups
 - [ ] 容器 - docker
 - [ ] 虚拟机 - KVM

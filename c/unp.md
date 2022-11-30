@@ -26,7 +26,7 @@ raw
 | `strings.h`    | ISO C | 字符串、内存操作        | 各种内存操作，例如内存清零、拷贝等。                         | 常规引入                     |
 | `unistd.h`     | ISO C | unix 系统调用接口       | read，write, close，fork，exec 等                            | 常规引入                     |
 | `signal.h`     | ISO C | 信号函数                | POSIX 信号相关函数                                           | 需要软件中断时引入           |
-| `sys/select`.h | POSIX | IO 复用                 | selec 相关函数                                               | 需要 IO 复用时引入           |
+| `sys/select.h` | POSIX | IO 复用                 | selec 相关函数                                               | 需要 IO 复用时引入           |
 | `poll.h`       | POSIX | IO 复用                 | poll 相关函数                                                | 需要 IO 复用时引入           |
 | `fcntl.h`      | POSIX | file control 文件控制   | 各种描述符控制操作                                           | 需要设置描述符控制属性时引入 |
 | `netdb.h`      | POSIX | 域名相关                | 与域名和 IP 地址转换相关的函数                               | 需要域名解析时引入           |
@@ -211,7 +211,220 @@ struct sockaddr_in6 {
 | `recvfrom` |           UDP 接收数据            |
 |  `sendto`  |           UDP 发送数据            |
 
+### socket 函数
 
+socket 创建一个通信实体，并返回一个指向该实体的文件描述符 (file descriptor)，该文件描述符也称为套接字。三个参数逐步缩小 socket 类型的范围。
+
+```
+/* Create a new socket of type TYPE in domain DOMAIN, using
+   protocol PROTOCOL.  If PROTOCOL is zero, one is chosen automatically.
+   Returns a file descriptor for the new socket, or -1 for errors.  */
+int socket(int domain, int type, int protocol);
+```
+
+`domain` 指定了通信域，决定了通信时使用的协议族。常用的有：
+
+- AF_UNIX, AF_LOCAL
+- AF_INET
+- AF_INET6
+- AF_NETLINK
+- AF_PACKET
+
+协议族中的 AF_* 前缀意为 Address Family，4.x BSD 使用 PF_* 前缀，意为 Protocol Family，两者是完全相同的。
+
+`type` 指定了通信的类型，从而决定了通信的语义，如可靠性，序列性，等。常用的类型有：
+
+- SOCK_STREAM 流式套接字
+- SOCK_DGRAM 数据报套接字
+- SOCK_RAW 原始套接字
+- SOCK_PACKET 废弃，不应该在新软件中使用
+
+`protocol` 指定了通信时使用的具体协议，通常对于给定的协议族和类型，只会有一种协议与之对应，这种情况下 protocol 值设为 0 即可，然而当该类型有多种协议可选时，必须指定协议。
+
+创建一个合适的 socket 是第一步，因此要明确自己的需求。
+- 如果需要捕获一个帧 (2 层) 的全部信息，应当使用底层的接口 AF_PACKE
+    - 如果你需要自己处理帧头，指明类型为 SOCK_RAW
+    - 如果帧头交由系统自动处理指明类型为 SOCK_DGRAM
+    - 如果你明确需要只接收某种二层以上协议的帧，指明第三个协议参数，例如 ETH_P_IP 或者 ETH_P_ARP 表示只接收 IP 帧或者 ARP 帧，否则可以使用 ETH_P_ALL 来表示收发所有协议的帧。
+- 如果你需要处理 IP 层信息，可以使用较高的接口 AF_INET，进行 IP 包收发。
+    - 如果你需要自己处理 IP 头，则指明类型为 SOCK_RAW 
+    - 如果你只关心应用层信息，并且想使用 TCP，则指明类型为 SOCK_STREAM，协议默认为 0 即可。
+    - 如果你只关心应用层信息，并且想使用 UDP，则指明类型为 SOCK_DGRAM，协议默认为 0 即可。
+
+```c
+// Full frame including the link-level header (L2 header + L2 payload)
+int sock_raw_all = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));   // All Kinds of Frame
+int sock_raw_ip = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_IP));     // Only IP Frame
+int sock_raw_arp = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ARP));   // Only ARP Frame
+
+// Cooked packets with the link-level header removed.
+int sock_dgram_ip = socket(AF_PACKET, SOCK_DGRAM, htons(ETH_P_IP));     // Only IP Packet
+int sock_dgram_arp = socket(AF_PACKET, SOCK_DGRAM, htons(ETH_ARP_IP));     // Only ARP Packet
+
+// IP packet (IP header + IP payload)
+int sock_ip = socket(AF_INET, SOCK_RAW, 0);         // same with sock_dgram_ip
+int sock_ip_tcp = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);
+int sock_ip_udp = socket(AF_INET, SOCK_RAW, IPPROTO_UDP);
+int sock_ip_icmp = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+
+// L4 packet or flow
+int sock_udp = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);     // (UDP header + UDP payload)
+int sock_tcp = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);     // (TCP header + TCP payload)
+```
+
+### bind 函数
+```c
+/* Give the socket FD the local address ADDR (which is LEN bytes long).  */
+int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+```
+
+bind 操作将给 sockfd 分配一个长度为 addrlen 的 addr 地址。第二个参数 sockaddr 是一个通用 socket 地址，然而任何具体的 bind 调用必须要将指向特定协议的套接字地址结构的指针进行强制类型转换，变成指向某个通用套接字地址结构的指针。以下是三种常用结构体。
+- struct sockaddr     - 通用 socket 地址
+- struct sockaddr_in  - Internet socket 地址 (IPv4)
+- struct sockaddr_in6 - Internet socket 地址 (IPv6)
+
+因此，强制类型转换的代码需要写成以下形式，即：将 address 的地址强行按照 sockaddr 结构体的方式读取。避免了编译器报不兼容指针类型的错误。
+```c
+struct sockaddr_in address;     /* IPv4 socket address structure */
+bind(sockfd, (structure sockaddr *) &address, sizeof(address))
+```
+
+### listen 函数
+```c
+/* Prepare to accept connections on socket FD.
+   N connection requests will be queued before further requests are refused.
+   Returns 0 on success, -1 for errors.  */
+int listen(int sockfd, int backlog);
+```
+
+listen() 将 sockfd 指向的套接字标记为一个**被动套接字 (passive socket)**，即该套接字不能主动发起连接，内核应当接收指向该套接字的连接请求，该套接字使用 accept() 来接收请求。
+
+一旦应用程序调用了 listen，TCP 协议栈将为所有传入连接执行**三次握手**，这些连接在内核中排队，然后 accept 从队列中检索下一个连接并返回它。backlog 定义为**由未处理连接构成的队列可能增长到的最大长度**。当队列已满时，客户端可能会收到一个 ECONNREFUSED 错误。
+
+> 虽然 listen 表面上作为监听之意，但 listen 并不是一个阻塞的调用，它将会立即返回调用程序。
+
+### accept 函数
+```c
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+```
+
+sockfd 是一个通过 socket 创建的套接字，该套接字已经 bind 到一个本地地址，并且经过 listen 设置为等待连接的状态。
+
+addr 是一个 指向 sockaddr 类型的指针，该结构需要使用 addrlen 指针指明长度。当连接建立时，该地址结构将会**填充对端的信息**。
+
+addrlen 必须正确的初始化为对端 socket 地址结构的字节数，如果你看到对端地址都是 0.0.0.0 之类的信息，请立即检查初始化是否正确。
+
+```c
+socklen_t = clientlen;
+// ...
+clientlen = sizeof(struct sockaddr_in);
+connfd = accept(listenfd, (struct sockaddr *)&clientaddr, &clientlen);
+```
+
+> 执行完三次握手的连接将会在内核中排队，然而如果内核队列中没有连接时，则应用程序会阻塞在 accept 这里，等待一个连接的到来。
+
+### connect 函数
+```c
+int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+```
+
+如果说一个被动套接字通过 listen 和 accept 过程才能完成一个连接的话，那么这个连接是对端通过 connect 主动发起的。通常 TCP 服务器端有一个监听套接字，而客户端使用 connect 发起连接。
+
+connect 函数将使用 sockfd 套接字发起连接，其对端的地址为 addr 指针指向的结构，该地址大小为 addrlen。与 accept 不同，connect 函数的地址大小参数不是一个指针。
+
+```c
+struct sockaddr_in serveraddr;
+// ... initialize serveraddr
+connect(sockfd, (struct sockaddr *)&serveraddr, sizeof(serveraddr);
+```
+
+connect 意为连接之意，我们知道 UDP 并没有连接的概念，只有类似 TCP 的流协议才有连接的语义，然而这并不意味着 UDP 套接字 (SOCK_DGRAM) 类型不可以使用 connect，虽然这确实是较少使用的场景，但仍然是可能的，我们将在后续文章再讨论这种特殊情况。
+
+### close 函数
+
+```c
+#include <unistd.h>
+int close(int fd);
+```
+
+close 函数用来关闭套接字，并终止 TCP 连接。
+
+close 并非立即终止 TCP 连接，其默认行为是把该套接字标记成已关闭，然后立即返回到调用进程，此时该套接字描述符不能再由调用进程使用（不能再进行读写），然后 TCP 将继续尝试发送已排队等待发送到对端的数据，数据发送完毕后发送正常的 TCP 连接终止序列。
+
+父进程关闭己连接套接字只是导致相应描述符的引用数值减 1 ，如果引用计数值仍大于 0，则这个 close 调用并不引发 TCP 的终止序列。如果我们确实想在某个 TCP 连接发送一个 FIN 终止序列，那么可以改用 shutdown 函数。
+
+### read & write 函数
+```c
+#include <unistd.h>
+ssize_t read(int fd, void *buf, size_t count);
+```
+
+read 函数尝试从文件描述符 fd 读取最多 count 字节的数据到 buf 中。
+- 成功：返回读取字节数
+- 失败：返回 -1
+- 到达文件末尾：返回 0
+
+```c
+#include <unistd.h>
+ssize_t write(int fd, const void *buf, size_t count);
+```
+
+write 函数尝试从 buf 缓冲区提取最多 count 字节的数据写入到文件描述符 fd 中。
+- 成功：返回写入字节数
+- 失败：返回 -1
+
+> read/write 的返回值和 count 不相等并不是一个错误，这个现象的原因在于内核中用于套接宇的缓冲区可能已达到极限，这时候需要多次调用 read/wirte 函数才能读写剩余的字节。
+
+### readn & writen 函数
+为了解决 read 和 write 的潜在问题，可以通过自己定义的函数来确保每次都读取 n 个字节数据。
+
+```c
+ssize_t readn(int fd, void *vptr, size_t n) {
+    size_t nleft;
+    ssize_t nread;
+    char *ptr;
+
+    ptr = vptr;
+    nleft = n;
+    while (nleft > 0) {
+        if ((nread = read(fd, ptr, nleft)) < 0) {
+            if (errno == EINTR)
+                nread = 0; /* and call read() again */
+            else
+                return (-1);
+        } else if (nread == 0)
+            break; /* EOF */
+    
+        nleft -= nread;
+        ptr += nread;
+    }
+    return (n - nleft); /* return >= 0 */
+}
+```
+
+```c
+ssize_t writen(int fd, const void *vptr, size_t n) {
+    size_t nleft;
+    ssize_t nwritten;
+    const char *ptr;
+
+    ptr = vptr;
+    nleft = n;
+    while (nleft > 0) {
+        if ((nwritten = write(fd, ptr, nleft)) <= 0) {
+            if (nwritten < 0 && errno == EINTR)
+                nwritten = 0; /* and call write() again */
+            else
+                return (-1); /* error */
+        }
+    
+        nleft -= nwritten;
+        ptr += nwritten;
+    }
+    return (n);
+}
+
+```
 
 ## UDP 套接字编程
 
@@ -501,22 +714,13 @@ TODO
 2. 将数据从内核拷贝到进程中 (Copying the data from the kernel to the process)
 
 Unix 下有五种基本的 I/O 模型：
-- 阻塞 I/O (blocking I/O) 
-- 非阻塞 I/O (nonblocking I/O) 
-- I/O 多路复用 (IO multiplexing/Event-driven I/O) 
+- **阻塞 I/O (blocking I/O)** 
+- **非阻塞 I/O (nonblocking I/O)** 
+- **I/O 多路复用 (IO multiplexing/Event-driven I/O)** 
 - 信号驱动 I/O (signal driven I/O) 
 - 异步 I/O (asynchronous I/O) 
 
-
-
-- 阻塞 IO
-- 非阻塞 IO 往往耗费大量 CPU 时间
-- IO Multiplexing (Event-driven IO) 与在多线程中使用阻塞式 IO 极为相似
-- Sigal-driven IO 开启套接字的信号驱动式 IO 功能，并通过sigaction 安装一个信号处理函数
-- 异步IO Asynchronous IO 信号驱动式 IO 是由内核通知我们何时可以启动一个 IO 操作，而异步 IO 模型是由内核通知我们 IO 操作何时完成。aio_read
-
-- https://eklitzke.org/blocking-io-nonblocking-io-and-epoll
-The multiplexing approach to concurrency is what I call “asynchronous I/O”. Sometimes people will call this same approach “nonblocking I/O”, which I believe comes from a confusion about what “nonblocking” means at the systems programming level. I suggest reserving the term “nonblocking” for referring to whether or not file descriptors are actually in nonblocking mode or not.
+信号驱动 I/O 思路是为套接字设置信号处理函数，当 I/O 就绪时内核触发信号通知进程可以启动一个 I/O 操作，例如 recvfrom 读取数据。异步 I/O 类似于信号驱动，但是由内核通知进程 IO 操作何时完成。由于两者适用场景较少，本文不做过多介绍。
 
 ### 阻塞式 I/O
 
@@ -540,7 +744,7 @@ I/O 复用是指所有 I/O 事件复用一个等待时机，系统不阻塞在�
 
 ![image-20221130170247105](unp.assets/image-20221130170247105.png)
 
-### 异步 I/O
+
 
 ## I/O 复用
 
