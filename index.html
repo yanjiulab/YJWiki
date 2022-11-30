@@ -8,15 +8,12 @@
   <meta name="description" content="Description">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
   <link rel="stylesheet" href="//unpkg.com/docsify-gifcontrol/dist/docsify-gifcontrol.css">
-
   <!-- <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css" /> -->
-  <!-- <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify/lib/themes/buble.css" /> -->
   <!-- Theme: Simple (light + dark) -->
   <link rel="stylesheet" media="(prefers-color-scheme: light)"
     href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple.css">
   <link rel="stylesheet" media="(prefers-color-scheme: dark)"
     href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple-dark.css">
-
 </head>
 
 <body>
@@ -27,12 +24,13 @@
       repo: 'https://github.com/yanjiulab/YJWiki',
       loadSidebar: true,
       auto2top: true,
+      topMargin: 90,
       //loadNavbar: true,
       coverpage: true,
       subMaxLevel: 5,
       pagination: {
-        previousText: '上一章节',
-        nextText: '下一章节',
+        previousText: '上一卷',
+        nextText: '下一卷',
         crossChapter: true,
         crossChapterText: true,
       },
@@ -52,7 +50,10 @@
             return '<figure>' + image_html + '</figure>'
           }
         }
-      }
+      },
+      plantuml: {
+        skin: 'default',
+      },
     }
   </script>
   <!-- Docsify v4 -->
@@ -66,7 +67,7 @@
   <!-- 翻页 -->
   <script src="//unpkg.com/docsify-pagination/dist/docsify-pagination.min.js"></script>
   <!-- 搜索 -->
-  <script src="//unpkg.com/docsify/lib/plugins/search.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.js"></script>
   <!-- 字数统计 -->
   <script src="//unpkg.com/docsify-count/dist/countable.js"></script>
   <!-- 代码高亮 -->
@@ -78,10 +79,13 @@
   <!-- 代码复制 -->
   <script src="//cdn.jsdelivr.net/npm/docsify-copy-code"></script>
   <!-- <script src="//cdn.jsdelivr.net/npm/docsify-copy-code/dist/docsify-copy-code.min.js"></script> -->
-  <!-- 公式 CDN files for docsify-katex -->
+  <!-- 公式 -->
+  <script src="//cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css" />
+  <script src="//cdn.jsdelivr.net/npm/marked@4"></script>
+  <!-- CDN files for docsify-katex -->
   <script src="//cdn.jsdelivr.net/npm/docsify-katex@latest/dist/docsify-katex.js"></script>
   <!-- or <script src="//cdn.jsdelivr.net/gh/upupming/docsify-katex@latest/dist/docsify-katex.js"></script> -->
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css" />
   <!-- 图片缩放 -->
   <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
   <!-- GIF 播放 -->
@@ -90,6 +94,8 @@
   <script src="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/js/docsify-themeable.min.js"></script>
   <!-- 自动添加空格 -->
   <script src="//cdn.jsdelivr.net/npm/docsify-pangu/lib/pangu.min.js"></script>
+  <!-- uml -->
+  <script src="//unpkg.com/docsify-plantuml/dist/docsify-plantuml.min.js"></script>
   <style>
     figure {
       text-align: center

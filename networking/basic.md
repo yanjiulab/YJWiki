@@ -59,6 +59,16 @@ $$ d_{node} = d_{proc} + d_{queue} + d_{trans} + d_{prop} $$
 
 ## 广域网
 
+```plantuml
+@startuml
+Alice -> Bob: Authentication Request
+Bob --> Alice: Authentication Response
+
+Alice -> Bob: Another authentication Request
+Alice <-- Bob: another authentication Response
+@enduml
+```
+
 ## 参考
 
 - [Computer Networking: a Top-Down Approach, 8th Edition](https://media.pearsoncmg.com/ph/esm/ecs_kurose_compnetwork_8/cw/)
