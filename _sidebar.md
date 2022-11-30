@@ -10,7 +10,6 @@
     - [IP 组播路由 - PIM](/networking/multicast-pim.md)
     - [IP 组播路由 - IGMP](/networking/multicast-igmp.md)
     - [传输协议 - TCP](/networking/tcp.md)
-    - [传输协议 - UDP]
     - [隧道 - VXLAN 协议](/networking/vxlan.md)
 - [C 语言](/c/)
   - [编译系统](/c/compilation.md)
