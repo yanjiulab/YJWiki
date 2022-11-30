@@ -3,7 +3,7 @@
 ![logo](/favicon.ico)
 
 # YJWiki
-研百家之术，究古今之变，是谓研究。
+恭喜你发现了互联网上的宝藏
 
 [GitHub](https://github.com/yanjiulab/)
 [Get Started](#YJWiki)
