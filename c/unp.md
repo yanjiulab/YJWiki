@@ -496,106 +496,18 @@ TODO
 
 ## Unix I/O 模型
 
-Linux (Unix) 有一条规则就是一切资源都可视为文件，每个进程都有一个文件描述符表，文件描述符可能指向文件、套接字、设备或其他对象。通常情况下系统需要处理众多 I/O 资源，因此会进行一个初始化阶段，然后进入一个等待模式，等待 IO 客户端的请求然后响应它。
+对于一次 I/O 访问 (以 read 举例) ，数据会先被拷贝到操作系统内核的缓冲区中，然后才会从操作系统内核的缓冲区拷贝到应用程序的地址空间。所以说，当一个 read 操作发生时，它会经历两个阶段：
+1. 等待数据准备完毕 (Waiting for the data to be ready)
+2. 将数据从内核拷贝到进程中 (Copying the data from the kernel to the process)
 
-由于 IO 通常是阻塞的，当我们等待一个 IO 的时候无法接收到其他 IO 的请求，简单的解决方案是通过多进程（线程）的方式为每一个 IO 客户端分配独立的进程（线程），该进程（线程）阻塞在某点保持阻塞状态，直到该客户端发来一个请求，才读取并回复它。这对于少量 IO 客户端来说是可以的，但是如果我们想将其扩展到数百个客户端，为每个客户端创建一个进程（线程）可不是一个好主意。
+Unix 下有五种基本的 I/O 模型：
+- 阻塞 I/O (blocking I/O) 
+- 非阻塞 I/O (nonblocking I/O) 
+- I/O 多路复用 (IO multiplexing/Event-driven I/O) 
+- 信号驱动 I/O (signal driven I/O) 
+- 异步 I/O (asynchronous I/O) 
 
 
-
-
-
-# Poll 系统调用
-## poll 函数
-{% codeblock wait for some event on a file descriptor lang:c %}
-#include <poll.h>
-int poll(struct pollfd *fds, nfds_t nfds, int timeout);
-{% endcodeblock %}
-
-第一个参数是指向一个结构数组第一个元素的指针。每个数组元素都是一个 pollfd 结构，用于测试每个描述符 fd 的条件。
-
-{% codeblock lang:c %}
-struct pollfd {
-    int fd;            /* File descriptor to poll.  */
-    short int events;  /* Types of events poller cares about.  */
-    short int revents; /* Types of events that actually occurred.  */
-};
-{% endcodeblock %}
-
-要测试的条件由 events 成员指定，函数在相应的 revents 成员中返回该描述符的状态。
-| 常值       | 可用于 events 设置 | 可用于 events 结果 | 解释                     |
-| ---------- | ------------------ | ------------------ | ------------------------ |
-| POLLIN     |                    | √                  | √                        |
-| POLLRDNORM | √                  | √                  | 普通数据可读             |
-| POLLRDBAND | √                  | √                  | 优先级带数据可读         |
-| POLLPRI    | √                  | √                  | 高优先级带数据可读       |
-| POLLOUT    | √                  | √                  | 普通数据可写             |
-| POLLRDNORM | √                  | √                  | 普通数据可写             |
-| POLLRDBAND | √                  | √                  | 优先级带数据可写         |
-| POLLERR    |                    | √                  | 发生错误                 |
-| POLLHUP    |                    | √                  | 发生挂起                 |
-| POLLNVAL   |                    | √                  | 描述符不是一个打开的文件 |
-
-结构数组中元素的个数是 nfds 参数指定。
-
-## 示例
-{% include_code Polling with poll socket/tcpserv_poll.c %}
-
-# Epoll* 系统调用
-{% codeblock epoll - I/O event notification facility lang:c %}
-#include <sys/epoll.h>
-int epoll_create(int size); // Since Linux 2.6.8, the size argument is ignored
-int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
-int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout);
-{% endcodeblock %}
-
-- 调用 `epoll_create` 在内核中建立一个 epoll 对象（在 epoll 文件系统中为这个句柄对象分配资源）。
-- 调用 `epoll_ctl` 向 epoll 对象中注册套接字，并设置监听的类型。
-- 调用 `epoll_wait` 收集发生的事件的连接。
-
-## 示例
-{% include_code Polling with epoll socket/tcpserv_epoll.c %}
-
-# 总结
-## 功能总结
-| 复用方式 | 用户态将文件描述符传入内核的方式                             |
-| -------- | ------------------------------------------------------------ |
-| select   | 创建 3 个文件描述符集并拷贝到内核中，分别监听读、写、异常动作。 |
-| poll     | 将传入的 struct pollfd 结构体数组拷贝到内核中进行监听。      |
-| epoll    | 执行 epoll_create 会在内核的高速 cache 区中建立一颗红黑树以及就绪链表 (该链表存储已经就绪的文件描述符)。接着用户执行的 epoll_ctl 函数添加文件描述符会在红黑树上增加相应的结点。 |
-
-| 复用方式 | 内核态检测文件描述符是否就绪                                 |
-| -------- | ------------------------------------------------------------ |
-| select   | 采用轮询方式。遍历所有 fd 并返回一个描述符读写操作是否就绪的 mask 掩码，根据这个掩码给 fd_set 赋值。 |
-| poll     | 采用轮询方式。查询每个 fd 的状态，如果就绪则在等待队列中加入一项并继续遍历。 |
-| epoll    | 采用回调机制。在执行 epoll_ctl 的 add 操作时，不仅将文件描述符放到红黑树上，而且也注册了回调函数，内核在检测到某文件描述符可读/可写时会调用回调函数，该回调函数将文件描述符放在就绪链表中。 |
-
-| 复用方式 | 用户态如何获取就绪的文件描述符                               |
-| -------- | ------------------------------------------------------------ |
-| select   | 将之前传入的 fd_set 拷贝传出到用户态并返回就绪的文件描述符总数。用户态并不知道是哪些文件描述符处于就绪态，需要遍历来判断。 |
-| poll     | 将之前传入的 fd 数组拷贝传出用户态并返回就绪的文件描述符总数。用户态并不知道是哪些文件描述符处于就绪态，需要遍历来判断。 |
-| epoll    | epoll_wait 只用观察就绪链表中有无数据即可，最后将链表的数据返回给数组并返回就绪的数量。内核将就绪的文件描述符放在传入的数组中，所以只用遍历依次处理即可。这里返回的文件描述符是通过 mmap 让内核和用户空间共享同一块内存实现传递的，减少了不必要的拷贝。 |
-
-| 复用方式 | 继续监听的需要的动作                                         |
-| -------- | ------------------------------------------------------------ |
-| select   | 将新的监听文件描述符集合拷贝传入内核中，继续以上步骤。       |
-| poll     | 将新的 struct pollfd 结构体数组拷贝传入内核中，继续以上步骤。 |
-| epoll    | 无需重新构建红黑树，直接沿用已存在的即可。                   |
-
-## 性能比较
-经过功能总结的话，其实 select 和 poll 的方式是类似的，两者的区别在于：
-- select 使用 3 个 fd_set 来指示描述符事件，并且 select 函数每次都会清空 fd_set 的值，而 poll 对于某个文件描述符有一个关联的结构，不需要每次都清空。
-- poll 没有文件描述符的数量限制。
-
-epoll 和 select/poll 主要区别在于：
-- epoll 减少了用户态和内核态之间的文件描述符拷贝。
-- epoll 减少了对就绪文件描述符的遍历，若 n 为 文件描述符总量，则 epoll 的该过程复杂度为 `O(1)`，而 select/poll 复杂度为 `O(n)`。
-
-# 参考
-- man page
-- [LINUX – IO MULTIPLEXING – SELECT VS POLL VS EPOLL](https://devarea.com/linux-io-multiplexing-select-vs-poll-vs-epoll)
-- [epoll 比 select 和 poll 高效的原因](https://blog.csdn.net/Move_now/article/details/71773965)
-
-# ====
 
 - 阻塞 IO
 - 非阻塞 IO 往往耗费大量 CPU 时间
@@ -608,17 +520,31 @@ The multiplexing approach to concurrency is what I call “asynchronous I/O”. 
 
 ### 阻塞式 I/O
 
-fork、线程、
+| 模型         | 图示                                                         |                                                              |                                                           |
+| ------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | --------------------------------------------------------- |
+| 阻塞式 I/O   | ![image-20221130164941890](unp.assets/image-20221130164941890.png) | **默认情况下，I/O 模型是阻塞式的**。                         |                                                           |
+| 非阻塞式 I/O | ![image-20221130165641102](unp.assets/image-20221130165641102.png) | 当进程把套接字设为非阻塞时，当请求的 I/O 操作需要把进程设为睡眠时，不进入睡眠而是立即返回一个错误。 | 非阻塞 IO 需要**轮询**返回的结果，往往耗费大量 CPU 时间。 |
+| I/O 复用     | ![image-20221130170247105](unp.assets/image-20221130170247105.png) |                                                              |                                                           |
+
+**默认情况下，I/O 模型是阻塞式的**。
+
+![image-20221130164941890](unp.assets/image-20221130164941890.png)
+
+由于 IO 通常是阻塞的，当我们等待一个 IO 的时候无法接收到其他 IO 的请求，简单的解决方案是通过多进程（线程）的方式为每一个 IO 客户端分配独立的进程（线程），该进程（线程）阻塞在某点保持阻塞状态，直到该客户端发来一个请求，才读取并回复它。这对于少量 IO 客户端来说是可以的，但是如果我们想将其扩展到数百个客户端，为每个客户端创建一个进程（线程）可不是一个好主意。
 
 ### 非阻塞式 I/O
 
+当进程把套接字设为非阻塞时，当请求的 I/O 操作需要把进程设为睡眠时，不进入睡眠而是立即返回一个错误。
+
+![image-20221130165641102](unp.assets/image-20221130165641102.png)
+
+非阻塞 IO 需要**轮询**返回的结果，往往耗费大量 CPU 时间。
+
 ### I/O 复用
 
-基于事件的并发针对两方面问题：
-1. 多线程应用中，正确处理并发很有难度，忘记加锁、死锁和其他烦人的问题会发生。
-2. 开发者无法控制多线程在某一时刻的调度。程序员只是创建了线程，然后就依赖操作系统能够合理的调度。在某些时候操作系统的调度不是最优的。
+I/O 复用是指所有 I/O 事件复用一个等待时机，系统不阻塞在真正的系统调用上，而是阻塞在 select 或 poll 上。
 
-### 编程模型
+![image-20221130170247105](unp.assets/image-20221130170247105.png)
 
 ### 异步 I/O
 
@@ -636,6 +562,15 @@ I/O 复用在以下典型的网络应用场合都发挥了巨大的作用：
 - 一个 TCP 服务器既要处理监听套接字，又要处理已连接套接字。
 - 一个服务器既要处理 TCP，又要处理 UDP。
 - 一个服务器要处理多个服务或多个协议。
+
+Linux (Unix) 有一条规则就是一切资源都可视为文件，每个进程都有一个文件描述符表，文件描述符可能指向文件、套接字、设备或其他对象。通常情况下系统需要处理众多 I/O 资源，因此会进行一个初始化阶段，然后进入一个等待模式，等待 IO 客户端的请求然后响应它。
+
+由于 IO 通常是阻塞的，当我们等待一个 IO 的时候无法接收到其他 IO 的请求，简单的解决方案是通过多进程（线程）的方式为每一个 IO 客户端分配独立的进程（线程），该进程（线程）阻塞在某点保持阻塞状态，直到该客户端发来一个请求，才读取并回复它。这对于少量 IO 客户端来说是可以的，但是如果我们想将其扩展到数百个客户端，为每个客户端创建一个进程（线程）可不是一个好主意。
+
+基于事件的并发针对两方面问题：
+
+1. 多线程应用中，正确处理并发很有难度，忘记加锁、死锁和其他烦人的问题会发生。
+2. 开发者无法控制多线程在某一时刻的调度。程序员只是创建了线程，然后就依赖操作系统能够合理的调度，在某些时候操作系统的调度不是最优的。
 
 ### 验证模型
 
@@ -762,7 +697,7 @@ int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 - 设置一个结构体，其中包含一段时间：最多等待一段固定时间后返回，如果期间有描述符准备好则立即返回。
 - 设置一个结构体，其中设置为 0：不等待。
 
-中间的三个参数用来让我们指定内核测试的条件，异常条件使用不多，主要是读写条件。
+中间的三个参数用来让我们指定**内核测试的条件**，异常条件使用不多，主要是读写条件。
 
 其中 fd_set 是一个文件描述符集，通常是一个整数数组，其中每个整数中的每一位对应一个描述符。形象的说，可以将 fd_set 看作是一个比特流，其中每一个比特位对应一个文件描述符：
 
@@ -777,19 +712,307 @@ void FD_CLR(int fd, fd_set *fdset);     /* turn off the bit for fd in fdset */
 int  FD_ISSET(int fd, fd_set *fdset);   /* is the bit for fd on in fdset? */
 ```
 
-nfds 参数指定待测试的描述符个数，通常设置为 `maxfd+1`，这是因为 select 要对 fd_set 的每一位进行检查，假设 fd_set 有 1024 位，但其实我们只有两个 fd，分别为 3 和 4，那么 select 不需要检测 1024 位，只需要检测 0-4 位即可，所以共 5 个。假设这两个 fd 分别为 100，200，那么很不幸，尽管我们只用到了两个 fd，但 0-200 描述符都需要被测试一遍！这是一个 `O(n)` 的算法。
+nfds 参数指定**待测试的描述符个数**，通常设置为 `maxfd+1`，这是因为 select 要对 fd_set 的每一位进行检查，假设 fd_set 有 1024 位，但其实我们只有两个 fd，分别为 3 和 4，那么 select 不需要检测 1024 位，只需要检测 0-4 位即可，所以共 5 个。假设这两个 fd 分别为 100，200，那么很不幸，尽管我们只用到了两个 fd，但 0-200 描述符都需要被测试一遍！这是一个 `O(n)` 的算法。
 
-调用 select 函数时，我们指定所关心的描述符在该函数返回时，结果将指示哪些描述符就绪，并且任何未就绪的描述符位都清成 0，因此该函数返回后，我们使用FD_ISSET 测试 fd_set 数据类)tj-中的描述符。
-描述符集内任何一与未就绪描述符对应的位返回时均清成O。
-我们都得再次把所有描述符集内所关心的位均置为l口
+调用 select 函数时，我们指定所关心的描述符在该函数返回时，结果将指示哪些描述符就绪，并且任何未就绪的描述符位都清成 0，因此该函数返回后，我们使用FD_ISSET 测试 fd_set 数据类的描述符，同时得再次把所有描述符集内所关心的位均置为 1。
 
-该函数的返回值表示跨所有描述符集的已就绪的总位数。
+该函数的返回值表示**跨所有描述符集的已就绪的总位数**。
+
+以下是 select 服务端的示例：
+
+```c
+#include <arpa/inet.h>
+#include <errno.h>
+#include <netinet/in.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <wait.h>
+
+#define MAXBUF 1500
+#define SERV_PORT 9877
+
+int main() {
+    char buffer[MAXBUF];
+    int nready, client[FD_SETSIZE];
+    int i, maxi, maxfd, listenfd, connfd, sockfd;
+    ssize_t n;
+    fd_set rset, allset;
+    socklen_t addrlen, peerlen;
+    struct sockaddr_in servaddr, cliaddr, peeraddr;
+
+    listenfd = socket(AF_INET, SOCK_STREAM, 0);
+
+    memset(&servaddr, 0, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = INADDR_ANY;
+    servaddr.sin_port = htons(SERV_PORT);
+
+    bind(listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
+
+    listen(listenfd, 5);
+
+    maxfd = listenfd;
+    maxi = -1;
+    for (i = 0; i < FD_SETSIZE; i++) {
+        client[i] = -1;
+    }
+    FD_ZERO(&allset);
+    FD_SET(listenfd, &allset);
+
+    for (;;) {
+        rset = allset;
+        nready = select(maxfd + 1, &rset, NULL, NULL, NULL);
+
+        if (FD_ISSET(listenfd, &rset)) {
+            addrlen = sizeof(cliaddr);
+            connfd = accept(listenfd, (struct sockaddr *)&cliaddr, &addrlen);
+            printf("client [%s:%d] connected\n", inet_ntoa(cliaddr.sin_addr),
+                   ntohs(((struct sockaddr_in *)&cliaddr)->sin_port));
+            for (i = 0; i < FD_SETSIZE; i++) {  // save descriptor
+                if (client[i] < 0) {
+                    client[i] = connfd;
+                    break;
+                }
+            }
+
+            if (i == FD_SETSIZE) {
+                perror("too many clients.");
+                exit(1);
+            }
+
+            FD_SET(connfd, &allset);  // add new descriptor to set
+            if (connfd > maxfd) {
+                maxfd = connfd;  // for select
+            }
+            if (i > maxi) {
+                maxi = i;  // max index in client[] array
+            }
+
+            if (--nready <= 0) {  // no more readable descriptors
+                continue;
+            }
+        }
+
+        for (i = 0; i <= maxi; i++) {  // check all clients for data
+            if ((sockfd = client[i]) < 0) {
+                continue;
+            }
+            if (FD_ISSET(sockfd, &rset)) {
+                peerlen = sizeof(struct sockaddr_in);
+                getpeername(sockfd, (struct sockaddr *)&peeraddr, &peerlen);
+                if ((n = read(sockfd, buffer, MAXBUF)) == 0) {
+                    // connection closed by client
+                    printf("client [%s:%d] closed\n",
+                           inet_ntoa(peeraddr.sin_addr),
+                           ntohs(((struct sockaddr_in *)&peeraddr)->sin_port));
+
+                    close(sockfd);
+                    FD_CLR(sockfd, &allset);
+                    client[i] = -1;
+                } else {
+                    printf("client [%s:%d] send %ld bytes -> %s\n",
+                           inet_ntoa(peeraddr.sin_addr),
+                           ntohs(((struct sockaddr_in *)&peeraddr)->sin_port),
+                           n, buffer);
+                    write(sockfd, buffer, n);
+                }
+            }
+            if (--nready <= 0) {
+                break;
+            }
+        }
+    }
+    return 0;
+}
+```
 
 ### poll
 
-### epoll
+```c
+#include <poll.h>
+int poll(struct pollfd *fds, nfds_t nfds, int timeout);
+```
 
+第一个参数是**指向一个结构数组第一个元素的指针**。每个数组元素都是一个 pollfd 结构，用于测试每个描述符 fd 的条件。
 
+```c
+struct pollfd {
+    int fd;            /* File descriptor to poll.  */
+    short int events;  /* Types of events poller cares about.  */
+    short int revents; /* Types of events that actually occurred.  */
+};
+```
+
+要测试的条件由 events 成员指定，函数在相应的 revents 成员中返回该描述符的状态。
+
+| 常值       | 可用于 events 设置 | 可用于 events 结果 | 解释                     |
+| ---------- | :----------------: | :----------------: | ------------------------ |
+| POLLIN     |         √          |         √          | 普通或优先级带数据可读   |
+| POLLRDNORM |         √          |         √          | 普通数据可读             |
+| POLLRDBAND |         √          |         √          | 优先级带数据可读         |
+| POLLPRI    |         √          |         √          | 高优先级带数据可读       |
+| POLLOUT    |         √          |         √          | 普通数据可写             |
+| POLLRDNORM |         √          |         √          | 普通数据可写             |
+| POLLRDBAND |         √          |         √          | 优先级带数据可写         |
+| POLLERR    |                    |         √          | 发生错误                 |
+| POLLHUP    |                    |         √          | 发生挂起                 |
+| POLLNVAL   |                    |         √          | 描述符不是一个打开的文件 |
+
+结构数组中元素的个数由 nfds 参数指定。
+
+以下是 poll 服务端的示例：
+
+```c
+#include <arpa/inet.h>
+#include <errno.h>
+#include <poll.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
+#define MAXBUF 1500
+#define SERV_PORT 9877
+#define OPEN_MAX 256
+
+void error(char *msg) {
+    perror(msg);
+    exit(1);
+}
+
+int main(int argc, char **argv) {
+    int i, maxi, listenfd, connfd, sockfd;
+    int nready;
+    ssize_t n;
+    char buf[MAXBUF];
+    socklen_t clilen;
+    struct pollfd client[OPEN_MAX];
+    struct sockaddr_in cliaddr, servaddr;
+
+    listenfd = socket(AF_INET, SOCK_STREAM, 0);
+
+    bzero(&servaddr, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    servaddr.sin_port = htons(SERV_PORT);
+
+    bind(listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
+    listen(listenfd, 5);
+
+    client[0].fd = listenfd;
+    client[0].events = POLLRDNORM;
+    for (i = 1; i < OPEN_MAX; i++) {
+        client[i].fd = -1; /* -1 indicates available entry */
+    }
+    maxi = 0; /* max index into client[] array */
+
+    for (;;) {
+        nready = poll(client, maxi + 1, -1);
+
+        if (client[0].revents & POLLRDNORM) { /* new client connection */
+            clilen = sizeof(cliaddr);
+            connfd = accept(listenfd, (struct sockaddr *)&cliaddr, &clilen);
+            printf("client [%s:%d] connected\n", inet_ntoa(cliaddr.sin_addr),
+                   ntohs(((struct sockaddr_in *)&cliaddr)->sin_port));
+
+            for (i = 1; i < OPEN_MAX; i++)
+                if (client[i].fd < 0) {
+                    client[i].fd = connfd; /* save descriptor */
+                    break;
+                }
+            if (i == OPEN_MAX) error("too many clients");
+
+            client[i].events = POLLRDNORM;
+            if (i > maxi) maxi = i; /* max index in client[] array */
+
+            if (--nready <= 0) continue; /* no more readable descriptors */
+        }
+
+        for (i = 1; i <= maxi; i++) { /* check all clients for data */
+            if ((sockfd = client[i].fd) < 0) continue;
+            if (client[i].revents & (POLLRDNORM | POLLERR)) {
+                if ((n = read(sockfd, buf, MAXBUF)) < 0) {
+                    if (errno == ECONNRESET) { /*4connection reset by client */
+                        printf("client[%d] aborted connection\n", i);
+                        close(sockfd);
+                        client[i].fd = -1;
+                    } else {
+                        error("read error");
+                    }
+
+                } else if (n == 0) { /*4connection closed by client */
+                    printf("client[%d] closed connection\n", i);
+                    close(sockfd);
+                    client[i].fd = -1;
+                } else {
+                    write(sockfd, buf, n);
+                }
+                if (--nready <= 0) break; /* no more readable descriptors */
+            }
+        }
+    }
+}
+
+```
+
+### epoll (TODO)
+
+```c
+#include <sys/epoll.h>
+int epoll_create(int size); // Since Linux 2.6.8, the size argument is ignored
+int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
+int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout);
+```
+
+- 调用 `epoll_create` 在内核中建立一个 epoll 对象（在 epoll 文件系统中为这个句柄对象分配资源）。
+- 调用 `epoll_ctl` 向 epoll 对象中注册套接字，并设置监听的类型。
+- 调用 `epoll_wait` 收集发生的事件的连接。
+
+### 总结
+
+功能总结
+
+| 复用方式 | 用户态将文件描述符传入内核的方式                             |
+| -------- | ------------------------------------------------------------ |
+| select   | 创建 3 个文件描述符集并拷贝到内核中，分别监听读、写、异常动作。 |
+| poll     | 将传入的 struct pollfd 结构体数组拷贝到内核中进行监听。      |
+| epoll    | 执行 epoll_create 会在内核的高速 cache 区中建立一颗红黑树以及就绪链表 (该链表存储已经就绪的文件描述符)。接着用户执行的 epoll_ctl 函数添加文件描述符会在红黑树上增加相应的结点。 |
+
+| 复用方式 | 内核态检测文件描述符是否就绪                                 |
+| -------- | ------------------------------------------------------------ |
+| select   | 采用轮询方式。遍历所有 fd 并返回一个描述符读写操作是否就绪的 mask 掩码，根据这个掩码给 fd_set 赋值。 |
+| poll     | 采用轮询方式。查询每个 fd 的状态，如果就绪则在等待队列中加入一项并继续遍历。 |
+| epoll    | 采用回调机制。在执行 epoll_ctl 的 add 操作时，不仅将文件描述符放到红黑树上，而且也注册了回调函数，内核在检测到某文件描述符可读/可写时会调用回调函数，该回调函数将文件描述符放在就绪链表中。 |
+
+| 复用方式 | 用户态如何获取就绪的文件描述符                               |
+| -------- | ------------------------------------------------------------ |
+| select   | 将之前传入的 fd_set 拷贝传出到用户态并返回就绪的文件描述符总数。用户态并不知道是哪些文件描述符处于就绪态，需要遍历来判断。 |
+| poll     | 将之前传入的 fd 数组拷贝传出用户态并返回就绪的文件描述符总数。用户态并不知道是哪些文件描述符处于就绪态，需要遍历来判断。 |
+| epoll    | epoll_wait 只用观察就绪链表中有无数据即可，最后将链表的数据返回给数组并返回就绪的数量。内核将就绪的文件描述符放在传入的数组中，所以只用遍历依次处理即可。这里返回的文件描述符是通过 mmap 让内核和用户空间共享同一块内存实现传递的，减少了不必要的拷贝。 |
+
+| 复用方式 | 继续监听的需要的动作                                         |
+| -------- | ------------------------------------------------------------ |
+| select   | 将新的监听文件描述符集合拷贝传入内核中，继续以上步骤。       |
+| poll     | 将新的 struct pollfd 结构体数组拷贝传入内核中，继续以上步骤。 |
+| epoll    | 无需重新构建红黑树，直接沿用已存在的即可。                   |
+
+经过功能总结的话，其实 select 和 poll 的方式是类似的，两者的区别在于：
+
+- select 使用 3 个 fd_set 来指示描述符事件，并且 select 函数每次都会清空 fd_set 的值，而 poll 对于某个文件描述符有一个关联的结构，不需要每次都清空。
+- poll 没有文件描述符的数量限制。
+
+epoll 和 select/poll 主要区别在于：
+
+- epoll 减少了用户态和内核态之间的文件描述符拷贝。
+- epoll 减少了对就绪文件描述符的遍历，若 n 为 文件描述符总量，则 epoll 的该过程复杂度为 `O(1)`，而 select/poll 复杂度为 `O(n)`。
 
 ## ioctl - 设备控制
 
@@ -995,3 +1218,5 @@ rtm->xxx = xxx;
 
 ## 参考
 
+- [LINUX – IO MULTIPLEXING – SELECT VS POLL VS EPOLL](https://devarea.com/linux-io-multiplexing-select-vs-poll-vs-epoll)
+- [epoll 比 select 和 poll 高效的原因](https://blog.csdn.net/Move_now/article/details/71773965)
