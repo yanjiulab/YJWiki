@@ -14,6 +14,13 @@
     href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple.css">
   <link rel="stylesheet" media="(prefers-color-scheme: dark)"
     href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple-dark.css">
+  <!-- Custom Styles -->
+  <style>
+    :root {
+      /* --base-font-size: 14px; */
+      /* --theme-hue: 325; */
+    }
+  </style>
 </head>
 
 <body>
@@ -25,7 +32,7 @@
       loadSidebar: true,
       auto2top: true,
       topMargin: 90,
-      //loadNavbar: true,
+      loadNavbar: true,
       coverpage: true,
       subMaxLevel: 5,
       pagination: {
@@ -54,6 +61,8 @@
       plantuml: {
         skin: 'default',
       },
+      loadFooter: true,
+      loadFooter: '_footer.md',
     }
   </script>
   <!-- Docsify v4 -->
@@ -94,8 +103,10 @@
   <script src="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/js/docsify-themeable.min.js"></script>
   <!-- 自动添加空格 -->
   <script src="//cdn.jsdelivr.net/npm/docsify-pangu/lib/pangu.min.js"></script>
-  <!-- uml -->
+  <!-- UML -->
   <script src="//unpkg.com/docsify-plantuml/dist/docsify-plantuml.min.js"></script>
+  <!-- 页脚 -->
+  <script src="//cdn.jsdelivr.net/npm/@alertbox/docsify-footer/dist/docsify-footer.min.js"></script>
   <style>
     figure {
       text-align: center

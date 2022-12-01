@@ -59,15 +59,8 @@ $$ d_{node} = d_{proc} + d_{queue} + d_{trans} + d_{prop} $$
 
 ## 广域网
 
-```plantuml
-@startuml
-Alice -> Bob: Authentication Request
-Bob --> Alice: Authentication Response
 
-Alice -> Bob: Another authentication Request
-Alice <-- Bob: another authentication Response
-@enduml
-```
+
 
 ## 参考
 
