@@ -28,7 +28,7 @@
     - [Linux 内核流量控制](/linux/tc.md)
     - [Linux 内核负载均衡](/linux/lvs.md)
     - [网络 - iproute2](/linux/iproute2.md)
-    - [路由 - Quagga/FRRouting](/linux/frrouting.md)
+    - [路由 - FRRouting](/linux/frrouting.md)
     - [容器 - Docker](/linux/docker.md)
     - [Shell 脚本](/linux/shellscript.md)
 - [开发工具](/tool/)
