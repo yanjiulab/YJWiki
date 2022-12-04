@@ -1373,7 +1373,7 @@ struct ifreq {
 
 ## ARP 缓存
 
-
+通过 `ip neigh show` 获取。
 
 ## 路由套接字
 
