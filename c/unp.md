@@ -1212,6 +1212,8 @@ epoll 和 select/poll 主要区别在于：
 - epoll 减少了用户态和内核态之间的文件描述符拷贝。
 - epoll 减少了对就绪文件描述符的遍历，若 n 为 文件描述符总量，则 epoll 的该过程复杂度为 `O(1)`，而 select/poll 复杂度为 `O(n)`。
 
+内核信息
+
 ## ioctl - 设备控制
 
 `sys/ioctl.h`  POSIX  各种 IO 接口操作函数  获取接口信息、访问路由表、ARP 缓存等函数  
