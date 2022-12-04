@@ -1345,7 +1345,7 @@ struct ifreq {
 - if_nameindex()
 - if_freenameindex()
 
-```
+```c
 #include <net/if.h>
 #include <stdio.h>
 #include <stdlib.h>
