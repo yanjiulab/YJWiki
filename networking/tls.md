@@ -69,7 +69,6 @@ TLS 协议的基本思路是采用公钥加密法，也就是说，客户端先�
 
 
 ## 参考
-- [Transport Layer Security](https://en.wikipedia.org/wiki/Transport_Layer_Security)
 - [RFC 5246 - TLS v1.2](https://tools.ietf.org/html/rfc5246)
 - [RFC 8446 - TLS v1.3](https://tools.ietf.org/html/rfc8446)
 - [SSL/TLS工作原理](https://zhuanlan.zhihu.com/p/66029254)
