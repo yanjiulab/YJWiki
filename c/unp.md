@@ -1338,8 +1338,6 @@ struct ifreq {
 #define ifr_settings ifr_ifru.ifru_settings   /* Device/proto settings*/
 ```
 
-## 
-
 ### 接口名字和索引函数
 
 - if_nametoindex()
