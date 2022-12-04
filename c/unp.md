@@ -1431,7 +1431,7 @@ if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
 }
 ```
 
-## 输入与输出
+### 输出规则
 
 原始套接字输出遵循以下规则：
 
@@ -1439,6 +1439,8 @@ if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
 - 如果套接字已连接，还可以使用 send 或 write。
 - 如果开启了 `IP_HDRINCL` 选项，则由用户组成首部，否则由内核负责。
 - 内核会对超出 MTU 的数据包进行分片。
+
+### 输入规则
 
 内核把数据传送给原始套接字遵循以下规则：
 
