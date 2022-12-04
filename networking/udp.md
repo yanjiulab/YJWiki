@@ -47,6 +47,6 @@ UDP 帧格式十分简单，由 8 字节固定包头以及载荷组成。其中 
 
 ## QUIC 
 
-QUIC（Quick UDP Internet Connection）是谷歌制定的一种基于 UDP 的传输层协议。目前已经由 IETF 推出标准版 [RFC 9000](https://www.rfc-editor.org/rfc/rfc9000.html)
+QUIC（Quick UDP Internet Connection）是谷歌制定的一种基于 UDP 的传输层协议。2021 年 5 月由 IETF 进行了标准化 [RFC 9000](https://www.rfc-editor.org/rfc/rfc9000.html)。
 
 ![img](udp.assets/v2-d61a62fdfb08ed3882e1018136ce6b2f_720w.webp)
