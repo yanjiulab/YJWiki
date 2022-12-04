@@ -1379,21 +1379,25 @@ main(int argc, char *argv[])
 
 通过 `ip neigh show` 获取。
 
-### ioctl 方式
+### ioctl 实现
 
 TODO
 
-### sysctl 方式
+### sysctl 实现
 
 TODO
 
-## 路由表相关
+## 路由表操作
 
 创建一个路由套接字后，进程可以通过写该套接字，向内核发送命令，通过读自该套接字，从内核接收信息。
 
 ### 路由套接字
 
-ioctl 
+### ioctl 实现
+
+### sysctl 实现
+
+## 路由表内部实现
 
 ### 最长掩码匹配实现
 
