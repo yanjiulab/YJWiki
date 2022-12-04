@@ -1316,8 +1316,6 @@ struct ifreq {
 #define ifr_settings ifr_ifru.ifru_settings   /* Device/proto settings*/
 ```
 
-
-
 ## 路由套接字
 
 创建一个路由套接字后，进程可以通过写该套接字，向内核发送命令，通过读自该套接字，从内核接收信息。
@@ -1330,7 +1328,7 @@ struct ifreq {
 - 接口表
 - ARP 缓存
 
-注：Linux很多没有
+注：Linux 很多没有
 
 ### 接口名字和索引函数
 
