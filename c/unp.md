@@ -1396,7 +1396,125 @@ main(int argc, char *argv[])
 
 ## 原始套接字
 
+原始套接字提供了普通 TCP/UDP 套接字不具备的功能：
+
+- 读写原始 IP 数据包首部中的内容。
+- 自定义 IP 包首部。
+
+### 创建
+
+原始套接字创建方法如下：
+
+```c
+fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+```
+
+如果需要发送时自定义 IP 首部，需要通过以下设置。否则由内核自动组成 IP 首部。
+
+```c
+const int on = 1;
+if (setsockopt(daemon_socket, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) < 0) {
+	log_warn("setsockopt error");
+}
+```
+
+另外，还可以进行 connect，可以使用 send 函数。
+
+```c
+struct sockaddr_in addr;
+bzero(&addr, sizeof(addr));
+addr.sin_family = AF_INET;
+addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+	log_error("daemon connect error (%s)", strerror(errno));
+}
+```
+
+## 输入与输出
+
+原始套接字输出遵循以下规则：
+
+- 普通输出通过 sendto 或 sendmsg 并指定 IP 地址完成。
+- 如果套接字已连接，还可以使用 send 或 write。
+- 如果开启了 `IP_HDRINCL` 选项，则由用户组成首部，否则由内核负责。
+- 内核会对超出 MTU 的数据包进行分片。
+
+原始套接字输入遵循以下规则：
+
+- UDP 分组和 TCP 分组**不会**被内核传送给原始套接字，想要获取带 IP 头的 UDP/TCP 数据，只能使用链路层套接字。
+- **大部分** ICMP 分组会被内核处理完后传递给原始套接字。
+- **所有** IGMP 分组会被内核处理完后传递给原始套接字。
+- 所有内核不认识的协议会被直接传递给原始套接字。
+- 分片分组在
+
+### PING 程序
+
+TODO
+
+### TRACEROUTE 程序
+
+TODO
+
+### ICMP 守护进程
+
+TODO
+
 ## 数据链路套接字
+
+Unix 为应用程序提供了访问数据链路层的强大功能。Linux 上访问数据链路层的 2 个常用方法为：
+
+- BSD 分组过滤器（BPF）
+- Linux 链路套接字 （PF_PACKET）
+
+除此之外，另有两个常用的库可以实现该功能。库使用了上述底层技术，但却为用户屏蔽了实现细节。
+
+- libpcap：分组捕获函数库
+- libnet：分组构造函数库
+
+### BPF
+
+BPF 架构如下图所示。
+
+![image-20221204233327365](unp.assets/image-20221204233327365.png)
+
+除了**捕获**功能，BPF 另一个强大的功能在于提供了**内核过滤方式**，避免了用户在应用层面进行数据过滤，这样大大减少了数据从内核空间到用户空间的复制开销。
+
+### Linux 链路套接字
+
+Linux 链路套接字创建方式如下：
+
+```c
+fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+```
+
+其中：
+
+- 第二个参数表示抓包获取的帧格式：
+    - `SOCK_RAW` 表示整个链路层帧
+    - `SOCK_DGRAM` 表示去除了首部的分组
+- 第三个参数表示抓包感兴趣的协议类型
+
+Linux 链路套接字提供了内核过滤方式，代码片如下：
+
+```c
+// tcpdump -i eth1 ip or ether proto 0x0886 or 0x0806 -dd
+struct sock_filter filter[] = {{0x28, 0, 0, 0x0000000c}, {0x15, 2, 0, 0x00000800}, {0x15, 1, 0, 0x00000886},
+                               {0x15, 0, 1, 0x00000806}, {0x6, 0, 0, 0x00040000},  {0x6, 0, 0, 0x00000000}};
+struct sock_fprog prog = {
+	.len = sizeof(filter) / sizeof(filter[0]),
+	.filter = filter,
+};
+setsockopt(fd, SOL_SOCKET, SO_ATTACH_FILTER, &prog, sizeof(prog))
+```
+
+### libpcap
+
+TODO
+
+### libnet
+
+TODO
 
 ## C/S 架构程序设计范式
 
