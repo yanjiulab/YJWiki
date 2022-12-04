@@ -41,7 +41,12 @@ TLS 从 SSL 发展而来，其间因为安全性问题经历了一系列版本�
 TLS 主要分为两层：
 
 - 底层的是 TLS 记录协议 (The TLS Record Protocol)，主要负责使用对称密码对消息进行加密。
-- 上层的是 TLS 握手协议 (The TLS Handshaking Protocols)，主要握手协议，密码规格变更协议和应用数据协议4个部分。
+- 上层的是 TLS 握手协议 (The TLS Handshaking Protocols)，又具体分为四个协议：
+    - 密码规格变更协议 (Change Cipher Spec Protocol)
+    - 警告协议 (Alert Protocol)
+    - 握手协议
+    - 密码规格变更协议
+    - 应用数据协议4个部分。
 
 ### 加密原理
 
