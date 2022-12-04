@@ -1401,7 +1401,7 @@ main(int argc, char *argv[])
 - 读写原始 IP 数据包首部中的内容。例如处理 OSPF、PIM 等路由包。
 - 自定义 IP 包首部。
 
-### 创建
+### 原始套接字创建
 
 原始套接字创建方法如下：
 
@@ -1431,7 +1431,7 @@ if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
 }
 ```
 
-### 输出规则
+### 原始套接字输出
 
 原始套接字输出遵循以下规则：
 
@@ -1440,7 +1440,7 @@ if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
 - 如果开启了 `IP_HDRINCL` 选项，则由用户组成首部，否则由内核负责。
 - 内核会对超出 MTU 的数据包进行分片。
 
-### 输入规则
+### 原始套接字输入
 
 内核把数据传送给原始套接字遵循以下规则：
 
