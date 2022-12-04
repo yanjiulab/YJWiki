@@ -75,5 +75,5 @@ TLS 协议的基本思路是采用公钥加密法，也就是说，客户端先�
 - [SSL/TLS工作原理](https://zhuanlan.zhihu.com/p/66029254)
 - [Cryptography, Encryption, Hash Functions and Digital Signature](https://medium.com/@ealtili/cryptography-encryption-hash-functions-and-digital-signature-101-298a03eb9462)
 - [Is encrypting data with a private key dangerous?](https://security.stackexchange.com/questions/11879/is-encrypting-data-with-a-private-key-dangerous/20362)
-- [阮一峰](https://www.ruanyifeng.com/blog/2011/08/what_is_a_digital_signature.html)
+- [数字签名](https://www.ruanyifeng.com/blog/2011/08/what_is_a_digital_signature.html)
 
