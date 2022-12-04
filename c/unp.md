@@ -1268,9 +1268,7 @@ int ioctl(int fd, unsigned long request, ...);
 
 ### 数据结构
 
-使用 ioctl 获取接口信息需要 `SIOCGET`
-
-`ifconf` structure
+使用 ioctl 获取接口信息需要 `SIOCGIFCONF` 请求完成，需要用到 `ifconf` 结构，该结构又包括 `ifreq` 结构。
 
 ```c
 /*
@@ -1290,9 +1288,7 @@ struct ifconf {
 #define ifc_req ifc_ifcu.ifcu_req /* array of structures */
 ```
 
-
-
-`ifreq` structure
+ `ifreq` 结构如下
 
 ```c
 /*
