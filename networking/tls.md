@@ -34,7 +34,9 @@ TLS 从 SSL 发展而来，其间因为安全性问题经历了一系列版本�
 | TLS 1.2 |  2008年  |                |    96.0%     |
 | TLS 1.3 |  2018年  |                |    18.4%     |
 
-# 加密基础概念
+## TLS 原理
+
+### 加密原理
 
 - 对称加密：密钥可能被截获
 - 非对称加密：私钥＋公钥，交换公钥，公钥加密，私钥解密；
@@ -44,7 +46,7 @@ TLS 从 SSL 发展而来，其间因为安全性问题经历了一系列版本�
 - 数字证书 (Digital Certificates)：数字证书包含公钥明文＋数字签名，
 - CA 证书：CA 公钥，浏览器用 CA 证书来验证数字证书的合法性，从而得到公钥。
 
-# 基本运行过程
+#### 基本运行过程
 TLS 协议的基本思路是采用公钥加密法，也就是说，客户端先向服务器端索要公钥，然后用公钥加密信息，服务器收到密文后，用自己的私钥解密。
 
 （1）如何保证公钥不被篡改？
@@ -60,13 +62,13 @@ TLS 协议的基本思路是采用公钥加密法，也就是说，客户端先�
 2. 双方协商生成"对话密钥"。
 3. 双方采用"对话密钥"进行加密通信。
 
-# 握手阶段 (The TLS Handshaking Protocols)
+## 握手阶段 (The TLS Handshaking Protocols)
 "握手阶段"涉及四次通信，"握手阶段"的所有通信都是明文的。
 
-# (The TLS Record Protocol)
+## (The TLS Record Protocol)
 
 
-# 参考
+## 参考
 - [Transport Layer Security](https://en.wikipedia.org/wiki/Transport_Layer_Security)
 - [RFC 5246 - TLS v1.2](https://tools.ietf.org/html/rfc5246)
 - [RFC 8446 - TLS v1.3](https://tools.ietf.org/html/rfc8446)
