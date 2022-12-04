@@ -2,7 +2,7 @@
 
 ## UDP 简介
 
-用户数据报协议（User Datagram Protocol, UDP）是 OSI 参考模型中一种**无连接**的传输层协议，提供**简单不可靠信息传送服务**。[IETF RFC 768](https://www.rfc-editor.org/rfc/rfc768) 是 UDP 的正式规范，其 IP 报文协议号是 17。
+用户数据报协议（User Datagram Protocol, UDP）是 OSI 参考模型中一种**无连接**的传输层协议，提供**简单不可靠信息传送服务**。[IETF RFC 768](https://www.rfc-editor.org/rfc/rfc768) 是 UDP 的正式规范，其 IP 报文协议号是 17。与 TCP 相比，UDP 轻量、传输效率高，但是缺少可靠性，通常应用于游戏、流媒体以及 VoIP 等场合。
 
 ## UDP 帧格式
 
@@ -47,6 +47,6 @@ UDP 帧格式十分简单，由 8 字节固定包头以及载荷组成。其中 
 
 ## QUIC 
 
-QUIC（Quick UDP Internet Connection）是谷歌制定的一种基于 UDP 的低时延的互联网传输层协议。与 TCP 相比，UDP 轻量、传输效率高，但是缺少可靠性。通常应用于游戏、流媒体以及 VoIP 等场合。
+QUIC（Quick UDP Internet Connection）是谷歌制定的一种基于 UDP 的传输层协议。
 
 【】https://www.rfc-editor.org/rfc/rfc9000.html
