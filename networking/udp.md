@@ -51,4 +51,4 @@ QUIC（Quick UDP Internet Connection）是谷歌制定的一种基于 UDP 的传
 
 ![img](udp.assets/v2-d61a62fdfb08ed3882e1018136ce6b2f_720w.webp)
 
-因此，了解 QUIC 协议需要理解 TCP、TLS、HTTP 等
+因此，理解 QUIC 协议需要理解 TCP、TLS、HTTP(S)、HTTP/2 协议过程。
