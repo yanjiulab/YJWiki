@@ -42,10 +42,10 @@ TLS 主要分为两层：
 
 - 底层的是 TLS 记录协议 (The TLS Record Protocol)，主要负责使用对称密码对消息进行加密。
 - 上层的是 TLS 握手协议 (The TLS Handshaking Protocols)，又具体分为四个协议：
+    - 握手协议 (Handshake Protocol)
     - 密码规格变更协议 (Change Cipher Spec Protocol)
     - 警告协议 (Alert Protocol)
-    - 握手协议 (Handshake Protocol)
-    - 应用数据协议4个部分。
+    - 应用数据协议 (Application data protocol)
 
 - 握手协议负责在客户端和服务器端商定密码算法和共享密钥，包括证书认证，是 4 个协议中最最复杂的部分。
 - 密码规格变更协议负责向通信对象传达变更密码方式的信号
