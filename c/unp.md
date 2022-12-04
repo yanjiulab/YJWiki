@@ -1268,40 +1268,7 @@ int ioctl(int fd, unsigned long request, ...);
 
 ### 数据结构
 
-
-
-### 接口名字和索引函数
-
-- if_nametoindex()
-- if_indextoname()
-- if_nameindex()
-- if_freenameindex()
-
-```
-#include <net/if.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-
-int
-main(int argc, char *argv[])
-{
-    struct if_nameindex *if_ni, *i;
-
-    if_ni = if_nameindex();
-    if (if_ni == NULL) {
-        perror("if_nameindex");
-        exit(EXIT_FAILURE);
-    }
-
-    for (i = if_ni; ! (i->if_index == 0 && i->if_name == NULL); i++)
-		printf("%u: %s\n", i->if_index, i->if_name);
-
-    if_freenameindex(if_ni);
-
-    exit(EXIT_SUCCESS);
-}
-```
+使用 ioctl 获取接口信息需要 `SIOCGET`
 
 `ifconf` structure
 
@@ -1373,6 +1340,41 @@ struct ifreq {
 #define ifr_qlen ifr_ifru.ifru_ivalue         /* Queue length 	*/
 #define ifr_newname ifr_ifru.ifru_newname     /* New name		*/
 #define ifr_settings ifr_ifru.ifru_settings   /* Device/proto settings*/
+```
+
+## 
+
+### 接口名字和索引函数
+
+- if_nametoindex()
+- if_indextoname()
+- if_nameindex()
+- if_freenameindex()
+
+```
+#include <net/if.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int
+main(int argc, char *argv[])
+{
+    struct if_nameindex *if_ni, *i;
+
+    if_ni = if_nameindex();
+    if (if_ni == NULL) {
+        perror("if_nameindex");
+        exit(EXIT_FAILURE);
+    }
+
+    for (i = if_ni; ! (i->if_index == 0 && i->if_name == NULL); i++)
+		printf("%u: %s\n", i->if_index, i->if_name);
+
+    if_freenameindex(if_ni);
+
+    exit(EXIT_SUCCESS);
+}
 ```
 
 ## ARP 缓存相关
