@@ -48,3 +48,5 @@ UDP 帧格式十分简单，由 8 字节固定包头以及载荷组成。其中 
 ## QUIC 
 
 QUIC（Quick UDP Internet Connection）是谷歌制定的一种基于 UDP 的低时延的互联网传输层协议。与 TCP 相比，UDP 轻量、传输效率高，但是缺少可靠性。通常应用于游戏、流媒体以及 VoIP 等场合。
+
+【】https://www.rfc-editor.org/rfc/rfc9000.html
