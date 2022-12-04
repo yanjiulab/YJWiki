@@ -1371,11 +1371,11 @@ struct ifreq {
 #define ifr_settings ifr_ifru.ifru_settings   /* Device/proto settings*/
 ```
 
-## ARP 缓存
+## ARP 缓存相关
 
 通过 `ip neigh show` 获取。
 
-## 路由套接字
+## 路由表相关
 
 创建一个路由套接字后，进程可以通过写该套接字，向内核发送命令，通过读自该套接字，从内核接收信息。
 
@@ -1408,7 +1408,11 @@ struct ifreq {
 
 ## 广播
 
+TODO
+
 ## 组播
+
+TODO
 
 ## 原始套接字
 
