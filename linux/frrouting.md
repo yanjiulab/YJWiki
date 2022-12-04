@@ -71,7 +71,7 @@ pimd          2611/tcp		  # PIMd vty
 nhrpd         2612/tcp		  # nhrpd vty
 ```
 
-## FRRouting 简介
+## FRR 简介
 
 FRRouting（以下简称 FRR）目前仍然在不断更新中，从使用者角度而言，Quagga 与 FRR 使用基本差别不大，特别是两者都支持的协议，其配置使用基本一致。因此，下文中关于 FRR 的配置介绍，绝大部分都适用于 Quagga，关于更多信息详见[官网](http://docs.frrouting.org/en/latest/index.html)。
 
@@ -465,9 +465,9 @@ zebra is an IP routing manager. It provides kernel routing table updates, interf
 
 ## FRR 源码分析
 
-### 基本架构分析
+### 架构分析
 
-
+### 基础工具
 
 ### PIM 协议
 
