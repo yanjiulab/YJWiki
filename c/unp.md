@@ -1264,7 +1264,7 @@ int ioctl(int fd, unsigned long request, ...);
 
 创建一个路由套接字后，进程可以通过写该套接字，向内核发送命令，通过读自该套接字，从内核接收信息。
 
-### 接口操作
+## 接口操作
 
 `ifconf` structure
 
@@ -1337,6 +1337,8 @@ struct ifreq {
 #define ifr_newname ifr_ifru.ifru_newname     /* New name		*/
 #define ifr_settings ifr_ifru.ifru_settings   /* Device/proto settings*/
 ```
+
+## ARP 缓存
 
 ## 路由套接字
 
