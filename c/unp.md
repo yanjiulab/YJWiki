@@ -1332,10 +1332,14 @@ netlink_socket = socket(AF_NETLINK, SOCK_RAW, netlink_family);
 内核态需要使用专门的内核 API 来使用 netlink。
 
 ```
-nl_sk = netlink_kernel_create(&init_net, NETLINK_USER, &cfg);
+netlink_socket = netlink_kernel_create(&init_net, netlink_family, &cfg);
 ```
 
-q
+其中第二个参数和用户态相同。
+
+
+
+
 
 相对于其他用户和内核通信方式，Netlink 具有以下优点：
 
