@@ -1331,7 +1331,7 @@ netlink_socket = socket(AF_NETLINK, SOCK_RAW, netlink_family);
 
 内核态需要使用专门的内核 API 来使用 netlink。
 
-```
+```c
 struct sock *netlink_kernel_create(struct net *net, int unit, struct netlink_kernel_cfg *cfg)
 ```
 
