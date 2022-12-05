@@ -1360,7 +1360,9 @@ struct sockaddr_nl {
 其中：
 
 - `nl_pid` 为通信端口号，用于唯一标识一个通信实体。内核为 0，用户空间程序一般为其进程 ID。
-- `nl_groups` 表示
+- `nl_groups` 表示 netlink 组，
+- 
+- 持多播，内核模块或应
 
 用户代码
 
