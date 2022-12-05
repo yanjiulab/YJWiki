@@ -1287,11 +1287,11 @@ int ioctl(int fd, unsigned long request, ...);
 
 ## Netlink 套接字
 
+### Netlink 简介
+
 Netlink 是一种在内核与用户应用间进行**双向数据传输**的方式，用户态应用使用标准的 socket API 就可以使用 netlink 提供的强大功能，内核态需要使用专门的内核 API 来使用 netlink。
 
-相对于其他用户和内核通信方式，Netlink 具有以下优点：
-
-- netlink是一种异步通信机制，
+- 
 
 创建 Netlink 套接字
 
@@ -1330,6 +1330,10 @@ netlink_socket = socket(AF_NETLINK, SOCK_RAW, netlink_family);
 #define NETLINK_CRYPTO		21	/* Crypto layer */
 #define NETLINK_SMC		22	/* SMC monitoring */
 ```
+
+
+
+
 
 netlink 使用 `sockaddr_nl` 结构体来表示地址。
 
