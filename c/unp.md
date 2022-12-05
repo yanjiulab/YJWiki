@@ -1357,7 +1357,16 @@ struct sockaddr_nl {
 };
 ```
 
-`nl_pid` 为单播通信端口号，用于唯一标识一个单播通信实体。如果置 0，则内核自动使用 PID 来进行填充，如果用户
+`nl_pid` 为单播通信端口号，用于唯一标识一个单播通信实体。如果置 0，则内核自动使用 PID 来进行填充，如果用户在 bind 前为该变量赋值，则由应用程序保证该值的唯一性，因此以下两种方式效果相同。
+
+```
+memset(&src_addr, 0, sizeof(src_addr));
+src_addr.nl_family = AF_NETLINK;
+src_addr.nl_pid = getpid(); /* self pid */
+
+```
+
+
 
 
 
