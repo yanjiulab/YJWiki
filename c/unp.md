@@ -1329,18 +1329,16 @@ netlink_socket = socket(AF_NETLINK, SOCK_RAW, netlink_family);
 #define NETLINK_SMC		22	/* SMC monitoring */
 ```
 
+内核态需要使用专门的内核 API 来使用 netlink。
+
+```
+TODO
+```
+
 相对于其他用户和内核通信方式，Netlink 具有以下优点：
 
 - netlink是一种异步通信机制，并且是双向通信的。
 - 使用 netlink 的内核部分可以采用模块的方式实现。
-
-内核态需要使用专门的内核 API 来使用 netlink。
-
-```
-T
-```
-
-
 
 netlink 使用 `sockaddr_nl` 结构体来表示地址。
 
