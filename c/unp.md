@@ -1332,10 +1332,10 @@ netlink_socket = socket(AF_NETLINK, SOCK_RAW, netlink_family);
 内核态需要使用专门的内核 API 来使用 netlink。
 
 ```
-netlink_socket = netlink_kernel_create(&init_net, netlink_family, &cfg);
+struct sock *netlink_kernel_create(struct net *net, int unit, struct netlink_kernel_cfg *cfg)
 ```
 
-其中第二个参数和用户态相同。
+其中第二个参数 unit 含义和用户态 netlink_family 参数相同。
 
 
 
