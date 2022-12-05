@@ -1289,7 +1289,7 @@ int ioctl(int fd, unsigned long request, ...);
 
 ### Netlink 简介
 
-Netlink 是一种在内核与用户应用间进行**双向数据传输**的方式，用户态应用使用标准的 socket API 就可以使用 netlink 提供的强大功能，
+Netlink 是一种在内核与用户应用间进行**双向数据传输**的方式
 
 用户态应用使用标准的 socket API 就可以使用 netlink 提供的强大功能。
 
@@ -1335,6 +1335,10 @@ netlink_socket = socket(AF_NETLINK, SOCK_RAW, netlink_family);
 - 使用 netlink 的内核部分可以采用模块的方式实现。
 
 内核态需要使用专门的内核 API 来使用 netlink。
+
+```
+T
+```
 
 
 
