@@ -1289,7 +1289,9 @@ int ioctl(int fd, unsigned long request, ...);
 
 Netlink 是一种在内核与用户应用间进行**双向数据传输**的方式，用户态应用使用标准的 socket API 就可以使用 netlink 提供的强大功能，内核态需要使用专门的内核 API 来使用 netlink。
 
-相对于其他用户和内核通信方式，
+相对于其他用户和内核通信方式，Netlink 具有以下优点：
+
+- netlink是一种异步通信机制，
 
 创建 Netlink 套接字
 
