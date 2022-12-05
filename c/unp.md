@@ -1368,7 +1368,14 @@ src_addr.nl_pid = getpid(); /* self pid */ 			// this line can be omitted
 bind(sock_fd, (struct sockaddr *)&src_addr, sizeof(src_addr));
 ```
 
-作为服务端地址时
+作为发送端地址时：如果目的是内核则填 0。
+
+```
+memset(&dest_addr, 0, sizeof(dest_addr));
+dest_addr.nl_family = AF_NETLINK;
+dest_addr.nl_pid = 0; /* For Linux Kernel */
+dest_addr.nl_groups = 0; /* unicast */
+```
 
 
 
