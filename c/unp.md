@@ -1239,6 +1239,12 @@ ioctl 系统调用
 |     `sysctl` 函数     |  获取内核信息的函数，包括文件系统、虚拟内存、网络、硬件等。  |  获取接口信息、访问路由表、ARP 缓存  |
 |   `netlink` 套接字    | 网络应用程序与内核通信时最新的首选机制，IPROUTE2 包中大多数命令都使用此接口。 |         能够获取许多网络信息         |
 
+Linux 提供的 PF_NETLINK 套接字是 BSD 中路由套接字（AF_ROUTE）的超集。
+
+```
+#define PF_ROUTE	PF_NETLINK /* Alias to emulate 4.4BSD.  */
+```
+
 ### procfs
 
 https://www.kernel.org/doc/html/latest/filesystems/proc.html
@@ -1282,14 +1288,6 @@ int ioctl(int fd, unsigned long request, ...);
 ## Netlink 套接字
 
 Netlink 是一种在内核与用户应用间进行**双向数据传输**的方式，用户态应用使用标准的 socket API 就可以使用 netlink 提供的强大功能，内核态需要使用专门的内核 API 来使用 netlink。
-
-创建一个Netlink 套接字后，进程可以通过写该套接字，向内核发送命令，通过读自该套接字，从内核接收路由信息。
-
-Linux 提供的 PF_NETLINK 套接字是 BSD 中路由套接字（AF_ROUTE）的超集。
-
-```
-#define PF_ROUTE	PF_NETLINK /* Alias to emulate 4.4BSD.  */
-```
 
 创建 Netlink 套接字
 
