@@ -1287,9 +1287,9 @@ int ioctl(int fd, unsigned long request, ...);
 
 ## Netlink 套接字
 
-### Netlink 简介
+Netlink 是一种在内核与用户应用间进行**双向数据传输**的方式。
 
-Netlink 是一种在内核与用户应用间进行**双向数据传输**的方式
+### Netlink 创建
 
 用户态应用使用标准的 socket API 就可以使用 netlink 提供的强大功能。
 
@@ -1339,12 +1339,12 @@ struct sock *netlink_kernel_create(struct net *net, int unit, struct netlink_ker
 
 
 
-
-
 相对于其他用户和内核通信方式，Netlink 具有以下优点：
 
 - netlink是一种异步通信机制，并且是双向通信的。
 - 使用 netlink 的内核部分可以采用模块的方式实现。
+
+### Netlink 地址
 
 netlink 使用 `sockaddr_nl` 结构体来表示地址。
 
@@ -1357,9 +1357,8 @@ struct sockaddr_nl {
 };
 ```
 
-其中：
+`nl_pid` 为单播通信端口号，用于唯一标识一个单播通信实体。内核为 0，用户空间程序一般为其进程 ID。
 
-- `nl_pid` 为单播通信端口号，用于唯一标识一个单播通信实体。内核为 0，用户空间程序一般为其进程 ID。
 - `nl_groups` 为组播通信组掩码。表示 netlink 组，
 - 
 - 持多播，内核模块或应
