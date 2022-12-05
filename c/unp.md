@@ -1212,17 +1212,36 @@ epoll 和 select/poll 主要区别在于：
 - epoll 减少了用户态和内核态之间的文件描述符拷贝。
 - epoll 减少了对就绪文件描述符的遍历，若 n 为 文件描述符总量，则 epoll 的该过程复杂度为 `O(1)`，而 select/poll 复杂度为 `O(n)`。
 
-## 内核信息控制
 
-网络编程时需要经常获取一些内核的信息，例如接口信息、是否支持广播、是否支持组播、路由表、ARP 缓存表等。获取这些信息的方式有多种，包括：
 
-- `ioctl` 函数：这是一个各种 IO 操作的杂货箱，各种不适宜归类的 IO 操作都被放到了这里。
+### 用户空间与内核的接口
 
-|     方式      |                             描述                             |           关注的网络功能           |
-| :-----------: | :----------------------------------------------------------: | :--------------------------------: |
-| `ioctl` 函数  | 这是一个各种 IO 操作的杂货箱，各种不适宜归类的 IO 操作都被放到了这里。 | 获取接口信息、访问路由表、ARP 缓存 |
-| `sysctl` 函数 |  获取内核信息的函数，包括文件系统、虚拟内存、网络、硬件等。  | 获取接口信息、访问路由表、ARP 缓存 |
-|  路由套接字   |                   路由子系统专用套接字接口                   |         主要是路由相关信息         |
+内核通过各种不同的接口把内部信急输出到用户空hl
+
+- 系统调用
+- procfs 这是个虚拟文件系统，通常是挂载到 /proc:，允许内核以文件的形式向用户空间输出内部信息，这些文件并没有实际存在于磁盘中，但是可以通过 cat 以及 > shell 重定向运算符写入。
+- sysctl /proc/sys 此接口允许用户空间读取或修改内核变量的值。
+
+ioctl 系统调用
+
+- Netlink 套接字 这是网络应用程序与内核通信时最新的首选机制，IPROUTE2 包中大多数命令都使用此接口。对 Linux 而言，Netlink 代表的就是 BSD 世界中的路由套接字 (routing socket)。
+
+
+
+## 用户空间与内核接口
+
+网络编程时需要经常获取一些内核的信息，例如接口信息、是否支持广播、是否支持组播、路由表、ARP 缓存表等。操作系统的大部分内部信息都存储在内核中，而我们的程序大部分是作为用户空间进程。系统调用是最常用的和内核通信的方式，库函数通过提供与系统调用的同名包装函数，使我们可以完成大部分功能。除此之外，Unix 提供了多种用户空间和内核通信的接口，我们可以利用这些方式来获取网络相关信息。
+
+|         方式          |                             描述                             |            关注的网络功能            |
+| :-------------------: | :----------------------------------------------------------: | :----------------------------------: |
+| `procfs` 虚拟文件系统 | 内核以文件的形式向用户空间输出内部信息，这些文件并没有实际存在于磁盘中，但是可以通过 `cat` 以及 `>` shell 重定向运算符写入。 | `/proc/net` 中记录了和网络相关的内容 |
+|     `ioctl` 函数      | 这是一个各种 IO 操作的杂货箱，各种不适宜归类的 IO 操作都被放到了这里。 |  获取接口信息、访问路由表、ARP 缓存  |
+|     `sysctl` 函数     |  获取内核信息的函数，包括文件系统、虚拟内存、网络、硬件等。  |  获取接口信息、访问路由表、ARP 缓存  |
+|   `netlink` 套接字    | 网络应用程序与内核通信时最新的首选机制，IPROUTE2 包中大多数命令都使用此接口。 |         能够获取许多网络信息         |
+
+### procfs
+
+https://www.kernel.org/doc/html/latest/filesystems/proc.html
 
 ### ioctl - 设备控制
 
@@ -1260,9 +1279,197 @@ int ioctl(int fd, unsigned long request, ...);
 
 注：Linux 很多没有
 
-### 路由套接字
+### Netlink 套接字
 
-创建一个路由套接字后，进程可以通过写该套接字，向内核发送命令，通过读自该套接字，从内核接收路由信息。
+创建一个Netlink 套接字后，进程可以通过写该套接字，向内核发送命令，通过读自该套接字，从内核接收路由信息。
+
+Linux 提供的 PF_NETLINK 套接字是 BSD 中路由套接字（AF_ROUTE）的超集。
+
+```
+#define PF_ROUTE	PF_NETLINK /* Alias to emulate 4.4BSD.  */
+```
+
+创建 Netlink 套接字
+
+```c
+#include <asm/types.h>
+#include <sys/socket.h>
+#include <linux/netlink.h>
+
+netlink_socket = socket(AF_NETLINK, SOCK_RAW, netlink_family);
+```
+
+其中协议族表示了需要通信的内核模块或者 netlink 组，预定义值如下。
+
+```c
+#define NETLINK_ROUTE		0	/* Routing/device hook				*/
+#define NETLINK_UNUSED		1	/* Unused number				*/
+#define NETLINK_USERSOCK	2	/* Reserved for user mode socket protocols 	*/
+#define NETLINK_FIREWALL	3	/* Unused number, formerly ip_queue		*/
+#define NETLINK_SOCK_DIAG	4	/* socket monitoring				*/
+#define NETLINK_NFLOG		5	/* netfilter/iptables ULOG */
+#define NETLINK_XFRM		6	/* ipsec */
+#define NETLINK_SELINUX		7	/* SELinux event notifications */
+#define NETLINK_ISCSI		8	/* Open-iSCSI */
+#define NETLINK_AUDIT		9	/* auditing */
+#define NETLINK_FIB_LOOKUP	10	
+#define NETLINK_CONNECTOR	11
+#define NETLINK_NETFILTER	12	/* netfilter subsystem */
+#define NETLINK_IP6_FW		13
+#define NETLINK_DNRTMSG		14	/* DECnet routing messages */
+#define NETLINK_KOBJECT_UEVENT	15	/* Kernel messages to userspace */
+#define NETLINK_GENERIC		16
+/* leave room for NETLINK_DM (DM Events) */
+#define NETLINK_SCSITRANSPORT	18	/* SCSI Transports */
+#define NETLINK_ECRYPTFS	19
+#define NETLINK_RDMA		20
+#define NETLINK_CRYPTO		21	/* Crypto layer */
+#define NETLINK_SMC		22	/* SMC monitoring */
+```
+
+netlink 使用 `sockaddr_nl` 结构体来表示地址。
+
+```
+struct sockaddr_nl {
+    sa_family_t     nl_family;  /* AF_NETLINK */
+    unsigned short  nl_pad;     /* Zero */
+    pid_t           nl_pid;     /* Port ID */
+    __u32           nl_groups;  /* Multicast groups mask */
+};
+```
+
+其中：
+
+nl_pid 表示单播地址，内核中填 0，用户空间程序一般为进程 ID。
+
+用户代码
+
+```
+#include <linux/netlink.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
+#define NETLINK_USER 31
+
+#define MAX_PAYLOAD 1024 /* maximum payload size*/
+struct sockaddr_nl src_addr, dest_addr;
+struct nlmsghdr *nlh = NULL;
+struct iovec iov;
+int sock_fd;
+struct msghdr msg;
+
+int main()
+{
+    sock_fd = socket(PF_NETLINK, SOCK_RAW, NETLINK_USER);
+    if (sock_fd < 0)
+        return -1;
+
+    memset(&src_addr, 0, sizeof(src_addr));
+    src_addr.nl_family = AF_NETLINK;
+    src_addr.nl_pid = getpid(); /* self pid */
+
+    bind(sock_fd, (struct sockaddr *)&src_addr, sizeof(src_addr));
+
+    memset(&dest_addr, 0, sizeof(dest_addr));
+    dest_addr.nl_family = AF_NETLINK;
+    dest_addr.nl_pid = 0; /* For Linux Kernel */
+    dest_addr.nl_groups = 0; /* unicast */
+
+    nlh = (struct nlmsghdr *)malloc(NLMSG_SPACE(MAX_PAYLOAD));
+    memset(nlh, 0, NLMSG_SPACE(MAX_PAYLOAD));
+    nlh->nlmsg_len = NLMSG_SPACE(MAX_PAYLOAD);
+    nlh->nlmsg_pid = getpid();
+    nlh->nlmsg_flags = 0;
+
+    strcpy(NLMSG_DATA(nlh), "Hello");
+
+    iov.iov_base = (void *)nlh;
+    iov.iov_len = nlh->nlmsg_len;
+    msg.msg_name = (void *)&dest_addr;
+    msg.msg_namelen = sizeof(dest_addr);
+    msg.msg_iov = &iov;
+    msg.msg_iovlen = 1;
+
+    printf("Sending message to kernel\n");
+    sendmsg(sock_fd, &msg, 0);
+    printf("Waiting for message from kernel\n");
+
+    /* Read message from kernel */
+    recvmsg(sock_fd, &msg, 0);
+    printf("Received message payload: %s\n", NLMSG_DATA(nlh));
+    close(sock_fd);
+}
+```
+
+ 内核代码
+
+```
+#include <linux/module.h>
+#include <net/sock.h> 
+#include <linux/netlink.h>
+#include <linux/skbuff.h> 
+#define NETLINK_USER 31
+
+struct sock *nl_sk = NULL;
+
+static void hello_nl_recv_msg(struct sk_buff *skb)
+{
+
+    struct nlmsghdr *nlh;
+    int pid;
+    struct sk_buff *skb_out;
+    int msg_size;
+    char *msg = "Hello from kernel";
+    int res;
+
+    printk(KERN_INFO "Entering: %s\n", __FUNCTION__);
+
+    msg_size = strlen(msg);
+
+    nlh = (struct nlmsghdr *)skb->data;
+    printk(KERN_INFO "Netlink received msg payload:%s\n", (char *)nlmsg_data(nlh));
+    pid = nlh->nlmsg_pid; /*pid of sending process */
+
+    skb_out = nlmsg_new(msg_size, 0);
+    if (!skb_out) {
+        printk(KERN_ERR "Failed to allocate new skb\n");
+        return;
+    }
+
+    nlh = nlmsg_put(skb_out, 0, 0, NLMSG_DONE, msg_size, 0);
+    NETLINK_CB(skb_out).dst_group = 0; /* not in mcast group */
+    strncpy(nlmsg_data(nlh), msg, msg_size);
+
+    res = nlmsg_unicast(nl_sk, skb_out, pid);
+    if (res < 0)
+        printk(KERN_INFO "Error while sending bak to user\n");
+}
+
+static int __init hello_init(void)
+{
+
+    printk("Entering: %s\n", __FUNCTION__);
+    //nl_sk = netlink_kernel_create(&init_net, NETLINK_USER, 0, hello_nl_recv_msg, NULL, THIS_MODULE);
+    struct netlink_kernel_cfg cfg = {
+        .input = hello_nl_recv_msg,
+    };
+
+    nl_sk = netlink_kernel_create(&init_net, NETLINK_USER, &cfg);
+    if (!nl_sk) {
+        printk(KERN_ALERT "Error creating socket.\n");
+        return -10;
+    }
+
+```
+
+
+
+参考
+
+- [How to use netlink socket to communicate with a kernel module?](https://stackoverflow.com/questions/3299386/how-to-use-netlink-socket-to-communicate-with-a-kernel-module) 
 
 ## 接口操作
 
@@ -1391,11 +1598,13 @@ TODO
 
 创建一个路由套接字后，进程可以通过写该套接字，向内核发送命令，通过读自该套接字，从内核接收信息。
 
-### 路由套接字
+### Netlink 套接字
+
+### sysctl 实现
 
 ### ioctl 实现
 
-### sysctl 实现
+TODO
 
 ## 路由表内部实现
 
@@ -1426,7 +1635,36 @@ TODO
 
 ## 广播
 
-TODO
+TCP/IP 协议栈中的寻址类型包括：
+
+|      类型      | IPv4 | IPv6 | TCP  | UDP  | 标识接口数 |  递送接口数  |
+| :------------: | :--: | :--: | :--: | :--: | :--------: | :----------: |
+|  单播 unicast  |  √   |  √   |  √   |  √   |    一个    |     一个     |
+|  任播 anycast  |  √   |  √   |      |  √   |    一组    | 一组中的一个 |
+| 多播 multicast | 可选 |  √   |      |  √   |    一组    | 一组中的全体 |
+| 广播 broadcast |  √   |      |      |  √   |    全体    |     全体     |
+
+其中：
+
+- 多播支持在 IPv4 中是可选的，而在 IPv6 中则是必需的。
+- IPv6 不支持广播
+- TCP 只支持单播
+
+广播地址分为两种：
+
+- 子网定向广播地址：形如 `192.168.42.255/24`， 表示指定子网上所有接口的地址。
+- 受限广播地址：形如 `255.255.255.255/32`，用于不知道对方子网的情况下。
+
+这两种广播地址路由器均不转发。
+
+通过设置套接字属性，允许程序发送广播数据。
+
+```c
+const int on = 1;
+if (setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on)) < 0) {
+	// process error
+}
+```
 
 ## 组播
 
@@ -1584,5 +1822,6 @@ rtm->xxx = xxx;
 
 ## 参考
 
+- [The Linux Kernel](https://www.kernel.org/doc/html/latest/)
 - [LINUX – IO MULTIPLEXING – SELECT VS POLL VS EPOLL](https://devarea.com/linux-io-multiplexing-select-vs-poll-vs-epoll)
 - [epoll 比 select 和 poll 高效的原因](https://blog.csdn.net/Move_now/article/details/71773965)
