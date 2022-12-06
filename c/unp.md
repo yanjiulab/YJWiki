@@ -1332,7 +1332,8 @@ netlink_socket = socket(AF_NETLINK, SOCK_RAW, netlink_family);
 内核态需要使用专门的内核 API 来使用 netlink。
 
 ```c
-struct sock *netlink_kernel_create(struct net *net, int unit, struct netlink_kernel_cfg *cfg)
+struct sock *netlink_kernel_create(
+    struct net *net, int unit, struct netlink_kernel_cfg *cfg);
 ```
 
 其中第二个参数 unit 含义和用户态 netlink_family 参数相同。
@@ -1359,39 +1360,39 @@ struct sockaddr_nl {
 
 `nl_pid` 为单播通信端口号，用于唯一标识一个单播通信实体。
 
-作为服务端地址时：如果置 0，则内核自动使用进程 PID 来进行填充，如果用户在 bind 前为该变量赋值，则由应用程序保证该值的唯一性。
+作为本地地址时：如果置 0，则内核自动使用进程 PID 来进行填充，如果用户在 bind 前为该变量赋值，则由应用程序保证该值的唯一性。
 
 ```c
 memset(&src_addr, 0, sizeof(src_addr));
 src_addr.nl_family = AF_NETLINK;
-src_addr.nl_pid = getpid(); /* self pid */ 			// this line can be omitted
+src_addr.nl_pid = getpid(); /* self pid */		// this line can be omitted
 bind(sock_fd, (struct sockaddr *)&src_addr, sizeof(src_addr));
 ```
 
-作为发送端地址时：如果目的是内核则填 0。
+作为对端地址时：如果目的是内核则填 0，如果是用户应用则填写该 nl_pid 值。
 
-```
+```c
 memset(&dest_addr, 0, sizeof(dest_addr));
 dest_addr.nl_family = AF_NETLINK;
 dest_addr.nl_pid = 0; /* For Linux Kernel */
-dest_addr.nl_groups = 0; /* unicast */
+sendto(sock_fd, ..., ..., 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
 ```
 
+以上是 Netlink 单播通信，其中 `nl_groups` 应当设为 0。但 Netlink 还支持 netlink 组通信。内核模块或用户应用可以把消息多播给一个 netlink 组，属于该 neilink 组的任何内核模块或应用都能接收到该消息，内核事件向用户态的通知机制就使用了这一特性。
+
+`nl_groups` 为组播通信组掩码，某位为 1 表示希望加入该组。由于位数限制，因此 netlink 最多具有 32 个组。目前 netlink 组定义位于 `retnetlink.h`，格式为 `RTMGRP_*`，以下是常用的几个：
+
+- RTMGRP_LINK - 当网卡变动时会触发这个多播组，例如插拔网线、增减网卡设备、启用禁用接口等。
+- RTMGRP_IPV4_IFADDR - 当 ipv4 地址变动时会触发这个多播组，例如修改 IP。
+- RTMGRP_IPV4_ROUTE - 当 ipv4 路由变动时会触发这个多播组。
+
+?> 只有 root 用户可以对组进行 send 或者 listen 操作。从 Linux 3 开始，NETLINK_KOBJECT_UEVENT, NETLINK_GENERIC, NETLINK_ROUTE 和 NETLINK_SELINUX 组允许其他用户接收消息，但所有组都不允许其他用户发送消息。
+
+### Netlink 消息
 
 
-内核为 0，用户空间程序一般为其进程 ID。
 
-
-
-|        |      |      |
-| ------ | ---- | ---- |
-| 用户为 |      |      |
-|        |      |      |
-|        |      |      |
-
-
-
-`nl_groups` 为组播通信组掩码。表示 netlink 组，
+### =======
 
 用户代码
 
