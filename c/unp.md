@@ -1404,9 +1404,12 @@ struct nlmsghdr {
 
 如果字节流中包含多条消息，则最后一条消息的类型为 `NLMSG_DONE`，其余所有消息的 nlmsg_flags 属性都被设置 `NLM_F_MULTI` 有效。
 
+Netlink 消息的操作一般通过标准 `NLMSG_*` 宏完成，具体包括：
+
+```c
+```
 
 
-消息的操作一般通过标准 `NLMSG_*` 宏完成。
 
 ### =======
 
