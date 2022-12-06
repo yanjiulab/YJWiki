@@ -1417,13 +1417,16 @@ Netlink 消息的操作一般通过标准 `NLMSG_*` 宏完成，具体包括：
 #define NLMSG_LENGTH(len) ((len) + NLMSG_HDRLEN)
 // 获取不小于 len 字节数据的字节对齐消息的长度
 #define NLMSG_SPACE(len) NLMSG_ALIGN(NLMSG_LENGTH(len))
-// 获取数据部分
+// 获取数据部分首地址
 #define NLMSG_DATA(nlh)  ((void*)(((char*)nlh) + NLMSG_LENGTH(0)))
+// 得到下一个消息首地址，同时 len 变为剩余长度
 #define NLMSG_NEXT(nlh,len)	 ((len) -= NLMSG_ALIGN((nlh)->nlmsg_len), \
 				  (struct nlmsghdr*)(((char*)(nlh)) + NLMSG_ALIGN((nlh)->nlmsg_len)))
+// 判断是否是合法消息
 #define NLMSG_OK(nlh,len) ((len) >= (int)sizeof(struct nlmsghdr) && \
 			   (nlh)->nlmsg_len >= sizeof(struct nlmsghdr) && \
 			   (nlh)->nlmsg_len <= (len))
+/
 #define NLMSG_PAYLOAD(nlh,len) ((nlh)->nlmsg_len - NLMSG_SPACE((len)))
 ```
 
