@@ -1390,7 +1390,7 @@ sendto(sock_fd, ..., ..., 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
 
 ### Netlink 消息
 
-Netlink 消息由一个或多个 `nlmsghdr` 首部 字节流
+Netlink 消息由一个或多个 `nlmsghdr` 首部及其载荷组成的字节流。消息一般通过 `NLMSG_*` 宏完成操作。
 
 Netlink messages consist of a byte stream with one or multiple *nlmsghdr* headers and associated payload. The byte stream should only be accessed with the standard **NLMSG_\*** macros. See **[netlink](https://linux.die.net/man/3/netlink)**(3) for further information.
 
