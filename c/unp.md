@@ -1390,7 +1390,7 @@ sendto(sock_fd, ..., ..., 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
 
 ### Netlink 消息
 
-Netlink 消息由一个或多个 `nlmsghdr` 首部及其载荷组成的字节流。
+Netlink 消息由 `nlmsghdr` 首部及其载荷组成，多条消息可以共同组成消息字节流一同传输。
 
 ```c
 struct nlmsghdr {
@@ -1402,7 +1402,7 @@ struct nlmsghdr {
 };
 ```
 
-如果字节流中包含多条消息，则最后一条消息的类型为NLMSG_DONE，其余所有消息的nlmsg_flags属性都被设置NLM_F_MULTI位有效。
+如果字节流中包含多条消息，则最后一条消息的类型为 `NLMSG_DONE`，其余所有消息的 nlmsg_flags 属性都被设置 `NLM_F_MULTI` 有效。
 
 
 
