@@ -1390,7 +1390,7 @@ sendto(sock_fd, ..., ..., 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
 
 ### Netlink 消息
 
-
+Netlink messages consist of a byte stream with one or multiple *nlmsghdr* headers and associated payload. The byte stream should only be accessed with the standard **NLMSG_\*** macros. See **[netlink](https://linux.die.net/man/3/netlink)**(3) for further information.
 
 ### =======
 
