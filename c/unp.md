@@ -1407,6 +1407,9 @@ struct nlmsghdr {
 Netlink 消息的操作一般通过标准 `NLMSG_*` 宏完成，具体包括：
 
 ```c
+// 对齐字节数
+#define NLMSG_ALIGNTO	4U
+// 得到不小于
 #define NLMSG_ALIGN(len) ( ((len)+NLMSG_ALIGNTO-1) & ~(NLMSG_ALIGNTO-1) )
 #define NLMSG_HDRLEN	 ((int) NLMSG_ALIGN(sizeof(struct nlmsghdr)))
 #define NLMSG_LENGTH(len) ((len) + NLMSG_HDRLEN)
