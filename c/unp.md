@@ -1426,7 +1426,7 @@ Netlink 消息的操作一般通过标准 `NLMSG_*` 宏完成，具体包括：
 #define NLMSG_OK(nlh,len) ((len) >= (int)sizeof(struct nlmsghdr) && \
 			   (nlh)->nlmsg_len >= sizeof(struct nlmsghdr) && \
 			   (nlh)->nlmsg_len <= (len))
-// len 为 0 时，得到
+// 得到减去 len 字节对齐长度后剩余数据长度，一般用于多消息字节流。
 #define NLMSG_PAYLOAD(nlh,len) ((nlh)->nlmsg_len - NLMSG_SPACE((len)))
 ```
 
