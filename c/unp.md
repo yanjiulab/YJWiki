@@ -1409,10 +1409,13 @@ Netlink 消息的操作一般通过标准 `NLMSG_*` 宏完成，具体包括：
 ```c
 // 对齐字节数
 #define NLMSG_ALIGNTO	4U
-// 得到不小于
+// 得到不小于 len 字节且对齐的最小数值
 #define NLMSG_ALIGN(len) ( ((len)+NLMSG_ALIGNTO-1) & ~(NLMSG_ALIGNTO-1) )
+// 获取消息头长度
 #define NLMSG_HDRLEN	 ((int) NLMSG_ALIGN(sizeof(struct nlmsghdr)))
+// 获取消息长度
 #define NLMSG_LENGTH(len) ((len) + NLMSG_HDRLEN)
+// 获取
 #define NLMSG_SPACE(len) NLMSG_ALIGN(NLMSG_LENGTH(len))
 #define NLMSG_DATA(nlh)  ((void*)(((char*)nlh) + NLMSG_LENGTH(0)))
 #define NLMSG_NEXT(nlh,len)	 ((len) -= NLMSG_ALIGN((nlh)->nlmsg_len), \
