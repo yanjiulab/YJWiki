@@ -1402,7 +1402,7 @@ struct nlmsghdr {
 };
 ```
 
-
+如果字节流中包含多条消息，则最后一条消息的类型为NLMSG_DONE，其余所有消息的nlmsg_flags属性都被设置NLM_F_MULTI位有效。
 
 
 
