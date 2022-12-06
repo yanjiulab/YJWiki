@@ -1430,9 +1430,24 @@ Netlink 消息的操作一般通过标准 `NLMSG_*` 宏完成，具体包括：
 #define NLMSG_PAYLOAD(nlh,len) ((nlh)->nlmsg_len - NLMSG_SPACE((len)))
 ```
 
+初始化一个包含 hello 字符串的 Netlink 消息的简单步骤为：
 
+```c
+nlh = (struct nlmsghdr *)malloc(NLMSG_SPACE(MAX_PAYLOAD));
+memset(nlh, 0, NLMSG_SPACE(MAX_PAYLOAD));
+nlh->nlmsg_len = NLMSG_SPACE(MAX_PAYLOAD);
+nlh->nlmsg_pid = getpid();
+nlh->nlmsg_flags = 0;
+strcpy(NLMSG_DATA(nlh), "Hello");
+```
 
-### =======
+Netlink 消息可以通过 `sendto` 函数发送。
+
+```c
+sendto(nl->sock, &nlh, nlh.nlmsg_len, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr))
+```
+
+### Netlink 示例
 
 用户代码
 
@@ -1570,7 +1585,16 @@ module_init(hello_init); module_exit(hello_exit);
 MODULE_LICENSE("GPL");
 ```
 
+其中内核模块程序可以通过以下 Makefile 编译链接，然后通过 `insmod hello.ko` 来载入。
 
+```
+obj-m = hello.o
+KVERSION = $(shell uname -r)
+all:
+    make -C /lib/modules/$(KVERSION)/build M=$(PWD) modules
+clean:
+    make -C /lib/modules/$(KVERSION)/build M=$(PWD) clean
+```
 
 参考
 
