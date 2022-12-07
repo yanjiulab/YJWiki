@@ -1,4 +1,4 @@
-# Internet Protocol
+# IP 协议
 
 IP 协议提供无连接的（connectionless）、尽力而为（unreliable, best effort service）的服务，是 TCP/IP 网络中的网络层承载协议，也称为 routed 协议，由 RFC751 定义。
 
@@ -113,6 +113,9 @@ uint16_t ip_checksum(uint16_t *pbuf, uint16_t bytes) {
     return (unsigned short)~(unsigned short)sum;
 }
 ```
+
+## IPv6
+
 
 
 ## RFC
