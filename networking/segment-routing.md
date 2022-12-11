@@ -61,7 +61,11 @@ In Segment Routing, there are two segment classes:
 - Global Segment
 - Local Segment
 
+全局段是在整个 SR 域中具有意义的 ID 值。这意味着 SR 域中的每个节点都知道此值，并在其 LFIB 中将相同的操作分配给关联的指令。用于这些目的的保留标签范围是 <16000 - 23999>，它称为分段路由全局块 （SRGB），它是特定于供应商的范围，因此，其他供应商可能会使用不同的范围。
 
+另一方面，本地分段是具有本地意义的 ID 值，只有发起节点（通告它的路由器）才能执行关联的指令。由于此范围仅与该特定节点相关，因此这些值不在 SRGB 范围内，而是在本地配置的标签范围内。
+
+分段路由可识别属于全局或本地分段类的许多特定类型的分段。让我们来看看其中的一些：
 
 **A global segment is an ID value bearing significance inside the entire SR domain.** This means that **every node in the SR domain knows about this value and assigns the same action to the associated instruction in its LFIB**. **The reserved label range used for these purposes is <16000 - 23999>**, it is called **Segment Routing Global Block** (SRGB) and **it is a vendor-specific range**, therefore, other vendors may use a different range.
 
