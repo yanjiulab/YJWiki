@@ -1,8 +1,8 @@
 # Segment Routing
 
-## SR 背景
+## SR 相关技术
 
-Segment Routing 是路由领域的一个新宠儿，特别契合于自治网络或集中式控制网络（如 SDN），SR 与 MPLS 和 IPv6 两种技术深度绑定。因此，在学习 SR 之前需要对这两种技术做到基本熟悉。
+Segment Routing 是路由领域的一个新宠儿，特别契合于自治网络或集中式控制网络（如 SDN），SR 深度重用了 MPLS 和 IPv6 两种技术。因此，在学习 SR 之前需要熟悉相关技术。
 
 ### 源路由
 
@@ -20,6 +20,59 @@ SR 是一种**源路由协议**（Source Routing），在 RFC 791 中，定义�
 ### MPLS 简介
 
 暂时先全放到这里，如果太多考虑单独列出。
+
+This article assumes basic understanding of MPLS inner mechanisms and forwarding process. For an introduction into MPLS in a manageable and not-burdensome way, I invite you to read a blog written earlier: **MPLS History and building blocks**
+
+
+
+As a starter, let's summarize some of the key MPLS characteristics :
+
+
+
+- Transport technology able to carry a wide range (if not any kind) of protocols
+- Does not have its own datagram format; its shim labels are always inserted between the Layer 2 and Layer 3 headers of existing protocols
+- Its transport mechanism is based on operations with locally significant labels and their values
+- Label operations are PUSH, SWAP and POP
+- Relies mainly on Label Distribution Protocol (LDP) to advertise and distribute label bindings (although other protocols were extended later to support label advertisement)
+- Labels are typically bound to destination IP prefixes or virtual circuits - in general, to paths toward a specific endpoint and a specific operation to be performed after unlabeling
+- Available label range is <0 - 1,048,575>
+- Reserved label range is <0 - 15>
+
+
+
+The responsibility for creating and advertising label mappings for network entries in a router’s RIB is in the hands of LDP. More precisely, **LDP creates and advertises label bindings for RIB entries learned from all routing information sources except BGP**. BGP-learned routes are exempted from LDP operations because BGP has its own mechanism of advertising label mappings along with prefixes. Therefore, the RIB has to be populated so LDP can have something to work on. Typically, link-state protocols like OSPF and IS-IS are used for this purpose, not only to populate the RIB, but also to advertise topology information and build a shared topology database, allowing each node in the network to have a complete and consistent view of the topology. Distance-vector routing protocols such as EIGRP or BGP can of course be used, too, but some advanced MPLS applications actually require the routers to know the detailed network topology, so the link-state IGPs are generally preferred.
+
+
+
+Each router creates and advertises label bindings based on its own rules, and because each label value only has a particular meaning to the router that has advertised it (the same label value can have an entirely different meaning to a different router), the label values along the same path towards a particular destination are generally different on each hop.
+
+
+
+MPLS has a genuinely unique property: Regardless of what logic has been used to set up the labels between consecutive routers for a given path, the mechanism of forwarding labeled packets does not change. This allows MPLS to bring in diverse mechanisms into the control plane that are responsible for setting up the labels, and achieve very specific path setup and selection without changing the underlying data plane operations. This flexibility paved the way to one of most important - and advanced - MPLS applications: MPLS Traffic Engineering (MPLS-TE). MPLS-TE is an independent set of features and technologies that allows leveraging paths in the network that would not be usually chosen by routing protocols since they do not correspond with the usual shortest path criteria, but which may have specific properties, such as available bandwidth. Essentially, MPLS-TE allows transporting packets along paths that meet additional criteria than just the shortest distance. Doing this helps to utilize the overall capacity of the network more efficiently, and allows providing specific SLAs to specific data flows.
+
+
+
+MPLS-TE has multiple building blocks itself. First, it comprises a set of traffic engineering extensions for link-state IGPs. Their purpose is to, among other details, carry information about the total and reservable bandwidth on each link between routers in a network. Second, MPLS-TE reuses the RSVP protocol from the Integrated Services (IntServ) architecture. In IntServ, the purpose of RSVP was to provide the comprehensive signalling by which an application running on end hosts could tell the network what requirements it had on the transport path for a particular flow (bandwidth, queuing). The network would either set up such path, or let the application know that the required path was not available. In MPLS-TE, RSVP only runs between MPLS routers, not towards end hosts, and has slightly different responsibilities: It performs the advertisement and accounting of the bandwidth used up by individual TE tunnels on the individual links, and advertises MPLS labels for these TE tunnels. The link-state IGP and RSVP in MPLS-TE work together: The IGP is responsible for finding the shortest path that still meets the bandwidth requirement of a particular tunnel, then hands off the exact step-by-step router and link sequence to RSVP that performs the accounting of the used and remaining bandwidth along this path, and advertises the MPLS labels for this path.
+
+
+
+Traffic-engineered paths in MPLS-TE are called TE tunnels, or simply tunnels. A TE tunnel would always be configured on the starting router (the headend router) of the tunnel, and the configuration would typically contain the destination of the tunnel, the required bandwidth, and a list of path options, referring either to the routing protocol to do the path computation, or to an explicit list of next hops comprising the tunnel’s path. OSPF/IS-IS and RSVP would then either set up the tunnel including the MPLS labels, or inform the headend router that a path towards the configured destination with the requested bandwidth does not exist. TE tunnels in MPLS are always unidirectional - from the headend to the tailend router. A bidirectional traffic-engineered path between two tunnel endpoints would require setting up two TE tunnels.
+
+
+
+MPLS-TE is one of the major applications of MPLS, but there are certain concerns about its scalability. One of the obvious challenges is the configuration/operational complexity: Each tunnel with unique properties (destination, requested guaranteed bandwidth, and others) has to be configured on its headend explicitly. With tens, perhaps hundreds of tunnel endpoints, also considering the fact that there can be multiple tunnels with different requirements between the same endpoints, the amount of configuration increases considerably. Another concern is the presence of RSVP itself. In IntServ times, the RSVP signalling and resulting control plane state about all flows posed a major scalability burden. In MPLS-TE, the situation is way better since RSVP only carries information about TE tunnels, not about individual flows anymore, but RSVP is still an added component with its own set of messages to be periodically exchanged, and a state to be stored. Finally, another aspect of MPLS-TE are the added responsibilities of the link-state IGP - OSPF or IS-IS. These IGPs had to be extended with an additional feature called **C**onstrained **S**hortest **P**ath **F**irst (CSPF), which is a fancy name for the shortest path computation that also takes available bandwidths into account, to make sure that the computed shortest path can carry a tunnel with a particular requested bandwidth. Although this feature is very simple in its nature - ignore all links whose current available bandwidth is lower than the tunnel’s requested bandwidth and just compute the shortest path using the SPF algorithm over whatever links are left - it needs to be invoked on the headend router for every tunnel. As network administrators are always cautious about extra SPF runs, the CSPF executions do bring some concerns in.
+
+
+
+In summary, MPLS-TE imposes a considerable amount of extra state about the maximum, used, and available reservable bandwidths on the links in the network, and about the TE tunnels themselves, that the routers have to exchange, maintain, and update. While the TE capability is greatly desired, the resulting control plane overhead is not that attractive.
+
+
+
+Networks based on packet switching offer an unique quality, however: Instead of just transporting plain "vanilla" packets and storing all the forwarding state about their specific handling on all the routers along the path, we can encode the state - or the delivery instructions - somewhere into the packet itself. The instructions would be inserted into the packet by an ingress router, and other routers would simply follow these instructions. To an extent, this is what MPLS is already doing: Since the routers inside an MPLS network perform forwarding decisions based on the top label alone, they do not need to understand anything below that label. This is exactly what the MPLS VPNs are all about. Even with this logic, though, MPLS-TE still needs quite some overhead in terms of control plane operations till it sets up a particular sequence of labels on routers that mark out the particular TE tunnel path in a hop by hop fashion. Would it be possible to encode the complete TE tunnel path into a labeled packet, and if so, how to do this in the most efficient way?
+
+
+
+This question has actually been answered - using the technically available means of those times - over 35 years ago, when a technology capable of traffic engineering called **Source Routing** made its appearance on the stage. Let’s take a short step sideways because source routing - in a reinvented way - is what makes the core of **Segment Routing**.
 
 ### SR 简介
 
@@ -112,6 +165,14 @@ Since the Prefix segments (IGP Prefix and BGP Prefix segment types) have a globa
 
 
 How does this help? Check the Figure 4 again. The rightmost router is shown to advertise the prefix segment for prefix 5.5.5.5/32 as 16005. In reality, though, the router would advertise that its own SRGB starts at 16,000, and that the index for prefix 5.5.5.5/32 is 5 (16,005 = 16,000 + 5). If all routers in the SR domain use the same SRGB, they will all arrive at the same label of 16,005 when forwarding packets along the path toward 5.5.5.5/32. However, if the top middle router used a SRGB that starts at 20,000, its own SID for this prefix would be 20,005 (20,000 + 5). Every neighbor of this router would know that, too, since each router’s SRGB is advertised in its link-state packets. So when a neighbor would forward packets toward 5.5.5.5/32 through the top middle router, knowing that the index of this prefix is 5 and the router uses a SRGB range starting at 20,000, it would use a label of 20,005 instead. Again, with global SIDs, their originating routers advertise their index rather than their absolute value; the actual value to be used in the label is computed as the index plus the SRGB base of the next hop.
+
+
+
+**As a summary:** Segment Routing is able to accomplish exactly what MPLS itself can, and brings with itself a new paradigm of encoding the forwarding state into the packet itself as a label stack, opening a whole new area of possible applications. From a control plane perspective, Segment Routing relies on extensions made for link-state routing protocols to advertise the segment IDs, and to provide detailed knowledge about the network topology required to accomplish the source routing operations. Each segment represents a forwarding instruction that gets discarded once the task is fully carried out, and, as the segments taken into account each hop are the ones on the top of the MPLS label stack, labels are discarded once their task is done and forwarding is achieved, this process is repeated till the packet reaches its destination. Reducing operational complexity while simplifying the forwarding process grants Segment Routing a positive position among ISPs, considered as an attractive technology to implement in complex environments where simplification can make a difference in daily operations and meeting tight service level agreements contracted by exigent customers.
+
+
+
+This article was intentionally meant to be a light introduction into the topic, tying strongly into the roots of Segment Routing rather than in its advanced features, and does not cover more advanced topics or deployments such as Path Computation Element (where Segment Routing demonstrates its capacity to be SDN-ready) deployment in conjunction with BGP-LS, or data plane related features like Topology Independent LFA and several others. These are coming, though - stay tuned!
 
 
 
@@ -249,7 +310,8 @@ draft-ietf-ospf-segment-routing-extensions-02
 
 ## 参考
 
-- [https://www.segment-routing.net/](https://www.segment-routing.net/)
-
 - [Introduction to Segment Routing](https://learningnetwork.cisco.com/s/blogs/a0D3i000002SKP6EAO/introduction-to-segment-routing)
-- 
+
+- [Segment Routing - Tutorials](https://www.segment-routing.net/tutorials)
+- [MPLS History and building blocks](https://learningnetwork.cisco.com/s/article/MPLS-History-and-building-blocks)
+
