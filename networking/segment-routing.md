@@ -85,6 +85,10 @@ IGP 邻接分段：由 IGP （IS-IS/OSPF） 分布的本地重要分段，它描
 
 **IGP Adjacency Segment:** A locally significant segment distributed by IGPs (IS-IS/OSPF) which describes a particular link - or better put, an IGP adjacency between two neighboring routers. As opposed to IGP Prefix Segments, the SID for an Adjacency segment would be assigned by the router itself, and does not require an administrator’s intervention. The instruction related with this segment can be explained as “Pop label and forward on the IGP adjacency”. An IGP Adjacency Segment is very similar to a strict source routing hop, as shown in Figure 5:
 
+将代表相同类型分段的多个标签推送到数据包上，本质上提供了与 IP 源路由完全相同的功能：多个 IGP 前缀段只不过是松散源路由;多个 IGP 邻接分段无非是严格源路由 - 但在这里，基于 MPLS 标记，并提供足够的 MTU 保留，不再局限于仅 9 个显式跃点。
+
+可能不明显的是，两种段类型的标签可以自由组合并推送到数据包上！它们的组合是普通 IP 源路由能够完成的超集，并为更复杂的源路由方案提供了充足的空间，包括备份路径和类似快速重新路由的绕道，在这些绕道中，流量可以通过网络路由围绕故障进行引导。一个简单的场景如图所示
+
 Pushing multiple labels representing segments of the same type onto a packet essentially provides exactly the same functionality as IP Source Routing does: Multiple IGP Prefix Segments are nothing else than Loose Source Routing; multiple IGP Adjacency segments are nothing else than Strict Source Routing - but here, based on MPLS labeling, and, provided with a sufficient MTU reserve, not limited anymore to just 9 explicit hops.
 
 
