@@ -73,11 +73,11 @@ In Segment Routing, there are two segment classes:
 
 **A local segment**, on the other hand, **is an ID value holding local significance, and only the originating node** (the router advertising it) **can execute the associated instruction.** As this range is only relevant for that particular node, **these values are not in the SRGB range** but in the locally configured label range.
 
-
+分段路由可识别属于全局或本地分段类的许多特定类型的分段。让我们来看看其中的一些：
 
 Segment Routing recognizes many particular types of segments that belong either to the global or the local segment class. Let’s have a look at some of them:
 
-
+IGP 前缀段：由 IGP （IS-IS/OSPF） 分布的全局重要分段，其路径计算为通向该特定前缀的最短路径。这也允许它能够感知 ECMP。IGP 前缀段的实际 SID 值由管理员基于每个接口进行配置，管理员也有责任确保此值在整个 SR 域中是唯一的。通常，SID 将在环路接口上配置，以标识云中的节点。IGP 前缀分段与松散源路由跃点非常相似。如图 4 所示：
 
 **IGP Prefix Segment:** A globally significant segment which is distributed by IGPs (IS-IS/OSPF) and whose path is computed as the shortest path towards that specific prefix. This also allows it to be ECMP-aware. The actual SID value of an IGP Prefix Segment is configured by the administrator on a per-interface basis, and it is also the administrator’s responsibility to make sure that this value is unique in the entire SR domain. Typically, the SID would be configured on loopback interfaces to identify nodes in the cloud. An IGP Prefix Segment is very similar to a loose source routing hop. This is shown in Figure 4:
 
