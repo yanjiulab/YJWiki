@@ -27,6 +27,56 @@ SR 是一种**源路由协议**（Source Routing），在 RFC 791 中，定义�
 
 
 
+Lets reiterate where we have arrived so far. We have discussed MPLS-TE and noted that it is a very useful and widely deployed application of MPLS but it has issues with scalability and manageability, both referring to the control and management plane aspects. We have also discussed the IP Source Routing which can be seen as a rudimentary traffic engineering technique in which the network itself has no added burden on the control plane because the explicit path is encoded into each packet’s header, but which has security implications because it gives too much power to end hosts sending IP packets themselves.
+
+
+
+But what if the responsibility of encoding the explicit path into the packet was given to an ingress router instead of the sending host? the security issues would no longer be a concern. And if there was a way to encode this explicit path information into labeled packets so that a MPLS-enabled network could process them without needing to store additional state on all routers along the desired path, it would resolve the issues with MPLS-TE scalability. These are the two key ideas of Segment Routing that combines the best from MPLS and Source Routing.
+
+
+
+Encoding an explicit path into a packet can be seen as putting a sequence of instructions into the packet. With a grain of salt, it is almost like "turn left, then go straight, then turn right, then right again, and then straight for the next 10 kilometers". Segment Routing leverages this idea: **Its explicit path is an ordered set of instructions placed into the packet**, with the routers executing these instructions as they forward it. Each **instruction** in Segment Routing is called a **segment**, **has its own number called the Segment ID (SID)**, and as we will learn later, there are multiple segment types. To represent these instructions in a packet, Segment Routing needs to choose a suitable encoding - and **for** **MPLS-enabled networks, the natural encoding is nothing else than a label stack**, with **each label representing one particular segment. The MPLS label values would carry the Segment IDs of individual segments.**
+
+
+
+From a pure MPLS forwarding perspective, Segment Routing again builds on top of the basic MPLS forwarding paradigm and does not change how the labeled packets are forwarded, similar to other MPLS applications. Regarding control plane operations, there are two significant changes to the well-used MPLS control plane policies that deserve to be mentioned:
+
+- For certain segment types, the labels have preferably identical values on all routers in the SR domain and so have global significance
+- Label bindings to segments are advertised by OSPF or IS-IS; LDP is not used
+
+
+
+To summarize: **In Segment Routing, the path a packet follows is represented by a stack of labels pushed down to the packet by an edge router.** Each label represents a segment - a particular forwarding instruction that determines how the packet will be forwarded.
+
+
+
+Having said this, we have understood that they are instructions, but now we need to determine how the routers identify these segments. Let’s define the classes of segments we can encounter.
+
+
+
+In Segment Routing, there are two segment classes:
+
+- Global Segment
+- Local Segment
+
+
+
+**A global segment is an ID value bearing significance inside the entire SR domain.** This means that **every node in the SR domain knows about this value and assigns the same action to the associated instruction in its LFIB**. **The reserved label range used for these purposes is <16000 - 23999>**, it is called **Segment Routing Global Block** (SRGB) and **it is a vendor-specific range**, therefore, other vendors may use a different range.
+
+
+
+**A local segment**, on the other hand, **is an ID value holding local significance, and only the originating node** (the router advertising it) **can execute the associated instruction.** As this range is only relevant for that particular node, **these values are not in the SRGB range** but in the locally configured label range.
+
+
+
+Segment Routing recognizes many particular types of segments that belong either to the global or the local segment class. Let’s have a look at some of them:
+
+
+
+**IGP Prefix Segment:** A globally significant segment which is distributed by IGPs (IS-IS/OSPF) and whose path is computed as the shortest path towards that specific prefix. This also allows it to be ECMP-aware. The actual SID value of an IGP Prefix Segment is configured by the administrator on a per-interface basis, and it is also the administrator’s responsibility to make sure that this value is unique in the entire SR domain. Typically, the SID would be configured on loopback interfaces to identify nodes in the cloud. An IGP Prefix Segment is very similar to a loose source routing hop. This is shown in Figure 4:
+
+
+
 
 
 ## Overview
