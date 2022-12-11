@@ -33,7 +33,10 @@ But what if the responsibility of encoding the explicit path into the packet was
 
 Encoding an explicit path into a packet can be seen as putting a sequence of instructions into the packet. With a grain of salt, it is almost like "turn left, then go straight, then turn right, then right again, and then straight for the next 10 kilometers". Segment Routing leverages this idea: **Its explicit path is an ordered set of instructions placed into the packet**, with the routers executing these instructions as they forward it. Each **instruction** in Segment Routing is called a **segment**, **has its own number called the Segment ID (SID)**, and as we will learn later, there are multiple segment types. To represent these instructions in a packet, Segment Routing needs to choose a suitable encoding - and **for** **MPLS-enabled networks, the natural encoding is nothing else than a label stack**, with **each label representing one particular segment. The MPLS label values would carry the Segment IDs of individual segments.**
 
+从纯 MPLS 转发的角度来看，分段路由再次建立在基本 MPLS 转发范例之上，并且不会更改标记数据包的转发方式，类似于其他 MPLS 应用程序。关于控制平面操作，值得一提的是，常用的 MPLS 控制平面策略有两个重大变化：
 
+- 对于某些分段类型，标签最好在 SR 域中的所有路由器上具有相同的值，因此具有全局意义
+- 与段的标签绑定由 OSPF 或 IS-IS 通告;不使用自进程序
 
 From a pure MPLS forwarding perspective, Segment Routing again builds on top of the basic MPLS forwarding paradigm and does not change how the labeled packets are forwarded, similar to other MPLS applications. Regarding control plane operations, there are two significant changes to the well-used MPLS control plane policies that deserve to be mentioned:
 
