@@ -36,14 +36,14 @@ Encoding an explicit path into a packet can be seen as putting a sequence of ins
 从纯 MPLS 转发的角度来看，分段路由再次建立在基本 MPLS 转发范例之上，并且不会更改标记数据包的转发方式，类似于其他 MPLS 应用程序。关于控制平面操作，值得一提的是，常用的 MPLS 控制平面策略有两个重大变化：
 
 - 对于某些分段类型，标签最好在 SR 域中的所有路由器上具有相同的值，因此具有全局意义
-- 与段的标签绑定由 OSPF 或 IS-IS 通告;不使用自进程序
+- 与段的标签绑定由 OSPF 或 IS-IS 通告;不使用 LDP 程序
 
 From a pure MPLS forwarding perspective, Segment Routing again builds on top of the basic MPLS forwarding paradigm and does not change how the labeled packets are forwarded, similar to other MPLS applications. Regarding control plane operations, there are two significant changes to the well-used MPLS control plane policies that deserve to be mentioned:
 
 - For certain segment types, the labels have preferably identical values on all routers in the SR domain and so have global significance
 - Label bindings to segments are advertised by OSPF or IS-IS; LDP is not used
 
-
+总结一下：在分段路由中，数据包遵循的路径由边缘路由器向下推送到数据包的标签堆栈表示。每个标签代表一个分段 - 确定数据包如何转发的特定转发指令。
 
 To summarize: **In Segment Routing, the path a packet follows is represented by a stack of labels pushed down to the packet by an edge router.** Each label represents a segment - a particular forwarding instruction that determines how the packet will be forwarded.
 
