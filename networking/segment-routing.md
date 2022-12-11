@@ -81,9 +81,15 @@ IGP 前缀段：由 IGP （IS-IS/OSPF） 分布的全局重要分段，其路径
 
 **IGP Prefix Segment:** A globally significant segment which is distributed by IGPs (IS-IS/OSPF) and whose path is computed as the shortest path towards that specific prefix. This also allows it to be ECMP-aware. The actual SID value of an IGP Prefix Segment is configured by the administrator on a per-interface basis, and it is also the administrator’s responsibility to make sure that this value is unique in the entire SR domain. Typically, the SID would be configured on loopback interfaces to identify nodes in the cloud. An IGP Prefix Segment is very similar to a loose source routing hop. This is shown in Figure 4:
 
+IGP 邻接分段：由 IGP （IS-IS/OSPF） 分布的本地重要分段，它描述了两个相邻路由器之间的特定链路 - 或者更好地说，IGP 邻接关系。与 IGP 前缀分段相反，邻接分段的 SID 将由路由器本身分配，不需要管理员干预。与此段相关的指令可以解释为“在IGP邻接上弹出标签和转发”。IGP 邻接分段与严格源路由跃点非常相似，如图 5 所示：
+
+**IGP Adjacency Segment:** A locally significant segment distributed by IGPs (IS-IS/OSPF) which describes a particular link - or better put, an IGP adjacency between two neighboring routers. As opposed to IGP Prefix Segments, the SID for an Adjacency segment would be assigned by the router itself, and does not require an administrator’s intervention. The instruction related with this segment can be explained as “Pop label and forward on the IGP adjacency”. An IGP Adjacency Segment is very similar to a strict source routing hop, as shown in Figure 5:
+
+Pushing multiple labels representing segments of the same type onto a packet essentially provides exactly the same functionality as IP Source Routing does: Multiple IGP Prefix Segments are nothing else than Loose Source Routing; multiple IGP Adjacency segments are nothing else than Strict Source Routing - but here, based on MPLS labeling, and, provided with a sufficient MTU reserve, not limited anymore to just 9 explicit hops.
 
 
 
+What might not be obvious is that labels for both segment types can be freely combined and pushed onto a packet! Their combination is a superset of what plain IP Source Routing was able to accomplish, and provides ample space for more complex source routing scenarios including backup paths and fast-reroute-alike detours where traffic can be steered through the network routing around a failure. A simple scenario is shown in Figure
 
 ## Overview
 
