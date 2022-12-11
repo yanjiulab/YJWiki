@@ -1,8 +1,31 @@
 # Segment Routing
 
-## SR 简介
+## SR 背景
+
+Segment Routing 是路由领域的一个新宠儿，特别契合于自治网络或集中式控制网络（如 SDN），SR 与 MPLS 和 IPv6 两种技术深度绑定。因此，在学习 SR 之前需要对这两种技术做到基本熟悉。
 
 ### 源路由
+
+SR 是一种**源路由协议**（Source Routing），在 RFC 791 中，定义了 IPv4 基本的路由模型是**基于目的地址转发**，对于一个给定数据包，路由器只能根据其目的地址来选择路由（选择下一跳），发送者以及数据包其他字段均不能影响路径转发。然而，IPv4 还规定了**源路由**模式，通过 **IP 选项域**字段来实现发送者对于转发路径的更多控制，这意味着发送者可以为数据包指定转发路径，控制数据包如何到达目的地。例如图中绿色是一条常规路由转发使用的最短路径，红色是源路由选择的转发路径。
+
+![img](segment-routing.assets/SegmentRouting.png)
+
+在 IPv4 中有两种源路由协议，两者均是**在 IP 首部选项域字段存入一个逐跳列表**实现，这个列表也称作**路由数据**。
+
+- **Loose Source and Record Route** (LSRR)：松散是指逐跳列表中的**下一跳节点不需要直接相连**，只需要指定一个大致的转发路径即可。如果两跳不直接相连，则由路由器决定具体转发到哪个节点。
+- **Strict Source and Record Route** (SRRR)：严格是指逐跳列表中的**下一跳节点必须是直接相连**的。如果路由器发现逐跳列表里不是直接相连的，则会丢弃该数据。
+
+综上所述，源路由的显著特点是路由在数据包中存储，沿途路由器无需再保存路由表等数据，只需要按照数据包中的指示转发即可，减轻了路由器负担。但与此同时却对数据发送者要求更高，等于是将这部分开销转移了。相对于分布式路由，源路由更适用于集中控制网络，可以通过指定路径更为方便的实现转发优化、流量控制等。但与此同时，源路由也带来了一定的安全问题，因此目前大部分路由器的源路由功能都不会默认开启。
+
+### MPLS 简介
+
+暂时先全放到这里，如果太多考虑单独列出。
+
+### SR 简介
+
+
+
+
 
 
 
@@ -137,3 +160,10 @@ draft-ietf-isis-segment-routing-extensions-02
 #### 【各种Extensions】
 
 draft-ietf-ospf-segment-routing-extensions-02
+
+## 参考
+
+- [https://www.segment-routing.net/](https://www.segment-routing.net/)
+
+- [Introduction to Segment Routing](https://learningnetwork.cisco.com/s/blogs/a0D3i000002SKP6EAO/introduction-to-segment-routing)
+- 
