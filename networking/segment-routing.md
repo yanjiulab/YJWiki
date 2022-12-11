@@ -101,11 +101,17 @@ Pushing multiple labels representing segments of the same type onto a packet ess
 
 What might not be obvious is that labels for both segment types can be freely combined and pushed onto a packet! Their combination is a superset of what plain IP Source Routing was able to accomplish, and provides ample space for more complex source routing scenarios including backup paths and fast-reroute-alike detours where traffic can be steered through the network routing around a failure. A simple scenario is shown in Figure
 
-BGP 前缀段：与 IGP 前缀段类似并具有全局意义，BGP 前缀段表示到特定 BGP 前缀的最短路径，当然，它是 ECMP 感知的。与 IGP 通告的 IGP 前缀分段相反，此分段由 BGP 发出信号。
+BGP 前缀段：与 IGP 前缀段类似并具有全局意义，BGP 前缀段表示到特定 BGP 前缀的最短路径，当然，它是 ECMP 感知的。与 IGP 通告的 IGP 前缀分段相反，此分段由 BGP 发出信号。【图】
 
 **BGP Prefix Segment:** Similar to IGP Prefix segment and holding global significance, BGP Prefix Segment represents the shortest path to a specific BGP prefix and, of course, is ECMP-aware. As opposed to IGP Prefix Segment that is advertised by an IGP, this segment is signaled by BGP.
 
 
+
+Since the Prefix segments (IGP Prefix and BGP Prefix segment types) have a global significance, it was necessary to consider that MPLS routers might reserve the same range of label values for SR deployment, and it might not be possible to expect that all routers will be able to use the same label for the same segment. There are various reasons for that: Different vendors might allocate different default ranges; gradual SR deployment into an existing MPLS network may face the obvious issue of the label range already partially used or label ranges configured differently on different routers. Therefore, Prefix segments introduce a level of indirection: Each router advertises its own range of labels reserved for Prefix segments in its link-state packets, and this range is called the Segment Routing Global Block (SRGB). Individual Prefix segment IDs are then advertised as offsets, or indexes, from the beginning of the label range, instead of absolute values. Typically, the SRGB range starts at 16,000, and this is what we call the default SRGB.
+
+
+
+How does this help? Check the Figure 4 again. The rightmost router is shown to advertise the prefix segment for prefix 5.5.5.5/32 as 16005. In reality, though, the router would advertise that its own SRGB starts at 16,000, and that the index for prefix 5.5.5.5/32 is 5 (16,005 = 16,000 + 5). If all routers in the SR domain use the same SRGB, they will all arrive at the same label of 16,005 when forwarding packets along the path toward 5.5.5.5/32. However, if the top middle router used a SRGB that starts at 20,000, its own SID for this prefix would be 20,005 (20,000 + 5). Every neighbor of this router would know that, too, since each router’s SRGB is advertised in its link-state packets. So when a neighbor would forward packets toward 5.5.5.5/32 through the top middle router, knowing that the index of this prefix is 5 and the router uses a SRGB range starting at 20,000, it would use a label of 20,005 instead. Again, with global SIDs, their originating routers advertise their index rather than their absolute value; the actual value to be used in the label is computed as the index plus the SRGB base of the next hop.
 
 
 
