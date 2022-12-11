@@ -47,11 +47,14 @@ From a pure MPLS forwarding perspective, Segment Routing again builds on top of 
 
 To summarize: **In Segment Routing, the path a packet follows is represented by a stack of labels pushed down to the packet by an edge router.** Each label represents a segment - a particular forwarding instruction that determines how the packet will be forwarded.
 
+话虽如此，我们已经了解它们是指令，但现在我们需要确定路由器如何识别这些段。让我们定义我们可以遇到的段的类。
 
+在分段路由中，有两个分段类：
+
+- 全球分部
+- 本地部分
 
 Having said this, we have understood that they are instructions, but now we need to determine how the routers identify these segments. Let’s define the classes of segments we can encounter.
-
-
 
 In Segment Routing, there are two segment classes:
 
