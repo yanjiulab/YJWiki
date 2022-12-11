@@ -23,11 +23,7 @@ SR 是一种**源路由协议**（Source Routing），在 RFC 791 中，定义�
 
 ### SR 简介
 
-
-
-
-
-Lets reiterate where we have arrived so far. We have discussed MPLS-TE and noted that it is a very useful and widely deployed application of MPLS but it has issues with scalability and manageability, both referring to the control and management plane aspects. We have also discussed the IP Source Routing which can be seen as a rudimentary traffic engineering technique in which the network itself has no added burden on the control plane because the explicit path is encoded into each packet’s header, but which has security implications because it gives too much power to end hosts sending IP packets themselves.
+我们已经讨论了 MPLS-TE，并注意到它是一个非常有用且广泛部署的 MPLS 应用程序，但它在可扩展性和可管理性方面存在问题，两者都涉及控制和管理平面方面。
 
 
 
