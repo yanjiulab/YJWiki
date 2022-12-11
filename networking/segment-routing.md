@@ -25,7 +25,7 @@ SR 是一种**源路由协议**（Source Routing），在 RFC 791 中，定义�
 
 我们已经讨论了 MPLS-TE，并注意到它是一个非常有用且广泛部署的 MPLS 应用程序，但它在可扩展性和可管理性方面存在问题，两者都涉及控制和管理平面方面。
 
-但是，如果将显式转发路径编码到数据包中的责任交给入口路由器而不是发送主机，则可以解决安全问题。如果有一种方法可以将此显式路径信息编码为标记的数据包，以便启用MPLS的网络可以处理它们，而无需在所需路径上的所有路由器上存储其他状态，它将解决MPLS-TE可扩展性的问题。这是分段路由的两个关键思想，它结合了MPLS和源路由的优点。
+但是，如果将显式转发路径编码到数据包中的责任交给入口路由器而不是发送主机，则可以解决安全问题。另外，如果有一种方法可以将此显式路径信息编码为标记的数据包，以便启用 MPLS 功能的网络可以处理它们，而无需在所需路径上的所有路由器上存储其他状态，它将解决 MPLS-TE 可扩展性的问题。这是 SR 路由的两个关键思想，它结合了 MPLS 和源路由的优点。
 
 But what if the responsibility of encoding the explicit path into the packet was given to an ingress router instead of the sending host? the security issues would no longer be a concern. And if there was a way to encode this explicit path information into labeled packets so that a MPLS-enabled network could process them without needing to store additional state on all routers along the desired path, it would resolve the issues with MPLS-TE scalability. These are the two key ideas of Segment Routing that combines the best from MPLS and Source Routing.
 
