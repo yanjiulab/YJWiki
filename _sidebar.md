@@ -8,6 +8,7 @@
     - [IP 组播路由 - 基础](/networking/multicast.md)
     - [IP 组播路由 - PIM](/networking/multicast-pim.md)
     - [IP 组播路由 - IGMP](/networking/multicast-igmp.md)
+    - [Segment Routing](/networking/segment-routing.md)
     - [传输协议 - TCP](/networking/tcp.md)
     - [传输协议 - TLS/SSL](/networking/tls.md)
     - [传输协议 - UDP](/networking/udp.md)
