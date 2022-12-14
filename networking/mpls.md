@@ -16,13 +16,9 @@ Before getting into the nitty-gritty of MPLS, let's talk about what it is, from 
 
 ## MPLS 起源
 
-Everything started in the 90s when Frame Relay, ATM and IP-over-ATM were being employed
+上世纪 90 年代，各大 ISP开始部署 Frame Relay、ATM 以及 IP-over-ATM 网络，各种技术层出不穷的原因很简单：需要更高的吞吐量和更低的延迟！
 
-by ISPs. The reason was simple: higher throughput and lower latency! Those were early
 
-ages when devices were not exactly overflowing with resources and high bandwidth links like
-
-nowadays, and every inch they could win in favor of improving resource usage was welcome.
 
 ATM’s method of transport was based on virtual circuits that were identified using a pair of simple values
 
