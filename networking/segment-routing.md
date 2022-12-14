@@ -23,7 +23,9 @@ SR 是一种**源路由协议**（Source Routing），在 RFC 791 中，定义�
 
 This article assumes basic understanding of MPLS inner mechanisms and forwarding process. For an introduction into MPLS in a manageable and not-burdensome way, I invite you to read a blog written earlier: **MPLS History and building blocks**
 
+MPLS 具有如下特性：
 
+- 
 
 As a starter, let's summarize some of the key MPLS characteristics :
 
