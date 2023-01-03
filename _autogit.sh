@@ -7,3 +7,4 @@ remark=$(date +"%Y-%m-%d %H:%M:%S")
 git commit -m "Update: ${remark}"
 git pull origin master
 git push origin master
+git push gitee master
