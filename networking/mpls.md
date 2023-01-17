@@ -120,7 +120,7 @@ all done in hardware, yet the real tangible value lies in what you can build usi
 
 able to support. Its scalability and interoperability, along with the services and infrastructures you can
 
-run on top of it, like L3VPNs, made it a key tool to drive businesses and networks to a new horizon.
+run on top of it, made it a key tool to drive businesses and networks to a new horizon.
 
  
 

@@ -15,7 +15,7 @@
     - [x] IP 组播路由
     - [ ] MPLS 标签交换
     - [ ] Segment Routing
-    - [ ] 隧道/VPN(gre/ipsec/vxlan)
+    - [ ] 隧道(gre/ipsec/vxlan)
 - 传输层部分
     - [x] TCP
     - [ ] UDP

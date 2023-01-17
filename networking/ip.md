@@ -130,7 +130,6 @@ RFC|标题
 6752|Issues with Private IP Addressing in the Internet
 6676|Multicast Addresses for Documentation
 6598|IANA-Reserved IPv4 Prefix for Shared Address Space
-6515|IPv4 and IPv6 Infrastructure Addresses in BGP Updates for Multicast VPN
 6346|The Address plus Port (A+P) Approach to the IPv4 Address Shortage
 6319|Issues Associated with Designating Additional Private IPv4 Address Space
 6308|Overview of the Internet Multicast Addressing Architecture
