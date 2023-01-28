@@ -36,15 +36,19 @@ endpoints, these forwarding tables in adjacent ATM switches would neatly point t
 
 VPI/VCI combination of an upstream ATM switch would match the expected incoming VPI/VCI combination
 
-of the adjacent downstream switch along the entire path. Frame Relay used DLCIs (Data Link Connection
+of the adjacent downstream switch along the entire path. 
 
-Identifiers) instead, which were, as with ATMs VCs, locally significant values for each router. Transport
+
+
+Frame Relay used DLCIs (Data Link Connection Identifiers) instead, which were, as with ATMs VCs, locally significant values for each router. Transport
 
 was possible by matching and rewriting simple values between devices, instead of creating any kind of
 
 mapping or association, or even changing the frame format, simplicity made it very efficient and attractive.
 
- 
+帧中继改用 DLCI（数据链路连接标识符），与 ATM VC 一样，它是每个路由器的本地有效值。通过在设备之间匹配和重写简单值来实现传输，而不是创建任何类型的映射或关联，甚至更改帧格式，简单性使其非常高效和有吸引力。
+
+
 
 IP forwarding on the other hand, required a router to receive the frame, open the IP packet and compare
 
@@ -86,27 +90,11 @@ technologies showed in comparison: reduced delay, bottlenecks in the CPU and no 
 
  
 
-There were attempts to marry IP and ATM, and that's how IP-over-ATM came to the stage. It was ambitious
-
-and promising, but interwaving two protocols that stood in opposed sides of the street (each one had its own
-
-stack) became complex. Sooner than later, scalability constraints and complicated interoperability made it a
-
-challenge, and everything was happening while the time was running away and industry required a solution.
+有人试图将 IP 和 ATM 结合起来，这就是 IP-over-ATM 出现的方式。但是将两个协议站在街道两侧的协议（每个协议都有自己的堆栈）交织在一起变得复杂。可扩展性限制和复杂的互操作性迟早会使其成为一个挑战，而一切都在时间流逝，行业需要解决方案。
 
  
 
-Several solutions were conceived by different vendors in the following years,
-
-called multilayer switching, working in a similar way as the predecessor they
-
-were trying to succeed. But, none of them were able to reach that milestone.
-
-In 1997, the IETF decided to start a working group to create an interoperable multilayer
-
-switching standard. It was created making use of a clever idea that looked promising
-
-in the past and was in place in a similar way for previous WAN protocols: labels!
+Several solutions were conceived by different vendors in the following years, called multilayer switching, working in a similar way as the predecessor they were trying to succeed. But, none of them were able to reach that milestone. In 1997, the IETF decided to start a working group to create an interoperable multilayer switching standard. It was created making use of a clever idea that looked promising in the past and was in place in a similar way for previous WAN protocols: labels!
 
  
 
@@ -122,7 +110,11 @@ able to support. Its scalability and interoperability, along with the services a
 
 run on top of it, made it a key tool to drive businesses and networks to a new horizon.
 
- 
+现在我们知道为什么 MPLS 变得流行，那么它是如何工作的呢？MPLS 的工作方式与书签类似：它告诉路由器在路由表中的确切位置
+
+查找特定前缀。通常，路由器需要在其路由表中执行逐行查找对于特定条目，以便它可以正确转发/路由数据包，但是，如果可以阻止这种努力怎么办
+
+从发生超过需要的事情？如果有书签怎么办？是的！这就是MPLS所做的。
 
 And now that we know why MPLS became popular, what about how it works?
 
@@ -134,51 +126,15 @@ for a specific entry so it can forward/route a packet properly but, what if that
 
 from happening more than needed? What if a bookmark was available? Yes! That’s what MPLS does.
 
-When a router is MPLS-enabled, it will assign a unique number to every prefix in its routing table.
+当路由器启用了 MPLS 时，它将**为其路由表中的每个前缀分配一个唯一的编号**。一旦分配了编号，路由器便会将这些信息向所有邻居传送，消息类似于：“前缀 X.X.X.X 在我的路由表中位于 Y 行中，因此，如果您想将我用作 X.X.X.X 的下一跳，请在该数据包上贴上带有数字 Y 的标签，以便我可以立即跳转到第 Y 行并更快地转发数据包”。于是，所有邻居路由器都知道了：发往该路由器的 X.X.X.X 网段数据包，只需要使用 Y 标记即可通过该路由器正确转发。
 
-That number will be a key factor to make the communication quicker, as it will identify each prefix
+因此，整个交换可以通过事先在两个路由器之间传递整数（即标签）来完成，即：**每个路由器向其邻居通告分配给其路由表中每个前缀的本地标签号**。 
 
-individually. Once the numbers are assigned, they are communicated to its neighbors, like shouting
-
-all over the place. The message would be something like: “The prefix X.X.X.X is in line Y in my routing table, so if you want to use me as a next hop towards X.X.X.X, put a label with the number Y onto that packet so that I can jump onto row Y immediately and forward the packet quicker.”
+![img](mpls.assets/1.jpeg)
 
  
 
-What is the result? All neighbor routers will know that they need only to use that number Y for that prefix,
-
-and packets labeled with Y will be forwarded properly when sent through that router. Forwarding can
-
-happen thanks to the action of passing a integer (called label) between two routers before. In other words:
-
-each router advertises to its neighbors the local label number assigned to each prefix in its routing table.
-
- 
-
-Let’s illustrate that quickly:
-
-![img](mpls.assets/rtaImage.jpeg)
-
- 
-
-As we can observe, in each router the exact same prefix is associated/bound to a different
-
-\- locally significant - label number, and it is advertised to all neighbors indiscriminately.
-
- 
-
-Until now, we have spoken about labels and routers advertising them, without
-
-mentioning how they do it. There are several protocol capable of advertising labels,
-
-but the essential one for this purpose is called LDP (Label Distribution Protocol).
-
- 
-
-LDP allows routers to establish sessions between them, create, advertise and store label bindings, helping
-
-to populate the contents of the LIB (Label Information Base) and LFIB (Label Forwarding Information Base).
-
- 
+在每个路由器中，相同的前缀关联了不同的本地有效标签，并且在邻居间无差别扩散。那么标签如何在路由器之间通告呢？其中最基本的协议是**标签分发协议（Label Distribution Protocol, LDP）**。LDP 协议允许路由器之间建立连接，创建、通告以及存储标签映射，LDP 协议允许路由器之间建立会话，创建、通告和存储标签绑定，帮助填充标签信息库（Label Information Base, LIB）和标签转发信息库（Label Forwarding Information Base, LFIB）的内容。
 
 The rough order of operations is described as follows:
 
@@ -434,65 +390,15 @@ top of the existing label before forwarding, to guarantee it will be process swi
 
  
 
-So far, we spoke about labeled packets but we did not look in detail how exactly an
+目前为止，我们只是谈到了标记的数据包，现在让我们详细看看 MPLS 标签的内容及其在数据包中的位置：
 
-MPLS label looks like, and where exactly it is placed. Let's have a closer look now:
+![img](mpls.assets/mpls-format.jpeg)
 
- 
+如上所示，MPLS 首部长度为 32 比特（4 字节），位于二层帧头和三层包头之间，具体包括：
 
-![img](mpls.assets/rtaImage.jpeg)
+- Label (20 bits): Identifies the label value used by LSRs to forward the packet through a MPLS enabled network. The value range for this field is <0 - 1,048,575> (220-1).
+- Traffic Class (3 bits): The traffic class field, formerly known as EXP field, is used to carry traffic class information so QoS policies can be implemented in the MPLS network by checking the value in the header.
+- Bottom Of Stack (1 bit): MPLS allows multiple labels to be placed onto a packet. They are then treated as a stack; the bottom label is the one closest to the Layer 3 header, the top label is the one closest to the Layer 2 header, and LSRs always operate on the top label only (with the exception of Router Alert label). To be able to tell which label is the last one -the bottom one - the BoS bit will be set to 1 on the bottom label, and to 0 on all other labels.
+- Time to Live (TTL) (8 bits): Analogous to IP forwarding, it is used to keep track of the number of hops that a labeled packet can take (or the number of routers it can traverse in its journey to its destination) before being dropped. Used as loop prevention mechanism. Range of values is <0 - 255> (28-1). Packets are forwarded and one unit it subtracted from the current value at each hop/router, this operation is repeated until it reaches its destination or the value reaches 0 (and it is dropped).
 
-As depicted above, the MPLS header is 32 bits (4 bytes) long and it is just in the middle between the layer
-
-2 and layer 3 headers when forwarding happens. Taking a closer look we can identify the following fields:
-
- 
-
-Label (20 bits): Identifies the label value used by LSRs to forward the packet through
-
-a MPLS enabled network. The value range for this field is <0 - 1,048,575> (220-1).
-
- 
-
-Traffic Class (3 bits): The traffic class field, formerly known as EXP field, is used to carry traffic class
-
-information so QoS policies can be implemented in the MPLS network by checking the value in the header.
-
- 
-
-Bottom Of Stack (1 bit): MPLS allows multiple labels to be placed onto a packet. They are
-
-then treated as a stack; the bottom label is the one closest to the Layer 3 header, the top label is the one closest to the Layer 2 header, and LSRs always operate on the top label
-
-only (with the exception of Router Alert label). To be able to tell which label is the last one -
-
-the bottom one - the BoS bit will be set to 1 on the bottom label, and to 0 on all other labels.
-
- 
-
-Time to Live (TTL) (8 bits): Analogous to IP forwarding, it is used to keep track of the number of
-
-hops that a labeled packet can take (or the number of routers it can traverse in its journey to its
-
-destination) before being dropped. Used as loop prevention mechanism. Range of values is <0 - 255>
-
-(28-1). Packets are forwarded and one unit it subtracted from the current value at each hop/router,
-
-this operation is repeated until it reaches its destination or the value reaches 0 (and it is dropped).
-
- 
-
-Up to this point, we have discussed about many topics regarding MPLS, a bit of history and several
-
-components that work together to provide a transport method whose applications are a common
-
-and attractive trait nowadays. This blog has been intended to be an introductory lesson in plain
-
-MPLS to understand its inner moving parts. Future blogs will dwell deep into other more complex
-
-scenarios and applications of this protocol to build an infrastructure able to provide a service.
-
- 
-
-Any feedback, comments, questions and corrections are welcome!!
-
+ 到目前为止，我们已经讨论了有关MPLS的许多主题，一些历史和几个组件，这些组件协同工作以提供一种传输方法，其应用是当今常见且有吸引力的特征。
