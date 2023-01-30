@@ -153,11 +153,11 @@ To define the LIB, we need to remember in which way the labels are advertised, i
 
 LIB 是一个数据库，其功能是存储目标网络/前缀和标签的关联关系，其中关联关系包括路由器本地产生的或者从邻居接收到的。LIB 本身不用于执行转发决策，而是指导 LFIB 的生成。
 
-| 目标网络/前缀 | 标签 | 类型 |
-| :-----------: | :--: | :--: |
-| 172.31.0.0/24 | 100  | 本地 |
-| 172.31.1.0/24 | 100  | 邻居 |
-|      ...      |      |      |
+| 目标网络/前缀 | 标签 |  类型  |
+| :-----------: | :--: | :----: |
+| 172.31.0.0/24 | 100  |  本地  |
+| 172.31.1.0/24 | 100  | 邻居 1 |
+|      ...      |      |        |
 
 When advertisements are done and every router knows and has stored all the labels, forwarding can take
 
