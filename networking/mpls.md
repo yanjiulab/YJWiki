@@ -147,7 +147,7 @@ from happening more than needed? What if a bookmark was available? Yes! That’s
 
 在上述过程中，构建 LFIB 和 LIB 是最小化转发延迟的关键部分。让我们快速描述它们，以便我们可以清楚地了解它们。
 
- 
+在 LIB 中， 
 
 To define the LIB, we need to remember in which way the labels are advertised, indiscriminately, without paying attention what prefix and label is being advertised and who is or is not the next hop for it. When a router binds a prefix with a label number, that association is called local binding for that router. Any binding received from another router, is called remote binding (because comes from another neighbor, its not local). So, in plain words, regarding bindings, from any router’s perspective: “what is not mine (local) is remote”.
 
