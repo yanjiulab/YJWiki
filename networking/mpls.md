@@ -149,19 +149,7 @@ from happening more than needed? What if a bookmark was available? Yes! That’s
 
  
 
-Among its functions, building the LFIB and LIB are key pieces to minimize forwarding delay (and to forward in
-
-first place). Let's describe them quickly so we can have a clear picture of them.
-
- 
-
-To define the LIB, we need to remember in which way the labels are advertised, indiscriminately, without
-
-paying attention what prefix and label is being advertised and who is or is not the next hop for it. When a router
-
-binds a prefix with a label number, that association is called local binding for that router. Any binding received
-
-from another router, is called remote binding (because comes from another neighbor, its not local). So, in plain
+To define the LIB, we need to remember in which way the labels are advertised, indiscriminately, without paying attention what prefix and label is being advertised and who is or is not the next hop for it. When a router binds a prefix with a label number, that association is called local binding for that router. Any binding received from another router, is called remote binding (because comes from another neighbor, its not local). So, in plain
 
 words, regarding bindings, from any router’s perspective: “what is not mine (local) is remote”.
 
