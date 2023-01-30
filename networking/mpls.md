@@ -92,7 +92,7 @@ technologies showed in comparison: reduced delay, bottlenecks in the CPU and no 
 
 有人试图将 IP 和 ATM 结合起来，这就是 IP-over-ATM 出现的方式。但是将两个协议站在街道两侧的协议（每个协议都有自己的堆栈）交织在一起变得复杂。可扩展性限制和复杂的互操作性迟早会使其成为一个挑战，而一切都在时间流逝，行业需要解决方案。
 
- 
+在接下来的几年中，不同的供应商构思了几种解决方案，称为多层交换，其工作方式与他们试图成功的前身类似。但是，他们都未能达到这一里程碑。1997年，IETF决定成立一个工作组，创建一个可互操作的多层交换标准。它是利用一个聪明的想法创建的，这个想法在过去看起来很有前途，并且以类似的方式用于以前的WAN协议：标签！
 
 Several solutions were conceived by different vendors in the following years, called multilayer switching, working in a similar way as the predecessor they were trying to succeed. But, none of them were able to reach that milestone. In 1997, the IETF decided to start a working group to create an interoperable multilayer switching standard. It was created making use of a clever idea that looked promising in the past and was in place in a similar way for previous WAN protocols: labels!
 
