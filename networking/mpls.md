@@ -136,6 +136,10 @@ from happening more than needed? What if a bookmark was available? Yes! That’s
 
 在每个路由器中，相同的前缀关联了不同的本地有效标签，并且在邻居间无差别扩散。那么标签如何在路由器之间通告呢？其中最基本的协议是**标签分发协议（Label Distribution Protocol, LDP）**。LDP 协议允许路由器之间建立连接，创建、通告以及存储标签映射，LDP 协议允许路由器之间建立会话，创建、通告和存储标签绑定，帮助填充标签信息库（Label Information Base, LIB）和标签转发信息库（Label Forwarding Information Base, LFIB）的内容。
 
+LDP 大致流程如下：
+
+1. 
+
 The rough order of operations is described as follows:
 
 \1. Discovery of routers running LDP (hello messages to 224.0.0.2 address - UDP 646 )
