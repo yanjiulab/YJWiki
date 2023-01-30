@@ -163,7 +163,7 @@ LIB 是一个数据库，其功能是存储目标网络/前缀和标签的关联
 
 ![img](mpls.assets/2.jpeg)
 
-通过 LDP，路由器将其本地关联向其邻居通告，同时将其他路由器通告的远程关联存储在 LIB 中。上图中，R2 向 R1 通告 `172.31.0.0/24 - 568` 关联，R1 将该关联作为远程关联存储下来，接着，R1可以使用该标签通过 R2 向 172.31.0.0/24 网络发送
+通过 LDP，路由器将其本地关联向其邻居通告，同时将其他路由器通告的远程关联存储在 LIB 中。上图中，R2 向 R1 通告 `172.31.0.0/24 - 568` 关联，R1 将该关联作为远程关联存储下来，接着，R1可以使用该标签通过 R2 向 172.31.0.0/24 网络发送数据。因此对于路由器来说，其出口标签就是下一跳上接收的入口标签，也就是下一跳路由器的本地标签。
 
 The way forwarding happens involves knowing local and remote bindings and thinking in perspective. Using LDP, routers advertise their local bindings to their neighbors. All bindings received through LDP will be stored as remote bindings in the LIB. For example, in the picture above, after R2 advertises the label 568 for 172.31.0.0/24 to R1, R1 will store this binding as a remote binding in its LIB. Later, R1 can use this label whenever sending packets to 172.31.0.0/24 through R2. Therefore, for a router, its outgoing label is next hop’s incoming label, and also, your outgoing label is your next hop’s local label.
 
