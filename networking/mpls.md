@@ -151,7 +151,13 @@ from happening more than needed? What if a bookmark was available? Yes! That’s
 
 To define the LIB, we need to remember in which way the labels are advertised, indiscriminately, without paying attention what prefix and label is being advertised and who is or is not the next hop for it. When a router binds a prefix with a label number, that association is called local binding for that router. Any binding received from another router, is called remote binding (because comes from another neighbor, its not local). So, in plain words, regarding bindings, from any router’s perspective: “what is not mine (local) is remote”.
 
-LIB 是一个数据库，其功能是存储目标网络/前缀及其由路由器或邻居创建的本地和远程绑定。LIB 本身不用于执行转发决策，的数据库 - 相反，它是来自路由器及其邻居的所有已知标签绑定的存储，稍后将用于选择正确的最终候选并将它们放入 LFIB。
+LIB 是一个数据库，其功能是存储目标网络/前缀及其由路由器或邻居创建的本地和远程绑定。LIB 本身不用于执行转发决策，的数据库 - 相反，它是来自路由器及
+
+| 目标网络/前缀 | 标签 | 类型 |
+| ------------- | ---- | ---- |
+| 172.31.0.0/24 | 100  | 本地 |
+
+其邻居的所有已知标签绑定的存储，稍后将用于选择正确的最终候选并将它们放入 LFIB。
 
 The LIB is a repository whose function is to store destination networks/prefixes and their respective local and remote bindings created by a router and its neighbors. LIB itself is not the database that is used to perform forwarding decisions - rather, it is a storage of all known label bindings from the router and its neighbors which will be later used to pick the proper final candidates and place them into LFIB.
 
