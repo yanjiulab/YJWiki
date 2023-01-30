@@ -138,7 +138,9 @@ from happening more than needed? What if a bookmark was available? Yes! That’s
 
 LDP 大致流程如下：
 
-1. 
+1. 通过 Hello 报文（目的地址为 224.0.0.2，UDP 端口 646）发现运行 LDP 的路由器。
+2. 通过 TCP 端口 646 建立会话连接。
+3. 标签
 
 The rough order of operations is described as follows:
 
