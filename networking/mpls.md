@@ -171,6 +171,8 @@ If we play a little with perspectives, you can place yourself on top of the rout
 
 ![img](mpls.assets/2.jpeg)
 
+通过 LDP，路由器将其本地关联向其邻居通告
+
 The way forwarding happens involves knowing local and remote bindings and thinking in perspective. Using LDP, routers advertise their local bindings to their neighbors. All bindings received through LDP will be stored as remote bindings in the LIB. For example, in the picture above, after R2 advertises the label 568 for 172.31.0.0/24 to R1, R1 will store this binding as a remote binding in its LIB. Later, R1 can use this label whenever sending packets to 172.31.0.0/24 through R2. Therefore, for a router, its outgoing label is next hop’s incoming label, and also, your outgoing label is your next hop’s local label.
 
  
