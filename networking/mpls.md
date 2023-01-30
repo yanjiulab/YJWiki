@@ -153,13 +153,7 @@ To define the LIB, we need to remember in which way the labels are advertised, i
 
  
 
-The LIB is a repository whose function is to store destination networks/prefixes and their respective local and
-
-remote bindings created by a router and its neighbors. LIB itself is not the database that is used to perform
-
-forwarding decisions - rather, it is a storage of all known label bindings from the router and its neighbors which
-
-will be later used to pick the proper final candidates and place them into LFIB.
+The LIB is a repository whose function is to store destination networks/prefixes and their respective local and remote bindings created by a router and its neighbors. LIB itself is not the database that is used to perform forwarding decisions - rather, it is a storage of all known label bindings from the router and its neighbors which will be later used to pick the proper final candidates and place them into LFIB.
 
  
 
