@@ -167,13 +167,7 @@ differentiate them.
 
  
 
-If we play a little with perspectives, you can place yourself on top of the router and see the labels coming and
-
-going. The label numbers which you receive on the incoming packets are your incoming or ingress labels, and
-
-the label numbers you use to identify the outgoing packets are outgoing or egress labels. This perspective
-
-applies to each and every router individually.
+If we play a little with perspectives, you can place yourself on top of the router and see the labels coming and going. The label numbers which you receive on the incoming packets are your incoming or ingress labels, and the label numbers you use to identify the outgoing packets are outgoing or egress labels. This perspective applies to each and every router individually.
 
  
 
