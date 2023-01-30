@@ -145,19 +145,7 @@ from happening more than needed? What if a bookmark was available? Yes! That’s
 5. 通过标签表 LIB 和路由表 RIB 内容构造标签转发表 LFIB（其过程类似于 IP 转发中通过路由表 RIB 构造转发表 FIB）。
 6. 会话保持（发送保活、更新和错误信息）。
 
-The rough order of operations is described as follows:
-
-\1. Discovery of routers running LDP (hello messages to 224.0.0.2 address - UDP 646 )
-
-\2. Session establishment (TCP 646)
-
-\3. Label advertisement and reception
-
-\4. Storage of labels in LIB
-
-\5. Build LFIB based on LIB and RIB contents (similar to building FIB from RIB’s information)
-
-\6. Session maintaining (send keepalives, updates, and error messages when needed)
+在上述过程中，构建 LFIB 和 LIB 是最小化转发延迟的关键部分。让我们快速描述它们，以便我们可以清楚地了解它们。
 
  
 
