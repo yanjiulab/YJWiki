@@ -159,11 +159,7 @@ LIB 是一个数据库，其功能是存储目标网络/前缀和标签的关联
 | 172.31.1.0/24 | 100  | 邻居 1 |
 |      ...      |      |        |
 
-When advertisements are done and every router knows and has stored all the labels, forwarding can take
-
-place. What we are missing now is: which label to use in each case? There must be a way for each router to
-
-differentiate them.
+当通完成
 
 假设我们是路由器 R2，我们可以看到标签是如何在每个路由器中起作用的，收到的数据包上收到的标签编号是传入或入口标签，发送的数据包的标签编号是传出或出口标签。
 
