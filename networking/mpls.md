@@ -161,8 +161,6 @@ LIB 是一个数据库，其功能是存储目标网络/前缀和标签的关联
 
 当标签通告完成时，就可以进行转发了，那么不同类型的标签是如何使用呢？假设我们是路由器 R2，我们可以看到标签是如何在每个路由器中起作用的，收到的标签编号是入口标签（incoming/ingress label），发送的标签编号是出口标签（outgoing/egress label）。
 
-If we play a little with perspectives, you can place yourself on top of the router and see the labels coming and going. The label numbers which you receive on the incoming packets are your incoming or ingress labels, and the label numbers you use to identify the outgoing packets are outgoing or egress labels. This perspective applies to each and every router individually.
-
 ![img](mpls.assets/2.jpeg)
 
 通过 LDP，路由器将其本地关联向其邻居通告，同时将其他路由器通告的远程关联存储在 LIB 中。上图中，R2 
