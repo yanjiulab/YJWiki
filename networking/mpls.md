@@ -142,7 +142,7 @@ LDP 大致流程如下：
 2. 通过 TCP 端口 646 建立会话连接。
 3. 标签通告和接收。
 4. 将标签存储在 LIB 中。
-5. 通过 LIB 和 RIB 内容构造 
+5. 通过标签表 LIB 和路由表 RIB 内容构造标签转发表 LFIB（其过程类似于 IP 转发中通过路由表 RIB 构造转发表 FIB）。
 
 The rough order of operations is described as follows:
 
