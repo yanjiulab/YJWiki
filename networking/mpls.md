@@ -163,31 +163,15 @@ LIB 是一个数据库，其功能是存储目标网络/前缀和标签的关联
 
 ![img](mpls.assets/2.jpeg)
 
-通过 LDP，路由器将其本地关联向其邻居通告，同时将其他路由器通告的远程关联存储在 LIB 中。上图中，R2 向 R1 通告 `172.31.0.0/24 - 568` 关联，R1 将该关联作为远程关联存储下来，接着，R1可以使用该标签通过 R2 向 172.31.0.0/24 网络发送数据。因此对于路由器来说，其出口标签就是下一跳端口上的入口标签，也就是下一跳路由器的本地标签。
+通过 LDP，路由器将其本地关联向其邻居通告，同时将其他路由器通告的远程关联存储在 LIB 中。上图中，R2 向 R1 通告 `172.31.0.0/24 - 568` 关联，R1 将该关联作为远程关联存储下来，接着，R1可以使用该标签通过 R2 向 172.31.0.0/24 网络发送数据。因此对于路由器来说，其出口标签就是下一跳端口上的入口标签，也就是下一跳路由器的本地标签。当 R2 收到 R1 发送的数据时，由于 172.31.0.0/24 并不是直连网络，因此 R2 将会通过 R3 转发数据包。同 R1 一样， R3 也已经事先将其本地关联  `172.31.0.0/24 - 89` 通告给 R2，R2 此时将数据包中的 568 标签号替换为 89，然后向 R3 转发。
 
- 
 
-In the same scenario we used before to explain LDP advertisements, some new details are added to see the big picture. Now we know where the destination network is and the path we will follow: R1 -> R2 -> R3 -> R4.
-
- 
-
-If you place yourself on top of R2, you will see that the local label R2 has advertised for 172.31.0.0/24
-
-earlier (568) is the label R1 uses to send the packets for 172.31.0.0/24 through R2. Since R2 does not have
-
-172.31.0.0/24 directly connected, it has to forward the packets downstream to its own next-hop which is R3.
-
-Because R3 (also called the downstream router) earlier advertised that its own label mapping for 172.31.0.0/24
-
-was 89, R2 (also called the upstream router) will swap the incoming label 568 on top of that packet with the
-
-label 89, and forward the relabeled packet to R3.
 
  
 
 We can conclude that: downstream routers advertise labels that upstream routers use to send labeled
 
-[packets.In](http://packets.in/) an analogous way as with IP routing, is not efficient to have a huge list of destinations and bindings
+[packets. In](http://packets.in/) an analogous way as with IP routing, is not efficient to have a huge list of destinations and bindings
 
 and when the time to forward packets comes, jump into it like a kid into a ball pit. To make this task quicker and
 
@@ -215,49 +199,17 @@ Now that we have labels, tables, structures and forwarding clear, what are the o
 
 packets here and there?
 
- 
+MPLS 处理数据包时，对标签的操作包括三种，当路由器执行这些功能时，称为标签交换路由器（Label Switching Router, LSR）。
 
-MPLS works relying in 3 processes when handling packets, as mentioned before, using labels. Those
+- 标签压栈（Label Push）
+- 标签替换（Label Swap）
+- 标签出栈（Label Pop） 
 
-operations are:
+Label Push: Happens when a packet arrives to a LSR and it pushes or imposes a label on top of the IP packet, or another label, in case there is a label already on top. One of the situations where this occurs is when a packet arrives to a MPLS capable network and will be transported through it.
 
-• Label Push or Imposition
+ Label Swap: This operation is performed if an LSR receives a labeled packet and it will be forwarded to its next hop as a labeled packet. Since each LSR assigns a locally significant label number for each destination network or prefix, forwarding them means replacing the incoming label with the outgoing label advertised by its next hop in the remote binding.
 
-• Label Swap
-
-• Label Pop
-
- 
-
-When these operations are performed by a router, it is called LSR
-
-(Label Switching Router). These functions are explained as follows:
-
- 
-
-Label Push: Happens when a packet arrives to a LSR and it pushes or imposes a label on top of
-
-the IP packet, or another label, in case there is a label already on top. One of the situations where
-
-this occurs is when a packet arrives to a MPLS capable network and will be transported through it.
-
- 
-
-Label Swap: This operation is performed if an LSR receives a labeled packet and it will be
-
-forwarded to its next hop as a labeled packet. Since each LSR assigns a locally significant
-
-label number for each destination network or prefix, forwarding them means replacing the
-
-incoming label with the outgoing label advertised by its next hop in the remote binding.
-
- 
-
-Label Pop: Pop operation is implemented by removing the label from the packet,
-
-or in the case the packet possesses more than one label, removing the top
-
-label of the label stack (a label stack is a “pile” of labels on top of a packet).
+ Label Pop: Pop operation is implemented by removing the label from the packet, or in the case the packet possesses more than one label, removing the top label of the label stack (a label stack is a “pile” of labels on top of a packet).
 
  
 
@@ -269,19 +221,11 @@ downstream router label, how does a LSR know when to POP them?
 
  
 
-To ensure this takes place in the correct moment, there is a mechanism called Penultimate Hop
-
-Popping, and its implemented to pop/remove the label one hop before its destination. It works in a clever way: the LSR having the destination network directly connected or summarized, advertises
-
-a specific label binding for that prefix using the reserved label range. Let’s take a closer look.
+To ensure this takes place in the correct moment, there is a mechanism called Penultimate Hop Popping, and its implemented to pop/remove the label one hop before its destination. It works in a clever way: the LSR having the destination network directly connected or summarized, advertises a specific label binding for that prefix using the reserved label range. Let’s take a closer look.
 
  
 
-Among the numbers used for labels, the range from 0 to 15 is reserved, and some of
-
-those numbers are used by the protocol itself to perform operations. Although there are
-
-several label numbers in the reserved range, we will take a look to the most used ones:
+Among the numbers used for labels, the range from 0 to 15 is reserved, and some of those numbers are used by the protocol itself to perform operations. Although there are several label numbers in the reserved range, we will take a look to the most used ones:
 
  
 
@@ -297,9 +241,7 @@ time in the FIB (regular IP lookup) to find the next hop information and outgoin
 
 removed by the penultimate hop LSR, the first (and unnecessary) lookup is prevented from happening.
 
- 
-
-![img](mpls.assets/rtaImage.jpeg)
+![img](mpls.assets/3.jpeg)
 
  
 
@@ -317,7 +259,7 @@ The explicit NULL label will be advertised by the ultimate LSR (depending on IP 
 
 ultimate LSR will remove the implicit NULL label and check the QoS information to forward it accordingly.
 
-![img](mpls.assets/rtaImage.jpeg)
+![img](mpls.assets/4.jpeg)
 
 Label number 1 or Router Alert: This label is used to troubleshoot MPLS as it assures packets are
 
@@ -333,7 +275,7 @@ top of the existing label before forwarding, to guarantee it will be process swi
 
  
 
-![img](mpls.assets/rtaImage.jpeg)
+![img](mpls.assets/5.jpeg)
 
  
 
