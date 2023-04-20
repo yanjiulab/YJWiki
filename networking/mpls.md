@@ -1,6 +1,6 @@
 # MPLS
 
-多协议标签交换技术 (Multi Protocol Label Switching, MPLS) 
+多协议标签交换技术 (Multi Protocol Label Switching, MPLS) 的发展
 
 A frequently mentioned term that causes buzzing in some ears and intrigue in others is MPLS. Multi Protocol
 
@@ -11,92 +11,22 @@ together, resembling the internal mechanics of Swiss watch. In this blog post, I
 this technology, not reinventing the wheel, but to make it simpler, as building towers with plastic blocks.
 
  
-
 Before getting into the nitty-gritty of MPLS, let's talk about what it is, from where it came, and why it is so popular.
 
 ## MPLS 起源
+在计算机网络采用了分组交换，其中面向无连接的数据报交换被因特网所采用，最终发展成为了 IP 路由转发技术。收到数据帧之后，IP 路由需要完成以下步骤才可以完成路由转发：
+1. 解封二层帧，解析三层报文头部目的 IP 地址。
+2. 在路由表中匹配最长掩码网络的表项，获取其出端口。
+3. 使用 ARP 协议获取下一跳接口的物理地址。
+4. 将三层路由报文重新封装为二层帧，转发给下一跳路由器。
 
-上世纪 90 年代，各大 ISP开始部署 Frame Relay、ATM 以及 IP-over-ATM 网络，各种技术层出不穷的原因很简单：需要更高的吞吐量和更低的延迟！
+IP 转发的过程复杂，硬件实现昂贵且困难，因此通常由软件完成。
 
+对于面向连接的虚电路网络，上世纪 90 年代，各大 ISP 开始部署 Frame Relay、ATM 以及 IP-over-ATM 网络，各种技术层出不穷的原因很简单：网络需要更高的吞吐量和更低的延迟！对于 ATM、帧中继网络来说，他们的地址都是简单定长的数字，因此更易用使用硬件实现，从而减小时延以及解决 CPU 处理瓶颈。
 
-
-ATM’s method of transport was based on virtual circuits that were identified using a pair of simple values
-
-named Virtual Paths (VPs) and Virtual Channels (VCs). Each switch had to check the header of the cell (ATM’s
-
-type of frame with a fixed length) to determine the next hop based on VPI/VCI values. The forwarding decision
-
-process was rather simple: For every port, an ATM switch maintained a table with each row saying: “If a
-
-cell comes in with this particular VPI/VCI combination, rewrite it to the following VPI’/VCI’ combination and
-
-send it out this interface”. It was the task of signalling in ATM to make sure that for a pair of communicating
-
-endpoints, these forwarding tables in adjacent ATM switches would neatly point to each other - the outgoing
-
-VPI/VCI combination of an upstream ATM switch would match the expected incoming VPI/VCI combination
-
-of the adjacent downstream switch along the entire path. 
-
-
-
-Frame Relay used DLCIs (Data Link Connection Identifiers) instead, which were, as with ATMs VCs, locally significant values for each router. Transport
-
-was possible by matching and rewriting simple values between devices, instead of creating any kind of
-
-mapping or association, or even changing the frame format, simplicity made it very efficient and attractive.
-
-帧中继改用 DLCI（数据链路连接标识符），与 ATM VC 一样，它是每个路由器的本地有效值。通过在设备之间匹配和重写简单值来实现传输，而不是创建任何类型的映射或关联，甚至更改帧格式，简单性使其非常高效和有吸引力。
-
-
-
-IP forwarding on the other hand, required a router to receive the frame, open the IP packet and compare
-
-the destination IP with its routing table, looking for an entry that matched the destination IP in the
-
-longest possible prefix. The first lookup might not have sufficed, though. The routing table entry might
-
-have only contained a next hop IP address without an outgoing interface information, and so the router
-
-would need to perform another lookup, this time for the next hop IP address. This recursion process
-
-could potentially take several iterations until a routing entry would be found that pointed out a specific
-
-interface. Then the router had to consult the ARP (or any other Layer3-to-Layer2 mapping) table to
-
-understand what Layer2 address should be used when forwarding the packet through the immediate
-
-next-hop. Only after all this process, the router was (finally) able to send a packet out. This way of routing
-
-IP packets was also called process switching, and was the basic mode to perform IP routing functions.
-
+在接下来的几年中，不同的供应商构思了几种解决方案，称为多层交换，其工作方式与他们试图成功的前身类似。但是，他们都未能达到这一里程碑。1997 年，IETF 决定成立一个工作组，创建一个可互操作的多层交换标准。它是利用一个聪明的想法创建的，这个想法在过去看起来很有前途，并且以类似的方式用于以前的 WAN 协议：标签！
  
-
-What was the difference between ATM or Frame Relay, and IP routing? Forwarding simply by doing exact
-
-matching between integers was easier than performing a set of operations for process switching that
-
-were CPU intensive, specifically for IP and its longest prefix matching. In addition to that, IP forwarding
-
-was usually done in software, since constructing a device to perform these actions in hardware instead
-
-was expensive and difficult. For ATM and Frame Relay, their address values were of fixed lengths, able
-
-to be used straight away without any additional computation. This made them considerably easier to
-
-implement in hardware and the overall forwarding process was swift and less painful. Implementation of those
-
-technologies showed in comparison: reduced delay, bottlenecks in the CPU and no long lasting processes.
-
- 
-
-有人试图将 IP 和 ATM 结合起来，这就是 IP-over-ATM 出现的方式。但是将两个协议站在街道两侧的协议（每个协议都有自己的堆栈）交织在一起变得复杂。可扩展性限制和复杂的互操作性迟早会使其成为一个挑战，而一切都在时间流逝，行业需要解决方案。
-
-在接下来的几年中，不同的供应商构思了几种解决方案，称为多层交换，其工作方式与他们试图成功的前身类似。但是，他们都未能达到这一里程碑。1997年，IETF决定成立一个工作组，创建一个可互操作的多层交换标准。它是利用一个聪明的想法创建的，这个想法在过去看起来很有前途，并且以类似的方式用于以前的WAN协议：标签！
-
-Several solutions were conceived by different vendors in the following years, called multilayer switching, working in a similar way as the predecessor they were trying to succeed. But, none of them were able to reach that milestone. In 1997, the IETF decided to start a working group to create an interoperable multilayer switching standard. It was created making use of a clever idea that looked promising in the past and was in place in a similar way for previous WAN protocols: labels!
-
- 
+MPLS 从诞生以来迅速发展，并且随着时间的推移，它的采用率一直在增加，直到现在，它已成为服务提供商的事实标准。如今，由于硬件的进步，基于 IP 地址或标签的转发在性能上实际上没有区别，因为它都是在硬件中完成的。然而，MPLS 真正的实际价值在于可以使用 MPLS 构建什么以及它能够支持什么。它的可扩展性和互操作性，以及您可以在其上运行的服务和基础设施，使其成为推动企业和网络迈向新视野的关键工具。
 
 MPLS became quickly a must and its adoption was increasing over the time, until now, when it’s the
 
