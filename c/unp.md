@@ -1676,10 +1676,10 @@ struct ifreq {
 
 ### 接口名字和索引函数
 
-- if_nametoindex()
-- if_indextoname()
-- if_nameindex()
-- if_freenameindex()
+- `unsigned int if_nametoindex(const char *ifname);` 根据网卡名称获取索引
+- `char *if_indextoname(unsigned int ifindex, char *ifname);` 根据网卡索引获取名称，需要提供字符串缓存变量。
+- `struct if_nameindex *if_nameindex(void);` 获取“网卡索引-名称”结构体数组。
+- `void if_freenameindex(struct if_nameindex *ptr);`
 
 ```c
 #include <net/if.h>
