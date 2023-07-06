@@ -96,34 +96,34 @@ iptables 使用表 (tables) 来组织其规则 (rules)。
 
 ```
 iptables -nvL
-iptables -nvL --line-numbers	# useful for insert,replace and delete a rule
+iptables -nvL --line-numbers # useful for insert,replace and delete a rule
 ```
 
 在表中**添加/重命名/删除/重置**链：
 
 ```
-iptables [-t table] -N chain 	# creates a chain in a table
+iptables [-t table] -N chain  # creates a chain in a table
 
-iptables [-t table] -E old-chain new-chain	# Rename the user specified chain to the user supplied name.
+iptables [-t table] -E old-chain new-chain # Rename the user specified chain to the user supplied name.
 
 iptables [-t table] -X [chain]
-iptables -X						# deletes all empty non-default chains in a table
-iptables -X [chain_name] 		# deletes the specific empty non-default chains in a table
+iptables -X      # deletes all empty non-default chains in a table
+iptables -X [chain_name]   # deletes the specific empty non-default chains in a table
 
 iptables [-t table] -F [chain]
-iptables -F						# flushes all the chains in its current table
-iptables -F [chain_name] 		# flushes the specific chain in its current table
+iptables -F      # flushes all the chains in its current table
+iptables -F [chain_name]   # flushes the specific chain in its current table
 ```
 
 在链中**增加/插入/替换/删除/查看是否存在**规则：
 
 ```
-iptables -A chain rule-specification				# append a rule to a chain
-iptables -I chain [rulenum] rule-specification		# insert a rule at a specific position on the chain, default is 1, which is the head of the chain.
-iptables -R chain rulenum rule-specification		# replacing a rule in the selected chain
-iptables -D chain rule-specification				# delete a rule by specification
-iptables -D chain rulenum							# delete a rule by number. Rules are numbered starting at 1
-iptables -C chain rule-specification				# Check whether a rule matching the specification does exist in the selected chain.
+iptables -A chain rule-specification    # append a rule to a chain
+iptables -I chain [rulenum] rule-specification  # insert a rule at a specific position on the chain, default is 1, which is the head of the chain.
+iptables -R chain rulenum rule-specification  # replacing a rule in the selected chain
+iptables -D chain rule-specification    # delete a rule by specification
+iptables -D chain rulenum       # delete a rule by number. Rules are numbered starting at 1
+iptables -C chain rule-specification    # Check whether a rule matching the specification does exist in the selected chain.
 ```
 
 ### 规则示例
@@ -145,7 +145,7 @@ iptables -D INPUT -p tcp --dport 22 -j DROP   # 删除规则：禁止 TCP 目的
 iptables -A INPUT -p tcp --dport 22 -j ACCEPT   # 添加规则：允许 TCP 目的端口 22
 ```
 
-IP 
+IP
 
 ```
 iptables -A INPUT -s 192.168.0.4 -j ACCEPT
@@ -211,7 +211,6 @@ iptables -A INPUT -m conntrack --ctstate INVALID -j logdrop
 ## 内核实现
 
 ## 参考
+
 - [SDN handbook](https://tonydeng.github.io/sdn-handbook/)
 - [a-deep-dive-into-iptables-and-netfilter-architecture](https://www.digitalocean.com/community/tutorials/a-deep-dive-into-iptables-and-netfilter-architecture)
-
-
