@@ -19,8 +19,6 @@
 |  ip netns  |      |
 |            |      |
 
-
-
 ### ip link 子命令
 
 ip link 命令用来配置网络设备，常用命令基本格式如下：
@@ -71,10 +69,10 @@ ip -n ns2 address add 10.0.0.2/24 dev veth-ns2
 
 将接口添加到网桥之前，必须保证其状态为 up，通过设置接口的 master 属性即可将其添加到网桥。
 
-````
+```
 ip link set veth-ns1-br master br0
 ip link set veth-ns2-br master br0
-````
+```
 
 因此，通过网桥两个容器可以互相通信。
 
@@ -136,8 +134,6 @@ route: default gw 10.0.0.3/24
 +---------------(enp0s3)--------------------+
 ```
 
-
-
 ## veth - 虚拟以太网对
 
 veth 设备总是成对出现的，两个设备一端连接内核协议栈，另一端两个设备彼此相连。一个设备收到协议栈的数据发送请求后，会将数据发送到另一个设备上去。
@@ -185,6 +181,3 @@ ip -n[etns] <p2-namespace> link set <p2-name> up
 ip link add <p1-name> type veth peer name <p2-name>
 ...
 ```
-
-
-
