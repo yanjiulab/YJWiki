@@ -31,12 +31,12 @@ quagga 架构包括内核、zebra 守护进程、路由模块守护进程三部�
 相较于 FRRouting，Quagga 的安装方式较为简单。
 
 ```
-cd quagga-master	# 进入安装目录
-./bootstrap			# 部署准备
-./configure			# 相关环境配置
-make clean			# (可选) 清理二进制文件
-make				# 编译构建软件
-make install		# 将编译好的文件复制到安装目录
+cd quagga-master # 进入安装目录
+./bootstrap   # 部署准备
+./configure   # 相关环境配置
+make clean   # (可选) 清理二进制文件
+make    # 编译构建软件
+make install  # 将编译好的文件复制到安装目录
 ```
 
 在上述步骤中，configure 时可以进行参数设置，更改软件的默认配置。其中，主要的选项包括：
@@ -58,17 +58,17 @@ make install		# 将编译好的文件复制到安装目录
 用户可以通过 VTY 接口同 Quagga 守护进程交互，在 `/etc/services` 添加如下进行使用。
 
 ```
-zebrasrv      2600/tcp		  # zebra service
-zebra         2601/tcp		  # zebra vty
-ripd          2602/tcp		  # RIPd vty
-ripngd        2603/tcp		  # RIPngd vty
-ospfd         2604/tcp		  # OSPFd vty
-bgpd          2605/tcp		  # BGPd vty
-ospf6d        2606/tcp		  # OSPF6d vty
-ospfapi       2607/tcp		  # ospfapi
-isisd         2608/tcp		  # ISISd vty
-pimd          2611/tcp		  # PIMd vty
-nhrpd         2612/tcp		  # nhrpd vty
+zebrasrv      2600/tcp    # zebra service
+zebra         2601/tcp    # zebra vty
+ripd          2602/tcp    # RIPd vty
+ripngd        2603/tcp    # RIPngd vty
+ospfd         2604/tcp    # OSPFd vty
+bgpd          2605/tcp    # BGPd vty
+ospf6d        2606/tcp    # OSPF6d vty
+ospfapi       2607/tcp    # ospfapi
+isisd         2608/tcp    # ISISd vty
+pimd          2611/tcp    # PIMd vty
+nhrpd         2612/tcp    # nhrpd vty
 ```
 
 ## FRR 简介
@@ -93,6 +93,7 @@ sudo dnf config-manager --set-enabled powertools
 ```
 
 查看是否启用 PowerTools 库。
+
 ```shell
 $ dnf repolist
 repo id                                                  repo name
@@ -107,7 +108,7 @@ powertools                                               CentOS Linux 8 - PowerT
 FRR 需要依赖 libyang 2.0 版本以上，libyang 源码安装如下。
 
 ```shell
-sudo dnf install cmake pcre2-devel	# libyang's dependencies
+sudo dnf install cmake pcre2-devel # libyang's dependencies
 git clone https://github.com/CESNET/libyang.git
 cd libyang
 git checkout v2.0.0
@@ -144,7 +145,7 @@ sudo useradd -u 92 -g 92 -M -r -G frrvty -s /sbin/nologin -c "FRR FRRouting suit
 配置完毕之后，可以进行编译、检查、安装过程。
 
 ```shell
-make [-j]	# 根据需求是否开启并行编译加速
+make [-j] # 根据需求是否开启并行编译加速
 make check
 sudo make install
 ```
@@ -216,7 +217,7 @@ sudo systemctl start frr
 
 - 开启 IP 转发
 
-创建文件 `/etc/sysctl.d/90-routing-sysctl.conf `，填入以下内容：
+创建文件 `/etc/sysctl.d/90-routing-sysctl.conf`，填入以下内容：
 
 ```shell
 # Sysctl for routing
@@ -302,9 +303,9 @@ Router#
 若要使用集成式配置，需要在 `vtysh.conf` 中进行配置。
 
 ```shell
-service integrated-vtysh-config		# vtysh 配置永远只写入 frr.conf
-no service integrated-vtysh-config	# vtysh 配置不会写入 frr.conf，而是写入独立配置文件。
-Neither option present (default)	# 默认行为。若 frr.conf 存在则写入；否则写入独立配置文件。
+service integrated-vtysh-config  # vtysh 配置永远只写入 frr.conf
+no service integrated-vtysh-config # vtysh 配置不会写入 frr.conf，而是写入独立配置文件。
+Neither option present (default) # 默认行为。若 frr.conf 存在则写入；否则写入独立配置文件。
 ```
 
 在终端中即可启动 vtysh。
@@ -325,8 +326,8 @@ gRPC 通过 YANG 北向接口为**所有**守护进程提供了一个统一交�
 配置 FRR 守护进程监听 gRPC 端口（默认 50051）需要在守护进程配置文件中配置 `-M grpc:PORT` 参数，例如：
 
 ```shell
-bfdd_options=" --daemon -A 127.0.0.1 -M grpc"		# 使用默认端口
-isisd_options=" --daemon -A 127.0.0.1 -M grpc:PORT"	# 使用自定义端口
+bfdd_options=" --daemon -A 127.0.0.1 -M grpc"  # 使用默认端口
+isisd_options=" --daemon -A 127.0.0.1 -M grpc:PORT" # 使用自定义端口
 ```
 
 ### 配置文件总结
@@ -368,8 +369,8 @@ service integrated-vtysh-config
 无论是 VTY Shell 还是 VTY 命令行接口，进入之后分为两种模式：
 
 - 终端模式：主要用于查看状态或者进行通用设置。
-    - 只读模式：使用 `>` 标识。
-    - 读写模式：使用 `#` 标识，
+  - 只读模式：使用 `>` 标识。
+  - 读写模式：使用 `#` 标识，
 - 配置模式：进行网络和路由功能配置，是核心部分，使用 `(config)#` 标识，括号中的内容表示当前配置层级。
 
 ### 终端模式命令
@@ -399,8 +400,6 @@ service integrated-vtysh-config
 | log file [FILENAME [LEVEL]]  |           设置文件日志           |
 |      log syslog [LEVEL]      |         设置 syslog 日志         |
 | exec-timeout MINUTE [SECOND] | 设置退出超时时间（没有设置成功） |
-
-
 
 ### 守护进程参数
 
@@ -519,6 +518,24 @@ int receive_pim_hello(src, dst, pim_message, datalen)
     -> 
 ```
 
-
-
 char* packet_kind(proto, type, code)
+
+## FRR debug
+
+### FRR debug 相关命令
+
+### 日志
+
+可以指定 frr 的 log 文件
+
+### terminal monitor
+
+### GDB
+
+单独启动 bgpd 进程时，需要指定配置文件
+
+```shell
+gdb --args bgpd -f config_file arg1 arg2 arg3
+```
+
+需要调试多线程时
