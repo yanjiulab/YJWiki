@@ -257,6 +257,36 @@ sudo chown frr:frrvty /etc/frr/vtysh.conf
 sudo chmod 640 /etc/frr/*.conf
 ```
 
+## FRR 极简安装配置指南
+
+初学者自己学习使用时，推荐安装下文的方式进行安装配置，这样可以对 FRR 有更清晰的认识。首先，安装好各个依赖项，准备好 FRR 源码，就可以开工了。
+
+首先进行配置，这里将 FRR 安装到 `/opt/frr` 目录下，这样的好处是将 FRR 相关的可执行及配置文件集中到一起，否则各种目录将散落到 `/usr/local/` 目录下面。另外，由于是个人使用，所以直接使用 `root:root` 来管理 FRR，简化了了创建用户和组的过程。
+
+```
+./configure \
+    --enable-user=root \
+    --enable-group=root \
+    --prefix=/opt/frr/
+```
+
+注意：如果需要学习某模块或特性，请详细参考 configure 帮助，因为有一些功能是默认不安装的，因此需要确保你需要的模块安装了，不过大部分情况下，按照上述安装的 FRR 包含了绝大部分常用模块。
+
+然后进行编译和安装，安装后可以查看 FRR 都生成了哪些文件。
+
+```
+# make -j
+...
+
+# make install
+....
+
+# ls /opt/frr
+bin  include  lib  sbin  share
+```
+
+最后进行配置，我们发现，
+
 ## FRR 基本使用
 
 FRR 提供了多种方式与用户进行交互。
