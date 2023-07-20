@@ -1,4 +1,4 @@
-## 示例
+# 示例
 
 ```c
 #include <stdio.h>
@@ -24,7 +24,7 @@ class Main() {
 }
 ```
 
-$$ d_{node} = d_{proc} + d_{queue} + d_{trans} + d_{prop} $$ 
+$$ d_{node} = d_{proc} + d_{queue} + d_{trans} + d_{prop} $$
 
 ```plantuml
 @startuml
@@ -55,4 +55,3 @@ EN is high
 EN is low
 @enduml
 ```
-

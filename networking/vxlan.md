@@ -1,5 +1,3 @@
-
-
 # VXLAN
 
 ## 简介
@@ -107,6 +105,7 @@ VXLAN 表项管理通过 **bridge** 命令来完成：
 - 其中，若动作为 add，则重复添加将会报错，如果想要追加 dst 地址，则使用 append 命令，这样一个 MAC 具有多个 VTEP 地址。
 
 删除转发表项:
+
 ```
 # bridge fdb delete 00:17:42:8a:b4:05 dev vxlan0
 ```
@@ -143,7 +142,7 @@ VXLAN 创建之后，需要为 vxlan0 配置 IP 地址，这样相当于把主�
 
 此时，假设我们从主机上 ping 10.0.0.2 时，在 vxlan0 接口上可以抓到原始 ARP 帧，在 eth1 上可以抓到 VXLAN 封装的 ARP 包。
 
-![image-20221106164343535](vxlan.assets/image-20221106164343535.png) 
+![image-20221106164343535](vxlan.assets/image-20221106164343535.png)
 
 若主机上具有虚拟主机，则 VM 可通过网桥与 vxlan0 设备相连，VM 流量通过网桥交换到 VXLAN 设备，进一步封装到远端 VTEP。此时 vxlan0 可以没有 IP 地址。
 
@@ -255,4 +254,3 @@ miss lladdr 50:54:33:00:00:0a STALE
 - [VXLAN & Linux](https://vincent.bernat.ch/en/blog/2017-vxlan-linux)
 
 - [VXLAN: BGP EVPN with FRR](https://vincent.bernat.ch/en/blog/2017-vxlan-bgp-evpn)
-

@@ -1,4 +1,4 @@
-# MPLS
+# 标签路由 - MPLS
 
 多协议标签交换技术 (Multi Protocol Label Switching, MPLS) 的发展
 
