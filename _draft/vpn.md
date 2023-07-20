@@ -14,7 +14,9 @@
 
 GRE提供了将一种协议的报文封装在另一种协议报文中的机制，是一种三层隧道封装技术，使报文可以通过GRE隧道透明的传输，解决异种网络的传输问题。
 
-## DSVPNRE（Generic Routing Encapsulation）可以对某些网络层协议（如IPX、ATM、IPv6、AppleTalk等）的数据报文进行封装，使这些被封装的数据报文能够在另一个网络层协议（如IPv4）中传输。
+## DSVPNRE（Generic Routing Encapsulation）
+
+可以对某些网络层协议（如IPX、ATM、IPv6、AppleTalk等）的数据报文进行封装，使这些被封装的数据报文能够在另一个网络层协议（如IPv4）中传输
 
 GRE提供了将一种协议的报文封装在另一种协议报文中的机制，是一种三层隧道封装技术，使报文可以通过GRE隧道透明的传输，解决异种网络的传输问题。
 
@@ -73,4 +75,3 @@ EVPN是采用类似于BGP/MPLS IP VPN的机制的VPN技术，在公共网络中�
 ## VXLAN
 
 RFC定义了VLAN扩展方案VXLAN（Virtual eXtensible Local Area Network，虚拟扩展局域网）。VXLAN采用MAC in UDP（User Datagram Protocol）封装方式，是NVO3（Network Virtualization over Layer 3）中的一种网络虚拟化技术。
-

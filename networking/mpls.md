@@ -10,11 +10,12 @@ together, resembling the internal mechanics of Swiss watch. In this blog post, I
 
 this technology, not reinventing the wheel, but to make it simpler, as building towers with plastic blocks.
 
- 
 Before getting into the nitty-gritty of MPLS, let's talk about what it is, from where it came, and why it is so popular.
 
 ## MPLS 起源
+
 在计算机网络采用了分组交换，其中面向无连接的数据报交换被因特网所采用，最终发展成为了 IP 路由转发技术。收到数据帧之后，IP 路由需要完成以下步骤才可以完成路由转发：
+
 1. 解封二层帧，解析三层报文头部目的 IP 地址。
 2. 在路由表中匹配最长掩码网络的表项，获取其出端口。
 3. 使用 ARP 协议获取下一跳接口的物理地址。
@@ -25,7 +26,7 @@ IP 转发的过程复杂，硬件实现昂贵且困难，因此通常由软件�
 对于面向连接的虚电路网络，上世纪 90 年代，各大 ISP 开始部署 Frame Relay、ATM 以及 IP-over-ATM 网络，各种技术层出不穷的原因很简单：网络需要更高的吞吐量和更低的延迟！对于 ATM、帧中继网络来说，他们的地址都是简单定长的数字，因此更易用使用硬件实现，从而减小时延以及解决 CPU 处理瓶颈。
 
 在接下来的几年中，不同的供应商构思了几种解决方案，称为多层交换，其工作方式与他们试图成功的前身类似。但是，他们都未能达到这一里程碑。1997 年，IETF 决定成立一个工作组，创建一个可互操作的多层交换标准。它是利用一个聪明的想法创建的，这个想法在过去看起来很有前途，并且以类似的方式用于以前的 WAN 协议：标签！
- 
+
 MPLS 从诞生以来迅速发展，并且随着时间的推移，它的采用率一直在增加，直到现在，它已成为服务提供商的事实标准。如今，由于硬件的进步，基于 IP 地址或标签的转发在性能上实际上没有区别，因为它都是在硬件中完成的。然而，MPLS 真正的实际价值在于可以使用 MPLS 构建什么以及它能够支持什么。它的可扩展性和互操作性，以及您可以在其上运行的服务和基础设施，使其成为推动企业和网络迈向新视野的关键工具。
 
 MPLS became quickly a must and its adoption was increasing over the time, until now, when it’s the
@@ -58,11 +59,9 @@ from happening more than needed? What if a bookmark was available? Yes! That’s
 
 当路由器启用了 MPLS 时，它将**为其路由表中的每个前缀分配一个唯一的编号**。一旦分配了编号，路由器便会将这些信息向所有邻居传送，消息类似于：“前缀 X.X.X.X 在我的路由表中位于 Y 行中，因此，如果您想将我用作 X.X.X.X 的下一跳，请在该数据包上贴上带有数字 Y 的标签，以便我可以立即跳转到第 Y 行并更快地转发数据包”。于是，所有邻居路由器都知道了：发往该路由器的 X.X.X.X 网段数据包，只需要使用 Y 标记即可通过该路由器正确转发。
 
-因此，整个交换可以通过事先在两个路由器之间传递整数（即标签）来完成，即：**每个路由器向其邻居通告分配给其路由表中每个前缀的本地标签号**。 
+因此，整个交换可以通过事先在两个路由器之间传递整数（即标签）来完成，即：**每个路由器向其邻居通告分配给其路由表中每个前缀的本地标签号**。
 
 ![img](mpls.assets/1.jpeg)
-
- 
 
 在每个路由器中，相同的前缀关联了不同的本地有效标签，并且在邻居间无差别扩散。那么标签如何在路由器之间通告呢？其中最基本的协议是**标签分发协议（Label Distribution Protocol, LDP）**。LDP 协议允许路由器之间建立连接，创建、通告以及存储标签映射，LDP 协议允许路由器之间建立会话，创建、通告和存储标签绑定，帮助填充标签信息库（Label Information Base, LIB）和标签转发信息库（Label Forwarding Information Base, LFIB）的内容。
 
@@ -77,7 +76,7 @@ from happening more than needed? What if a bookmark was available? Yes! That’s
 
 在上述过程中，构建 LFIB 和 LIB 是最小化转发延迟的关键部分。让我们快速描述它们，以便我们可以清楚地了解它们。
 
-在 LIB 中， 
+在 LIB 中，
 
 To define the LIB, we need to remember in which way the labels are advertised, indiscriminately, without paying attention what prefix and label is being advertised and who is or is not the next hop for it. When a router binds a prefix with a label number, that association is called local binding for that router. Any binding received from another router, is called remote binding (because comes from another neighbor, its not local). So, in plain words, regarding bindings, from any router’s perspective: “what is not mine (local) is remote”.
 
@@ -95,10 +94,6 @@ LIB 是一个数据库，其功能是存储目标网络/前缀和标签的关联
 
 通过 LDP，路由器将其本地关联向其邻居通告，同时将其他路由器通告的远程关联存储在 LIB 中。上图中，R2 向 R1 通告 `172.31.0.0/24 - 568` 关联，R1 将该关联作为远程关联存储下来，接着，R1可以使用该标签通过 R2 向 172.31.0.0/24 网络发送数据。因此对于路由器来说，其出口标签就是下一跳端口上的入口标签，也就是下一跳路由器的本地标签。当 R2 收到 R1 发送的数据时，由于 172.31.0.0/24 并不是直连网络，因此 R2 将会通过 R3 转发数据包。同 R1 一样， R3 也已经事先将其本地关联  `172.31.0.0/24 - 89` 通告给 R2，R2 此时将数据包中的 568 标签号替换为 89，然后向 R3 转发。
 
-
-
- 
-
 We can conclude that: downstream routers advertise labels that upstream routers use to send labeled
 
 [packets. In](http://packets.in/) an analogous way as with IP routing, is not efficient to have a huge list of destinations and bindings
@@ -106,8 +101,6 @@ We can conclude that: downstream routers advertise labels that upstream routers 
 and when the time to forward packets comes, jump into it like a kid into a ball pit. To make this task quicker and
 
 efficient, the LFIB is constructed.
-
- 
 
 To build the LFIB it requires the router to collect and combine information from multiple sources/tables. An
 
@@ -123,8 +116,6 @@ Incoming label assigned by the router itself, outgoing label learned from the pr
 
 information.
 
- 
-
 Now that we have labels, tables, structures and forwarding clear, what are the operations required to move
 
 packets here and there?
@@ -133,7 +124,7 @@ MPLS 处理数据包时，对标签的操作包括三种，当路由器执行这
 
 - 标签压栈（Label Push）
 - 标签替换（Label Swap）
-- 标签出栈（Label Pop） 
+- 标签出栈（Label Pop）
 
 Label Push: Happens when a packet arrives to a LSR and it pushes or imposes a label on top of the IP packet, or another label, in case there is a label already on top. One of the situations where this occurs is when a packet arrives to a MPLS capable network and will be transported through it.
 
@@ -141,23 +132,15 @@ Label Push: Happens when a packet arrives to a LSR and it pushes or imposes a la
 
  Label Pop: Pop operation is implemented by removing the label from the packet, or in the case the packet possesses more than one label, removing the top label of the label stack (a label stack is a “pile” of labels on top of a packet).
 
- 
-
 If a PUSH happens when a router receives a packet that will traverse the
 
 MPLS network, and a SWAP occurs in each intermediary hop to accommodate
 
 downstream router label, how does a LSR know when to POP them?
 
- 
-
 To ensure this takes place in the correct moment, there is a mechanism called Penultimate Hop Popping, and its implemented to pop/remove the label one hop before its destination. It works in a clever way: the LSR having the destination network directly connected or summarized, advertises a specific label binding for that prefix using the reserved label range. Let’s take a closer look.
 
- 
-
 Among the numbers used for labels, the range from 0 to 15 is reserved, and some of those numbers are used by the protocol itself to perform operations. Although there are several label numbers in the reserved range, we will take a look to the most used ones:
-
- 
 
 Label Number 3 or Implicit NULL: This label number is advertised by the ultimate router (the one just
 
@@ -172,8 +155,6 @@ time in the FIB (regular IP lookup) to find the next hop information and outgoin
 removed by the penultimate hop LSR, the first (and unnecessary) lookup is prevented from happening.
 
 ![img](mpls.assets/3.jpeg)
-
- 
 
 Label numbers 0 and 2 (IPv4 and IPv6) or Explicit NULL: Although removing the label one hop before
 
@@ -203,11 +184,7 @@ will swap the labels as commonly done (using contents of LFIB) and then label 1 
 
 top of the existing label before forwarding, to guarantee it will be process switched by the next LSR.
 
- 
-
 ![img](mpls.assets/5.jpeg)
-
- 
 
 目前为止，我们只是谈到了标记的数据包，现在让我们详细看看 MPLS 标签的内容及其在数据包中的位置：
 

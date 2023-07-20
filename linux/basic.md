@@ -1,7 +1,5 @@
 # 基本操作
 
-
-
 ## 用户和组
 
 用户 (Users) 和组 (Groups) 是一种 GNU/Linux 系统对文件、目录和外设访问控制 (access control) 的机制 (mechanism)，管理员可以微调组成员和权限，以授权和拒绝用户或服务对系统资源的访问。Linux/Unix 是完全意义上的**多用户多任务**操作系统，所以推荐的做法是**为大多数任务创建和使用非特权账户，而仅使用 root 账户进行系统管理**。
@@ -32,14 +30,15 @@ drwxr-xr-x 6 root root     4096 11月 15 15:37 grub
 ```
 
 - 第 1 列：文件访问权限
-    - 文件类型（1）：目录为 `d`，文件为 `-`。
-    - 属主权限（3）
-    - 属组用户权限（3）
-    - 其他用户权限（3）
+  - 文件类型（1）：目录为 `d`，文件为 `-`。
+  - 属主权限（3）
+  - 属组用户权限（3）
+  - 其他用户权限（3）
 - 第 3 列：属主
 - 第 4 列：属组
 
 查看用户的属主、属组以及访问权限可以通过 `stat` 命令。例如：
+
 ```
 ➜  ~ stat -c %U /media/liyj/Shared
 liyj
@@ -49,10 +48,10 @@ liyj
 drwxrwxrwx
 ```
 
-
 其中 rwx 分别代表了 可读，可写，可执行，有相应权限则写明字母，若无相应权限，则用 `-` 代替。如上述 `grub` 目录 root 用户有读、写、执行权限，而 root 组所有用户以及其他用户，均只有读、执行权限。
 
 通过 find 命令可以查找属于某个用户或某个组的文件
+
 - find / -grup *groupname*
 - find / -group *groupnumber*
 - find / -user *user*
@@ -62,6 +61,7 @@ drwxrwxrwx
 详情参见：`chown(1)`、`chmod(1)`、[Linux 文件权限](https://www.linux.com/learn/understanding-Linux-file-permissions)。
 
 ### 信息存储
+
 | File           | Purpose                                              | 解释                 |
 | -------------- | ---------------------------------------------------- | -------------------- |
 | `/etc/passwd`  | User account information                             | 用户账户信息         |
@@ -72,9 +72,11 @@ drwxrwxrwx
 | `/home/*`      | Home directories                                     | 家目录               |
 
 本地用户信息存储在 `/etc/passwd` 文件中，一行代表一个用户，每行分七个部分，用英文冒号“:”分开：
+
 ```
 account:password:UID:GID:GECOS:directory:shell
 ```
+
 - `account` 是用户名，需要遵循标准 *Nix 命名准则。
 - `password` 是用户密码。`/etc/passwd` 对所有人可读，存储密码（无论是否通过哈希运算等方式加密）是不安全的，因此在 password 字段，用一个占位符 `x` 代替，加密过的密码储存在 `/etc/shadow` 文件，该文件对普通用户限制访问，shadow 这个名字也表示了密码被阴影笼罩住了。
 - `UID` 是用户ID，在 Arch 中，第一个非 root 用户的默认 UID 是 1000，后续创建的用户 UID 也应大于1000。
@@ -84,22 +86,27 @@ account:password:UID:GID:GECOS:directory:shell
 - `shell` 是用户默认登录的shell，通常是Bash。
 
 本地群组信息存储在 `/etc/group` 文件中，一行代表一个群组，每行分四个部分，用英文冒号“:”分开：
+
 ```
 group:password:GID:user_list
 ```
+
 - `group` 是群组名称。
 - `password` 是群组密码，同用户安全信息机制相同，加密过的密码储存在 `/etc/gshadow` 文件中。
 - `GID` 是群组 ID，是一个整数。
 - `user_list` 是群组中的用户成员，用逗号分割，群组可能是该用户的首要组，也可能是附加组；若此项为空，则表示该群组成员仅有一个，且用户名同组名相同。
 
 ### 用户管理
+
 - 使用 `who` 或 `users` 命令，可以查看目前已登陆的用户。
 - 以 root 执行 `passwd -Sa`，可以查看系统上的用户。
 
 #### `useradd` 创建用户
+
 ```
 # useradd -m -g initial_group -G additional_groups -s login_shell username
 ```
+
 - `-m/--create-home`：创建用户家目录 `/home/username`。
 - `-g/--gid`：设置用户初始组的名称或数字 ID。**如果设置此项，则组必须存在；如果不设置此项，将会根据`/etc/login.defs` 中的 `USERGROUPS_ENAB` 变量设置，默认行为是创建与用户名相同的组名，GID 等于 UID。**
 - `-G/--groups`：该用户要加入的其他组列表，用逗号分割，不加空格。**如果不设置，用户只加入初始组。**
@@ -110,12 +117,14 @@ group:password:GID:user_list
 新创建的用户记得用 `passwd username` 来设置密码。
 
 使用如下命令创建一个登录用户 test1，并设置密码。为该用户：创建用户目录 test1；默认创建同名群组 test1；默认不添加附加组；使用默认 shell。
+
 ```
 # useradd -m test1 
 # passwd test1
 ```
 
 查看创建的用户，验证以上参数的结果：
+
 ```
 ~ cat /etc/passwd | grep test1
 test1:x:1001:1001::/home/test1:/bin/sh
@@ -126,11 +135,13 @@ liyj  test1
 ```
 
 不同的系统用户可以为进程、守护进程提供更安全的管控目录及文件的访问。使用如下命令创建一个**非登录，无 home 目录的系统用户。（可以加入 -U 参数创建一个和用户名相同的群组，并自动将用户加入它）**
+
 ```
 # useradd -r -s /usr/bin/nologin username
 ```
 
 #### `usermod` 更改用户信息
+
 | 作用               | 命令                                       | 注释                                                         |
 | ------------------ | ------------------------------------------ | ------------------------------------------------------------ |
 | 更改用户登录名称   | `# usermod -l newname oldname`             | 仅更改用户名字，不更改主目录名称，更不更改同步创建的组名     |
@@ -142,28 +153,34 @@ liyj  test1
 更具体内容，请参阅 `man usermod`。
 
 #### `userdel` 删除用户
+
 ```
 # userdel -r username
 ```
 
 ### 群组管理
+
 - 使用 `groups user` 查看用户群组关系，如果 user 省略，默认查看当前用户的群组关系。另外，通过 `id user` 可以看到更详细的信息，如 UID 和 GID。
 - 列出系统上所有群组：`cat /etc/group`
 
 #### 增删群组
+
 ```
 # groupadd group # 创建新的组
 # groupdel group # 删除用户组
 ```
 
 #### `gpasswd` 增删群组成员
+
 ```
 # gpasswd -a user group # 将用户添加到组
 # gpasswd -d user group # 将用户从组中移除
 ```
 
 #### `groupmod` 更改信息
+
 更改用户所属的组名，不变更GID：
+
 ```
 # groupmod -n newname oldname
 ```
@@ -171,16 +188,17 @@ liyj  test1
 ### 交互式脚本
 
 除了上述的命令，还有一些以交互方式执行的脚本，这些脚本后台调用上述命令，更加易用。这些脚本的命名方式采用**动作＋对象**，而不是**对象＋动作**，这些脚本包括：
+
 - `adduser`, `addgroup` - add a user or group to the system
-    - Add a normal user
-    - Add a system user
-    - Add a user group
-    - Add a system group
-    - Add an existing user to an existing group
+  - Add a normal user
+  - Add a system user
+  - Add a user group
+  - Add a system group
+  - Add an existing user to an existing group
 - `deluser`, `delgroup` - remove a user or group from the system
-    - Remove a normal user
-    - Remove a group
-    - Remove a user from a specific group
+  - Remove a normal user
+  - Remove a group
+  - Remove a user from a specific group
 
 例如：使用 `adduser` 可以以交互的方式执行 `useradd`, `chfn` 和 `passwd`。
 
@@ -203,8 +221,6 @@ liyj  test1
     - adduser, addgroup
     - deluser, delgroup
 
-     
-
 ## 归档和压缩
 
 Unix 程序设计的其中一条哲学为：一个程序应当只做一件事，并做好它。日常我们经常说的压缩文件其实包含了两个过程：
@@ -215,9 +231,11 @@ Unix 程序设计的其中一条哲学为：一个程序应当只做一件事，
 所以，压缩过程实际上是：**首先建立档案文件，然后压缩它**。
 
 ### 归档工具
+
 归档工具的作用是：只生成档案文件。归档工具有很多，如 `GNU tar`，`ar`等，这里仅仅介绍一下 tar ，因为在日常使用中，基本用它最多。
 
 tar 的常用命令为：`tar cfv archive.tar /etc`，但我相信你第一次看肯定记不住，因为这条命令进行了高度简化，原命令可以写成：`tar --create --file archive.tar --verbose /etc`。它其实包含三个参数，可以按照如下方式记忆：
+
 - c (create)：**创建**
 - f (file)：**文件**（archive.tar），
 - v (verbose)：文件的**详细**内容为（/etc）。
@@ -227,6 +245,7 @@ tar 的常用命令为：`tar cfv archive.tar /etc`，但我相信你第一次�
 注意，上条命令代表将 archive.tar 文件解包到当前目录下，如果要将其解压到特定的目录下，需要加入 `-C` 参数，其意义为**Change Directory**。完整命令为：`tar xfv archive.tar -C /path/to/what/you/want`，更详细的用法参阅手册。
 
 ### 压缩工具
+
 在 Unix 系统中，常用的三种压缩格式如下：
 
 | 名称    | 拓展名       | 与 tar 连用时的拓展名   |
@@ -244,22 +263,26 @@ tar 的常用命令为：`tar cfv archive.tar /etc`，但我相信你第一次�
 | `xz`    | `xz file`    | `xz -d file.xz`     | `xzcat file.xz`    |
 
 ### tar 命令
+
 事实上，说 tar 仅是打包工具是不准确的，因为 tar 命令可以具有**压缩参数**。通过选择压缩选项可以同时完成两个阶段，在实际使用中也是如此。
 
 tar 难以记忆的点主要有两方面：
+
 - 参数风格
 - 压缩格式对应的参数
 
 事实上，tar 分为 BSD tar 和 GNU tar 两种，主要区别在于参数前有没有 `-`：
+
 - BSD 风格**没有** `-`
 - GNU 风格有 `-`
 
 总体来说两种风格都可以使用，GNU 风格更新一点，混用问题也不大。但是有一个点需要特别注意，**如果使用带有 `-` 的风格，那么最后一个参数必须为 `f`**，这是因为这种风格的代码参数解析时，将 f 后面的参数作为了**文件名**；然而 BSD 风格的参数解析没有这个问题。
 
 当建立一个压缩包的时候，**两者均支持使用 `-a` 参数来自动创建压缩包 (compressed archive)，并依据其文件扩展名选择对应的压缩程序**。另外，tar 针对不同的压缩格式提供了定制的参数，如
+
 - xz 的 `-J`
 - gzip 的 `-z`
-- bzip2 的 `-j` 
+- bzip2 的 `-j`
 
 推荐使用 a 参数，代表 auto compress，不仅使用方便，又能**降低命令记忆负担**。
 
@@ -276,6 +299,7 @@ tar xvf archive.tar.bz2 -C /opt/    # 解压包 archive 到指定目录（自动
 ```
 
 ### 其他命令
+
 虽然 Unix 设计的哲学是简单，但**打包后压缩**或**解压后拆包**应该是对用户无感的，用户只关注结果！如下是日常生活中用到的三种压缩格式对应的工具
 
 | 名称  | 命令           | 拓展名 | 描述                       |
@@ -293,6 +317,7 @@ tar xvf archive.tar.bz2 -C /opt/    # 解压包 archive 到指定目录（自动
 | `zip, unzip` | `zip a.zip file1 file2`   | `unzip a.zip` | `unzip -l a.zip` |
 
 ### 总结
+
 - 利用 tar 打包， `cfv` 分别代表 create file verbose， `xfv` 的 x 代表 extract(抽取) 。
 - 使用 tar 打包时候还可以压缩，增加参数 a 并 写明包后缀，如 `archive.tar.gz`，tar 可以自动依据后缀选择对应压缩程序对所选文件/目录进行压缩打包。
 - tar 支持自动解包常用的压缩包格式。如不支持，先解压，再解包。
@@ -315,6 +340,7 @@ tar xvf archive.tar.bz2 -C /opt/    # 解压包 archive 到指定目录（自动
 ```
 
 永久开启 IP 转发
+
 ```
 # sysctl -w net.ipv4.ip_forward=1
 ```
@@ -333,25 +359,27 @@ tar xvf archive.tar.bz2 -C /opt/    # 解压包 archive 到指定目录（自动
 ### 用户空间与内核的接口
 
 内核通过各种不同的接口把内部信急输出到用户空hl
+
 - 系统调用
 - procfs 这是个虚拟文件系统，通常是挂载到 /proc:，允许内核以文件的形式向用户空间输出内部信息，这些文件并没有实际存在于磁盘中，但是可以通过 cat 以及 > shell 重定向运算符写入。
 - sysctl /proc/sys 此接口允许用户空间读取或修改内核变量的值。
 
 ioctl 系统调用
+
 - Netlink 套接字 这是网络应用程序与内核通信时最新的首选机制，IPROUTE2 包中大多数命令都使用此接口。对 Linux 而言，Netlink 代表的就是 BSD 世界中的路由套接字 (routing socket)。
 
-
 ## 内核模块
+
 内核模块 (Kernel Module) 是可以根据需要加载和卸载到内核中的代码段，它们扩展了内核的功能，但无需重新引导系统。
 
 通过运行 `lsmod` 来查看哪些模块已经加载到内核中，该模块通过读取文件 `/proc/modules` 获取其信息。内核模块存储在 `/usr/lib/modules/kernel_release` 或者 `/lib/modules/kernel_release`，可以通过 `uname -r` 获取内核的版本。以下是一些常用的命令：
 
 ```
-$ lsmod                                 # 查看哪些模块已经加载到内核中
-$ modinfo module_name                   # 显示有关模块的信息
-$ modprobe -c | less                    # 显示所有模块的完整配置
-$ modprobe -c | grep module_name        # 显示特定模块的完整配置
-$ modprobe --show-depends module_name   # 列出模块的依赖项（包括模块本身）
+lsmod                                 # 查看哪些模块已经加载到内核中
+modinfo module_name                   # 显示有关模块的信息
+modprobe -c | less                    # 显示所有模块的完整配置
+modprobe -c | grep module_name        # 显示特定模块的完整配置
+modprobe --show-depends module_name   # 列出模块的依赖项（包括模块本身）
 ```
 
 ### 内核模块加载
@@ -363,14 +391,17 @@ $ modprobe --show-depends module_name   # 列出模块的依赖项（包括模�
 **手动加载**：手动加载/卸载内核模块均需要管理员权限。
 
 - 当需要加载 Linux 内核中的标准内核模块时，通过内核模块守护程序 `kmod` 执行 `modprobe` 来加载/卸载模块。`modprobe` 需要模块名称或模块标识符之一的字符串作为参数。
+
     ```
-    $ modprobe module_name		# 加载标准内核模块
-    $ modprobe -r module_name	# 卸载标准内核模块
+    modprobe module_name  # 加载标准内核模块
+    modprobe -r module_name # 卸载标准内核模块
     ```
+
 - 当需要加载自定义内核模块时，通过 `insmod` 来加载模块，通过 `rmmod` 来卸载模块。
+
     ```
-    $ insmod filename [args]    # 不在标准目录下的内核模块，可以通过文件名加载。
-    $ rmmod module_name			# 不在标准目录下的内核模块，可以通过文件名卸载。
+    insmod filename [args]    # 不在标准目录下的内核模块，可以通过文件名加载。
+    rmmod module_name   # 不在标准目录下的内核模块，可以通过文件名卸载。
     ```
 
 ### 内核模块编写

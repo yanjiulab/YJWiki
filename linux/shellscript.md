@@ -1,4 +1,4 @@
-# Shell Script
+# Shell 脚本
 
 ## 简介
 
@@ -51,8 +51,6 @@ echo ${var}
 
 双中括号 `[[]]`
 
-
-
 ## 数据类型
 
 ### 字符串
@@ -64,8 +62,6 @@ echo ${var}
 - 双引号里可以有变量。
 - 双引号里可以出现转义字符。
 - 与绝大多数编程语言习惯保持一致。
-
-
 
 ## 条件语句
 
@@ -110,8 +106,8 @@ SYNOPSIS
 
 ```bash
 if [ condition ]; then
-	command1
-	command2
+ command1
+ command2
 fi
 ```
 
@@ -119,9 +115,9 @@ if else 语句
 
 ```bash
 if [ condition ]; then
-	command1
+ command1
 else
-	command2
+ command2
 fi
 ```
 
@@ -129,11 +125,11 @@ fi
 
 ```bash
 if [ condition ]; then
-	command1
+ command1
 elif [ condition ]; then
-	command2
+ command2
 else
-	command3
+ command3
 fi
 ```
 
@@ -147,8 +143,6 @@ fi
 - 字符串测试
 - 文件测试
 
-
-
 整数判断
 
 |          | 使用 [ ] 命令             | 使用                  |      |
@@ -160,11 +154,7 @@ fi
 | 大于等于 | `if [ "$a" -ge "$b" ]` 或 | `if (("$a" >= "$b"))` |      |
 | 小于等于 | `if [ "$a" -le "$b" ]` 或 | `if (("$a" <= "$b"))` |      |
 
-
-
 ### for 循环
-
-
 
 ## 常用示例
 
@@ -175,9 +165,6 @@ TMS=`date +%Y%m%d-%H%M`
 touch $TMS
 ```
 
-
-
 ## 参考
 
 - [Advanced Bash-Scripting Guide](http://tldp.org/LDP/abs/html/index.html)
-

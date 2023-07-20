@@ -1,1 +1,1 @@
-YJWiki ©Copyright 2018-2022 | Maintained by Yanjiulab | Powered by [Docsify](https://docsify.js.org)
+YJWiki ©Copyright 2018-2023 | Maintained by Yanjiulab | Powered by [Docsify](https://docsify.js.org)

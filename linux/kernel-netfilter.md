@@ -1,4 +1,4 @@
-# Linux 内核防火墙
+# 内核防火墙 - Netfilter
 
 ## Netfilter 框架
 
@@ -16,7 +16,7 @@ Netfilter 在 Linux 协议栈中引入了五个**钩子函数** (hook) ，内核
 
 钩子函数在数据包传输过程中的位置关系如下图所示：
 
-![image-20221114143525488](netfilter.assets/image-20221114143525488.png)
+![image-20221114143525488](kernel-netfilter.assets/image-20221114143525488.png)
 
 ## iptables 工具
 
