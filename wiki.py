@@ -3,6 +3,7 @@
 import os
 import os.path
 import argparse
+import datetime
 
 dd = {
     'algorithm': '数据结构与算法',
@@ -36,6 +37,12 @@ def autosidebar():
 
 def autogit():
     print('autogit')
+    dt = datetime.datetime.now()
+    commit = 'Update: ' + dt.strftime('%Y-%m-%d %H:%M:%S')
+    os.system('git add .')
+    os.system('git commit -m "%s"' % commit)
+    os.system('git pull origin master')
+    os.system('git push origin master')
 
 
 if __name__ == '__main__':
