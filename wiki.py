@@ -36,7 +36,6 @@ def autosidebar():
 
 
 def autogit():
-    print('autogit')
     dt = datetime.datetime.now()
     commit = 'Update: ' + dt.strftime('%Y-%m-%d %H:%M:%S')
     os.system('git add .')
@@ -50,7 +49,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--draft', help='drafting wiki')
     parser.add_argument('-p', '--publish', help='publishing wiki')
     parser.add_argument(
-        '-g', '--git', nargs='?', help='automatic git add,commit,pull,push')
+        '-g', '--git', action='store_true', help='automatic git add,commit,pull,push')
     parser.add_argument(
         '-u', '--update', choices=['sb'], help='update file')
     args = parser.parse_args()
