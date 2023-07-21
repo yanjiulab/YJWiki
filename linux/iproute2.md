@@ -31,7 +31,7 @@ ip link show ...
 ip link help ...
 ```
 
-## bridge - 网桥
+## 网桥 - bridge
 
 bridge 设备即网桥（交换机），是 Linux 内核使用纯软件实现的虚拟交换机，有着和物理交换机相同的功能，例如二层交换，MAC 地址学习等。因此，bridge 更确切的叫法应该是 Linux 内核虚拟交换机。需要注意的是，Linux 平台上还有其他用户层虚拟交换机软件，例如 Open vSwitch 等，以下使用网桥指代 bridge 设备。
 
@@ -134,7 +134,215 @@ route: default gw 10.0.0.3/24
 +---------------(enp0s3)--------------------+
 ```
 
-## veth - 虚拟以太网对
+!> 对于本机来说，数据从 br0 出意味着从协议栈进入网桥，从 br0 口入意味着从网桥进入本机协议栈。这有助于梳理一些数据包的过滤条件的处理方向问题。
+
+## 绑定接口 - bonded interface
+
+Linux 可以将几个物理接口绑定到一起成为一个绑定的逻辑接口，即 bonded 接口，使用绑定接口的目的在于提高速率或者提高可靠性。因此，绑定接口支持两种模式：
+
+- 热备份：hot stanby
+- 负载均衡：load balancing
+
+![bond](iproute2.assets/bond.png)
+
+```
+ip link add bond1 type bond miimon 100 mode active-backup
+ip link set eth0 master bond1
+ip link set eth1 master bond1
+```
+
+这创建了一个热备份的 bonded 接口，其他使用方式请参考[内核文档](https://www.kernel.org/doc/Documentation/networking/bonding.txt)。
+
+## team device
+
+The main thing to realize is that a team device is not trying to replicate or mimic a bonded interface. What it does is to solve the same problem using a different approach, using, for example, a lockless (RCU) TX/RX path and modular design.
+
+But there are also some functional differences between a bonded interface and a team. For example, a team supports LACP load-balancing, NS/NA (IPV6) link monitoring, D-Bus interface, etc., which are absent in bonding. For further details about the differences between bonding and team, see Bonding vs. Team features.
+
+Use a team when you want to use some features that bonding doesn't provide.
+
+```
+# teamd -o -n -U -d -t team0 -c '{"runner": {"name": "activebackup"},"link_watch": {"name": "ethtool"}}'
+# ip link set eth0 down
+# ip link set eth1 down
+# teamdctl team0 port add eth0
+# teamdctl team0 port add eth1
+```
+
+[Bonding vs. Team features](https://github.com/jpirko/libteam/wiki/Bonding-vs.-Team-features)
+
+## 虚拟局域网 - VLAN
+
+VLAN 可以将 LAN 划分出独立的广播域，通过加入 VLAN 头来进行数据包区分。
+
+![vlan_01](iproute2.assets/vlan_01.png)
+
+通过 VLAN 接口，可以划分子网。VLAN 接口是逻辑接口，需要依附一个物理端口用于数据包的收发，但和物理接口的设置是相互独立的。因此，VLAN 接口上可以设置 IP 地址。
+
+![vlan](iproute2.assets/vlan.png)
+
+Linux 系统数据包从协议栈经过 eth0.100 发出时，将会给数据包打上 100 标签，然后再调用物理接口的发送函数从 eth0 发出。
+
+当数据包从 eth0 接收时，如果数据包不含 VLAN 标签，则直接送入协议栈正常处理。若含有 VLAN 标签，则会根据 VLAN 标签送往 VLAN 接口，在 VLAN 接口上 VLAN 头被去除，然后进入 eth0.100 接口到达协议栈处理。
+
+使用 ip 命令创建、查看、设置 IP 地址、开启、关闭、删除接口操作如下：
+
+```
+# ip link add link eth0 name eth0.100 type vlan id 100
+# ip -d addr show
+# ip addr add 192.168.100.1/24 brd 192.168.100.255 dev eth0.100
+# ip link set dev eth0.100 up
+# ip link set dev eth0.100 down
+# ip link delete eth0.100
+```
+
+!> 当配置了 VLAN 时，需要确保对端连接的交换机或设备接口可以处理 VLAN 标签，例如将交换机端口设置为 Trunk。
+
+## MACVLAN
+
+通过 VLAN 可以在一个物理接口上创建多个逻辑接口，并且通过 VLAN 标签进行数据分流，各个 VLAN 接口和其依附的物理接口的二层地址是相同的。然而，通过 MACVLAN 可以一个物理接口上创建多个逻辑接口，每个逻辑接口都拥有独立的二层地址。
+
+不使用 MACVLAN 时，若要将两个命名空间或虚拟机连接到物理网络，需要通过 bridge 设备。
+
+![br_ns](iproute2.assets/br_ns.png)
+
+通过 MACVLAN 可以将物理接口直接绑定到命名空间，不再需要桥接。
+
+![macvlan](iproute2.assets/macvlan.png)
+
+MACVLAN 是 Linux 的网卡虚拟化技术，关于容器和虚拟机是否可以使用，需要看对应的容器或虚拟机是否支持 MACVLAN 驱动。
+
+MACVLAN 操作命令如下：
+
+```
+# ip link add macvlan1 link eth0 type macvlan mode bridge
+# ip link add macvlan2 link eth0 type macvlan mode bridge
+# ip netns add net1
+# ip netns add net2
+# ip link set macvlan1 netns net1
+# ip link set macvlan2 netns net2
+```
+
+MACVLAN 具有 5 种类型，可以根据需求自由选择，其中常用的为桥模式。
+
+### 私有模式（Private）
+
+不允许 MACVLAN 接口之间互相通信，即使外部交换机开启了发卡模式。
+
+![macvlan_01](iproute2.assets/macvlan_01.png)
+
+!> hairpin 中文翻译为发卡。bridge 不允许包从收到包的端口发出，比如 bridge 从一个端口收到一个广播报文后，会将其广播到所有其他端口。bridge 的某个端口打开 hairpin mode 后允许从这个端口收到的包仍然从这个端口发出。这个特性用于 NAT 场景下，比如 docker 的 nat 网络，一个容器访问其自身映射到主机的端口时，包到达 bridge 设备后走到 ip 协议栈，经过 iptables 规则的 dnat 转换后发现又需要从 bridge 的收包端口发出，需要开启端口的 hairpin mode。
+
+### VEPA 模式
+
+允许 MACVLAN 接口之间穿过物理接口，通过外部交换机互相通信，外部交换机需要开启发卡模式。
+
+![macvlan_02](iproute2.assets/macvlan_02.png)
+
+### 桥模式（Bridge）
+
+允许 MACVLAN 接口之间互相通信，此时物理接口类似于桥转发数据。
+
+![macvlan_03](iproute2.assets/macvlan_03.png)
+
+### 穿越模式（Passthru）
+
+允许一个 MACVLAN 接口越过物理接口，直接和外部接口相连。
+
+![macvlan_04](iproute2.assets/macvlan_04.png)
+
+### 源模式（Source）
+
+这个模式通过允许通过的源 MAC 地址列表，可以实现 MAC-based VLAN。
+
+## IPVLAN
+
+IPVLAN 同 MACVLAN 极其相似，不过其接口实例拥有相同的 MAC 地址。
+
+![ipvlan](iproute2.assets/ipvlan.png)
+
+IPVLAN 支持两种模式：
+
+L2 模式类似于 MACVLAN 的桥模式，父接口类似于交换机。
+
+![ipvlan_01](iproute2.assets/ipvlan_01.png)
+
+L3 模式中父接口类似于交路由器。
+
+![ipvlan_02](iproute2.assets/ipvlan_02.png)
+
+对比 MACVLAN，IPVLAN 功能相似，那么如何选择呢？内核中推荐如果使用场景满足以下条件之一，那么需要使用 IPVLAN。
+
+- 物理父接口连接的对端设备配置了规则，一个端口仅允许一个 MAC 地址。
+- 主接口创建的虚拟接口不会达到 MAC 容量上限，且网卡设置混杂模式可能会降低性能。
+- 子接口位于的网络，其接口 MAC 地址可能会被误改变。
+
+```
+# ip netns add ns0
+# ip link add name ipvl0 link eth0 type ipvlan mode l2
+# ip link set dev ipvl0 netns ns0
+```
+
+## MACVTAP/IPVTAP
+
+MACVTAP/IPVTAP 驱动用于简化桥接的虚拟网络。当在某物理接口上创建 MACVTAP/IPVTAP 实例时，内核将会创建一个字符设备 `/dev/tapX` 作为 TUN/TAP 设备，该设备直接被 KVN/QEMU 使用。
+
+![macvtap](iproute2.assets/macvtap.png)
+
+### TUN/TAP
+
+什么是 TUN/TAP 设备呢？通常情况下，物理网卡工作如下：
+
+![macvtap_01](iproute2.assets/macvtap_01.png)
+
+TUN 设备是三层设备，可以被用户通过 `/dev/tunX` 字符设备直接读写，而不需要经过协议栈，通常可以用于实现 VPN。
+
+![macvtap_01](iproute2.assets/macvtap_02.png)
+
+TAP 设备类似 TUN 设备，区别如下：
+
+- `/dev/tunX` 工作在三层网络层 (ip_forward)
+- `/dev/tapX` 工作在二层链路层 (bridge, MAC broadcast)
+
+### MACVLAN vs MACVTEP
+
+MACVTEP 看起来使用方式同 MACVLAN 很类似，二者有何区别呢？
+
+MACVLAN 工作流程如下：
+
+![macvtap_03](iproute2.assets/macvtap_03.png)
+
+单独使用 MACVLAN 在同一接口上提供了不同的 IP 和 MAC 地址之外并无大用。如果与 namespace 相结合则发挥了威力。
+
+![macvtap_04](iproute2.assets/macvtap_04.png)
+
+通过使用 MACVLAN，宿主机和命名空间都好像挂载在交换机上一样。
+
+而使用 MACVTEP 则如下图所示。
+
+![macvtap_05](iproute2.assets/macvtap_05.png)
+
+可见两者最大的区别在于是否使用标准协议栈，而字符设备提供了更多的可能性。两者都具有不同的类型，在 MACVLAN 章节已经说明了各类型区别，不再赘述。另外，IPVALN 和 IPVTEP 的区别也类似。
+
+### 使用
+
+通过以下命令可以创建一个桥模式的 MACVTEP。
+
+```
+ip link add link eth0 name macvtap0 address 52:54:00:b8:9c:58 type macvtap mode bridge
+ip link set macvtap0 up
+ip link show macvtap0
+```
+
+创建完毕后，例如 QEMU 要使用该接口创建网卡，可以进行如下设置。
+
+```
+qemu -net nic,model=virtio,addr=1a:46:0b:ca:bc:7b -net tap,fd=3 3<>/dev/tap11
+```
+
+其中 `tap11` 中的 `11` 是创建 `macvtap0` 时自动生成的索引号。
+
+## 虚拟以太网对 - veth pair
 
 veth 设备总是成对出现的，两个设备一端连接内核协议栈，另一端两个设备彼此相连。一个设备收到协议栈的数据发送请求后，会将数据发送到另一个设备上去。
 
@@ -181,3 +389,76 @@ ip -n[etns] <p2-namespace> link set <p2-name> up
 ip link add <p1-name> type veth peer name <p2-name>
 ...
 ```
+
+## VXLAN
+
+## 单播路由（ip route）
+
+## 组播路由（ip mroute）
+
+## 邻居（ip neigh）
+
+## 策略路由（ip rule）
+
+IP rule 是策略路由（Routing policy database， RPDB）管理工具。
+
+每条策略路由规则（rule）包括一个匹配器/选择器（selector）和一个动作指示（action），数据包到来时，根据优先级由高到低（数字越小，优先级越高）依次搜索策略路由规则，如果 selector 匹配成功，则执行相应的动作。如果动作执行了，则返回路由或者失败，同时结束查找。否则，继续搜索下一条规则。
+
+在系统启动时，内核配置了默认的 RPDB，包括三个规则：
+
+优先级|选择器|动作|说明
+:---:|:---:|:---:|:---:
+0|匹配所有|查找 local (255) 路由表|特殊路由表，用于匹配广播和本地路由，该规则不可删除。
+32766|匹配所有|查找 main (254) 路由表|用于匹配系统主路由表，该规则可以由管理员修改或删除。
+32767|匹配所有|查找 default (253) 路由表|用于没有匹配策略之后的 post-processing，表默认为空，该规则可以删除。
+
+路由表名称和路由 ID 的映射关系在 `/etc/iproute2/rt_tables` 文件中。如果新增了路由表，可以在此文件中为该路由表映射名称。
+
+### 规则类型
+
+策略路由规则有 5 种类型：
+
+- unicast：返回单播路由表项。
+- blackhole：丢弃数据包。
+- unreachable：生成“网络不可达”错误。
+- prohibit：生成“通信被系统保护”错误。
+- nat：修改数据包源地址。
+
+### 规则 Selector
+
+策略路由规则匹配器包括：
+
+- from：根据源地址匹配。
+- to：根据目的地址匹配。
+- iif：如果是 lo，则可以为本地数据包和转发数据包制定不同的数据包。
+- oif：只应用于本地绑定了设备的套接字发出的数据包。
+- tos/dsfield：根据 tos 字段匹配。
+- fwmark：根据 firewall mark 匹配。iptables 可以用来标记，从而用于策略路由。
+- ipproto：根据 IP 协议匹配。
+- sport：根据源端口匹配，支持范围匹配。
+- dport：根据目的端口匹配，支持范围匹配。
+
+### 规则 Action
+
+规则动作包括：
+
+- table/lookup：查询路由表。
+- protocol：指示添加该规则的路由协议，例如 zebra。
+- nat：转换的地址。
+- realms：TODO。
+- goto：转到指定规则。
+
+## 命名空间（ip netns）
+
+## 字符设备（ip tuntap）
+
+## 隧道设备（ip tunnel）
+
+## IPv6 段路由（ip sr）
+
+## 套接字统计（ss）
+
+## 参考
+
+- [Introduction to Linux interfaces for virtual networking](https://developers.redhat.com/blog/2018/10/22/introduction-to-linux-interfaces-for-virtual-networking)
+- [Virtual networking: TUN/TAP, MacVLAN, and MacVTap](https://suhu0426.github.io/Web/Presentation/20150120/index.html)
