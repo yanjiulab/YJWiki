@@ -1,6 +1,6 @@
 # 内核防火墙 - Netfilter
 
-## Netfilter 框架
+## Netfilter 内核框架
 
 Netfilter 是 Linux 内核中的一个**防火墙软件框架**，用于管理网络数据包。不仅具备数据包**内容修改**以及数据包**过滤**等防火墙功能，也具有**网络地址转换 (NAT)** 的功能。
 
@@ -18,15 +18,24 @@ Netfilter 在 Linux 协议栈中引入了五个**钩子函数** (hook) ，内核
 
 ![image-20221114143525488](kernel-netfilter.assets/image-20221114143525488.png)
 
-## iptables 工具
+## 用户空间工具
 
-经典的 Netfilter 钩子系统的数据包过滤部分由 ip_tables、ip6_tables、arp_tables、ebtables 四个**内核模块**组成，它们提供了一个基于表的系统，用于定义可以过滤或转换数据包的防火墙规则。这些表可以被对应的**用户空间**的工具所管理，分别是 `iptables`、`ip6iptables`、`arptables`、`ebtables`，其中最常用的为 `iptables`。
+经典的 Netfilter 钩子系统的数据包过滤部分由 ip_tables、ip6_tables、arp_tables、ebtables 四个**内核模块**组成，它们提供了一个基于表的系统，用于定义可以过滤或转换数据包的防火墙规则。这些表可以被对应的**用户空间**的工具所管理，分别是：
 
-用户通过 `iptables` 软件提供的命令行工具即可根据需求生成对应的回调函数，与 `iptables` 关联的内核模块将该回调函数注册在 Netfilter 相关钩子处。用户无需编写内核模块即可完成流量控制。
+- `iptables`
+- `ip6tables`
+- `arptables`
+- `ebtables`
+
+其中最常用的为 `iptables`。用户通过 `iptables` 软件提供的命令行工具即可根据需求生成对应的回调函数，与 `iptables` 关联的内核模块将该回调函数注册在 Netfilter 相关钩子处。用户无需编写内核模块即可完成流量控制。
+
+### nftables
 
 `nftables` 是从内核 3.13 版本引入的新的数据包过滤框架，旨在替代现用的 `iptables` 框架。`nftables` 引入了一个新的命令行工具 `nft`，取代了之前的 `iptables`、`ip6iptables`、`arptables`、`ebtables` 等各种工具。
 
 综上所述，Netfilter 系统提供了内核模块和用户空间两个层次的管理方式，通常我们只需要利用 `iptables` 或者 `nftables` 命令行工具来管理规则，如果用户代码需要直接与内核模块通信的话，还需要利用 Netlink 套接字完成。
+
+## iptables
 
 ### iptables 结构
 
@@ -207,8 +216,6 @@ iptables -A INPUT -m conntrack --ctstate INVALID -j logdrop
 另外，可以使用 `ulogd` 来代替默认的 LOG 目标。
 
 更多使用方式可以 `man iptables` 或 `iptables --help`。
-
-## 内核实现
 
 ## 参考
 

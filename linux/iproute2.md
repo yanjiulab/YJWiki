@@ -392,6 +392,43 @@ ip link add <p1-name> type veth peer name <p2-name>
 
 ## VXLAN
 
+## VRF
+
+虚拟路由转发（Virtual Routing Forwarding, VRF）是一种三层虚拟化技术，简单而言就是把一台路由器当作多台虚拟路由器使用。虚拟路由器之间从物理网卡设备到三层路由之间全是隔离的。另外，VRF 可以嵌套在 net 命名空间中使用。
+
+Linux 中通过虚拟网卡技术实现 VRF，每个 VRF 域表现为一个虚拟网卡，通过将物理网卡“绑到”虚拟网卡上，从而实现将该物理网卡划分到不同 VRF 域中隔离。
+
+VRF 的实现经历了两个阶段：
+
+1. 内核 v4.3 - v4.8：基础阶段，需要结合外部策略路由规则才能使用。
+2. 内核 v4.8 之后：完善阶段，通过引入 l3mdev 提供完整的设施支持。
+
+在第一阶段中，VRF 的实现简单粗暴，通过配置**策略路由**，将流量导入不同的路由表中匹配，从而实现隔离。
+
+![vrf_01](iproute2.assets/vrf_01.png)
+
+```
+ip rule add oif vrf-blue table 10
+ip rule add iif vrf-blue table 10
+```
+
+当数据包被物理网卡 eth1 接收后，在 netif_receive_skb 中，会有 rx_handler 回调函数截获数据包，将 skb 中的 dev 字段修改为 VRF 虚拟网卡对象，这个处理是和 Bridge 一样的。
+
+由于数据包中 dev 已经是 VRF 设备，表明数据是通过 VRF 设备来接受的，自然进入策略路由匹配流程，由此实现了 VRF 隔离逻辑。
+
+在 Linux 4.8 之后，内核提供了一种更加优雅的
+
+```
+ip link add vrf-blue type vrf table 10
+ip link set vrf-blue up
+
+
+```
+
+<https://img-blog.csdn.net/20170923122019391?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvZG9nMjUw/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast>
+
+在创建一个 VRF 虚拟网卡的时候，系统便将其与一个特定的策略路由表自动关联，L3mdev 机制基于这种关联来完成策略路由表的定向操作。
+
 ## 单播路由（ip route）
 
 ## 组播路由（ip mroute）
@@ -454,6 +491,12 @@ IP rule 是策略路由（Routing policy database， RPDB）管理工具。
 
 ## 隧道设备（ip tunnel）
 
+## 安全通信（ip xfrm）
+
+IPsec 是一组协议，通过对通信会话中的每个数据包进行身份验证和加密，以确保 IP 流量的安全。在 Linux 内核中，IPsec 通过 XFRM 框架实现，XFRM 框架是 IPsec 的“基础设施”，这个“基础设施”自 2.5 版本后引入，独立于协议簇，包含可同时应用于 IPv4 和 IPv6 的通用部分，位于源代码的 `net/xfrm/` 目录下。
+
+XFRM 的正确读音是 transform, 这表示内核协议栈收到的 IPsec 报文需要经过转换才能还原为原始报文。同样地，要发送的原始报文也需要转换为 IPsec 报文才能发送出去。
+
 ## IPv6 段路由（ip sr）
 
 ## 套接字统计（ss）
@@ -462,3 +505,7 @@ IP rule 是策略路由（Routing policy database， RPDB）管理工具。
 
 - [Introduction to Linux interfaces for virtual networking](https://developers.redhat.com/blog/2018/10/22/introduction-to-linux-interfaces-for-virtual-networking)
 - [Virtual networking: TUN/TAP, MacVLAN, and MacVTap](https://suhu0426.github.io/Web/Presentation/20150120/index.html)
+- [VRF Kernel Document](https://docs.kernel.org/networking/vrf.html)
+- [VRF patch talk](https://lwn.net/Articles/632522/)
+- [Using VRFs with linux kernel 4.6](https://andreas.rammhold.de/posts/linux-ip-vrf/)
+- [Linux VRF 的原理和实现](https://blog.csdn.net/dog250/article/details/78069964)

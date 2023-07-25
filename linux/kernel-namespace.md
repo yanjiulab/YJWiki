@@ -41,7 +41,6 @@ lrwxrwxrwx 1 liyanjiu liyanjiu 0 6月  27 21:00 uts -> 'uts:[4026531838]'
 |             Mount              |    挂载点    |      -m      |  CLONE_NEWNS  |                 使得子进程有独立的文件系统。                 |
 |              PID               |              |              |               |                                                              |
 
-
 ### clone 系统调用
 
 clone() 系统调用的基本用法如下：
@@ -60,7 +59,7 @@ int clone(int (*fn)(void *), void *child_stack,
 
 clone() 创建新进程，其行为类似于 fork()，通常使用 glibc 库中的包装函数 clone()，该函数基于 clone 系统调用。与 fork 不同，clone 允许子进程与父进程共享部分执行上下文的参数，例如虚拟地址空间、文件描述符表、信号处理程序等。
 
-fork 是标准的 Unix 系统调用，用来创建进程，而在 Linux 中 clone 可以根据传递的选项创建不同的执行线程，新的执行线程可以遵循 UNIX 进程、POSIX 线程、介于两者之间或完全不同的事物（例如不同的容器）的语义。`pthread_create()` 和 `fork()` 底层实现都使用了 `clone()`。 
+fork 是标准的 Unix 系统调用，用来创建进程，而在 Linux 中 clone 可以根据传递的选项创建不同的执行线程，新的执行线程可以遵循 UNIX 进程、POSIX 线程、介于两者之间或完全不同的事物（例如不同的容器）的语义。`pthread_create()` 和 `fork()` 底层实现都使用了 `clone()`。
 
 通过 clone() 创建的子进程，从调用指向的函数 fn() 开始执行，而 fork() 创建的子进程将会从 fork 的调用点开始执行。当 fn(arg) 函数返回，子进程结束，函数 fn 的返回值就是子进程的退出状态码，子进程同样可以通过调用 exit() 和收到结束信号而显式结束。
 
@@ -148,6 +147,7 @@ int main() {
 ```
 
 程序的输出结果如下：
+
 ```
 $ gcc ns_uts.c -o ns_uts
 $ sudo ./ns_uts 
@@ -174,7 +174,7 @@ $ cat /proc/$$/uid_map  # no output
          0          0 4294967295
 ```
 
-映射并没有带来权限的升级，它仅仅是作为一种子 Namespace 的授权。 
+映射并没有带来权限的升级，它仅仅是作为一种子 Namespace 的授权。
 
 ### 代码实现
 
@@ -222,6 +222,7 @@ ip link set veth2 netns ns2
 ```
 
 现在，namespace 具有另外的接口了，请检查它们是否确实存在：
+
 ```
 ip netns exec ns1 \
         ip address show
@@ -246,4 +247,3 @@ ip netns exec ns2 \
 - [A deep dive into Linux namespaces, User](http://ifeanyi.co/posts/linux-namespaces-part-2)
 - [A deep dive into Linux namespaces, Mount $ PID](http://ifeanyi.co/posts/linux-namespaces-part-3)
 - [docker 容器基础技术：linux namespace 简介](https://cizixs.com/2017/08/29/linux-namespace/)
-

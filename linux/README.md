@@ -4,8 +4,8 @@
 
 - [ ] 操作系统基础 OSTEP
 - [ ] Linux 基础操作 basic
-    - [ ] 用户和内核通信 - netlink
-    - [ ] Linux 是如何开机的
+  - [ ] 用户和内核通信 - netlink
+  - [ ] Linux 是如何开机的
 - [ ] 开机自启动 - systemd
 - [x] 网络命令：iproute2
 - [x] 路由 - frrouting
@@ -23,8 +23,6 @@
 - [ ] 隔离机制：namespace
 - [ ] 资源限制：cgroups
 
-
-
 书籍
 
 - [Operating Systems: Three Easy Pieces](http://pages.cs.wisc.edu/~remzi/OSTEP/)
@@ -41,6 +39,3 @@
 问答
 
 - [What does the Kernel Virtual Memory of each process contain?](https://stackoverflow.com/questions/2445242/what-does-the-kernel-virtual-memory-of-each-process-contain)
-
-
-
