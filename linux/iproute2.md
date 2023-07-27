@@ -403,9 +403,13 @@ VRF 的实现经历了两个阶段：
 1. 内核 v4.3 - v4.8：基础阶段，需要结合外部策略路由规则才能使用。
 2. 内核 v4.8 之后：完善阶段，通过引入 l3mdev 提供完整的设施支持。
 
+### 第一阶段
+
 在第一阶段中，VRF 的实现简单粗暴，通过配置**策略路由**，将流量导入不同的路由表中匹配，从而实现隔离。
 
 ![vrf_01](iproute2.assets/vrf_01.png)
+
+用户需要使用命令配置策略路由，示例如下：
 
 ```
 ip rule add oif vrf-blue table 10
@@ -416,18 +420,41 @@ ip rule add iif vrf-blue table 10
 
 由于数据包中 dev 已经是 VRF 设备，表明数据是通过 VRF 设备来接受的，自然进入策略路由匹配流程，由此实现了 VRF 隔离逻辑。
 
-在 Linux 4.8 之后，内核提供了一种更加优雅的
+### 第二阶段
+
+在 Linux 4.8 之后，内核提供了一种更加优雅的实现方式。即引入了 l3mdev (Layer 3 master device) 机制，通过 l3mdev 便省去了显式配置策略路由的过程。在创建一个 VRF 虚拟网卡的时候，系统便自动将其与一个特定的策略路由表关联，l3mdev 机制基于这种关联来完成策略路由表的定向操作。
+
+### 操作
+
+首先，创建两个 VRF 虚拟网卡 vrf-blue 和 vrf-blue 及其关联路由表 table 1 和 table 2，然后启动两个网卡。
 
 ```
-ip link add vrf-blue type vrf table 10
-ip link set vrf-blue up
+# ip link add vrf-red type vrf table 1
+# ip link set vrf-red up
+# ip link add vrf-blue type vrf table 2
+# ip link set vrf-blue up
 
-
+# ip -br link
+...
+vrf-red          UP             8a:95:83:fc:c0:88 <NOARP,MASTER,UP,LOWER_UP> 
+vrf-blue         UP             72:ea:fe:db:f3:57 <NOARP,MASTER,UP,LOWER_UP> 
 ```
 
-<https://img-blog.csdn.net/20170923122019391?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvZG9nMjUw/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast>
+设置完之后，查看策略路由表。`[l3mdev-table]` 即是上文中自动生成的特定策略路由表。
 
-在创建一个 VRF 虚拟网卡的时候，系统便将其与一个特定的策略路由表自动关联，L3mdev 机制基于这种关联来完成策略路由表的定向操作。
+```
+# ip rule
+0:      from all lookup local
+1000:   from all lookup [l3mdev-table]
+32766:  from all lookup main
+32767:  from all lookup default
+```
+
+然后可以将网卡分别绑定到 VRF 虚拟网卡上，即：将网卡划入 VRF 隔离域。
+
+```
+# ip link set dev eth0 master vrf-blue
+```
 
 ## 单播路由（ip route）
 

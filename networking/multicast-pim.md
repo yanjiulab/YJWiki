@@ -1,6 +1,7 @@
 # IP 组播路由 - PIM
 
 ## PIM 简介
+
 PIM（Protocol Independent Multicast）称为协议无关组播。这里的**协议无关指的是与单播路由协议无关**，即 PIM 不需要维护专门的单播路由信息。与单播路由通过多种路由协议算法来动态生成路由表项不同， PIM 协议只专注于组成员和组播源状态相关的信息，而选取路径的信息直接从单播路由表获取，这降低了 PIM 协议的复杂性，使其成为应用最广泛的域内组播协议。
 
 在单播路由与转发中，单播报文沿着一条单点到单点的路径传输，路由器只需要考虑报文“需要到达的位置”，即目的地址，就知道从哪个接口转发出去。组播路由与转发则不同。由于组播报文的目的地址为组播地址，只是标识了一组接收者，无法通过目的地址来找到接收者的位置，但是组播报文的“来源位置”，即源地址是确定的。所以组播报文的转发主要是根据其源地址来保证转发路径正确性。
@@ -10,10 +11,12 @@ PIM（Protocol Independent Multicast）称为协议无关组播。这里的**协
 ## PIM 协议模式
 
 经过多年发展，PIM 协议目前具有两种模式：
+
 - 协议无关组播密集模式 PIM-DM（PIM-Dense Mode）
 - 协议无关组播稀疏模式 PIM-SM（PIM-Sparse Mode）
 
 其中，PIM-SM 按照组播模型不同，又可分为：
+
 - PIM-SM (ASM)：任意源组播，简称 PIM-SM
 - PIM-SM (SSM)：特定源组播，简称 PIM-SSM
 
@@ -100,37 +103,37 @@ PIM DM 协议由 **RFC 3973** 描述，是一种状态较为简单的协议，�
 首先路由器需要保持通用信息。
 
 - For each interface：
-    - Hello Timer (HT)
-    - State Refresh Capable
-    - LAN Delay Enabled
-    - Propagation Delay (PD)
-    - Override Interval (OI)
-    - For each neighbor:
-        - Neighbor’s Gen ID.
-        - Neighbor’s LAN Prune Delay
-        - Neighbor’s Override Interval
-        - Neighbor’s State Refresh Capability
-        - Neighbor Liveness Timer (NLT)
+  - Hello Timer (HT)
+  - State Refresh Capable
+  - LAN Delay Enabled
+  - Propagation Delay (PD)
+  - Override Interval (OI)
+  - For each neighbor:
+    - Neighbor’s Gen ID.
+    - Neighbor’s LAN Prune Delay
+    - Neighbor’s Override Interval
+    - Neighbor’s State Refresh Capability
+    - Neighbor Liveness Timer (NLT)
 
 其中主要是为每个接口维护邻居信息。
 
 其次，路由器需要为每个 `(S, G)` 表项维护如下信息。
 
 - For each interface:
-    - Local Membership: State: One of {"NoInfo", "Include"}
-    - PIM (S,G) Prune State: State: One of {"NoInfo" (NI), "Pruned" (P), "PrunePending"
+  - Local Membership: State: One of {"NoInfo", "Include"}
+  - PIM (S,G) Prune State: State: One of {"NoInfo" (NI), "Pruned" (P), "PrunePending"
         (PP)}
-    - (S,G) Assert Winner State: State: One of {"NoInfo" (NI), "I lost Assert" (L), "I won
+  - (S,G) Assert Winner State: State: One of {"NoInfo" (NI), "I lost Assert" (L), "I won
         Assert" (W)}
 - Upstream interface-specific:
-    - Graft/Prune State: 
-        - State: One of {"NoInfo" (NI), "Pruned" (P), "Forwarding" (F), "AckPending" (AP) }
-        - GraftRetry Timer (GRT)
-        - Override Timer (OT)
-        - Prune Limit Timer (PLT)
-    - Originator State:
-        - Source Active Timer (SAT)
-        - State Refresh Timer (SRT)
+  - Graft/Prune State:
+    - State: One of {"NoInfo" (NI), "Pruned" (P), "Forwarding" (F), "AckPending" (AP) }
+    - GraftRetry Timer (GRT)
+    - Override Timer (OT)
+    - Prune Limit Timer (PLT)
+  - Originator State:
+    - Source Active Timer (SAT)
+    - State Refresh Timer (SRT)
 
 ### 数据转发规则
 
@@ -155,6 +158,7 @@ The Upstream(S,G) state machine for sending Prune, Graft, and Join messages is g
 - AckPending (AP) 嫁接响应等待状态
 
 three state-machine-specific timers:
+
 - GraftRetry Timer (GRT(S,G)) ：如果上游没有回复 GA，则 GRT 超时，重发 G 报文，GRT 复位。若收到 GA，则取消 GRT。
 - Override Timer (OT(S,G))：收到来自上游的剪枝报文，如果下游出口不空，则需要启动 OT，OT超时时发送 Join 报文以恢复上游对自己的转发。
 - Prune Limit Timer (PLT(S,G))：如果上游已经时 P 状态，则 PLT 超时之前，为了限制 LAN 中的 P 报文数量，将不允许发送 P 报文。
@@ -164,15 +168,15 @@ three state-machine-specific timers:
 ![multicast](multicast.assets/pim-dm-downstream-state-machine.PNG)
 
 The Prune(S,G) Downstream state machine for receiving Prune, Join and Graft messages on interface I is given below
+
 - NoInfo(NI) 正常转发状态
 - PrunePending(PP) 剪枝等待状态：收到剪枝消息后，进入该状态等待下游邻居发送 Join 消息来覆盖该剪枝消息。
 - Pruned(P) 剪枝状态：如果没有收到 Join 消息，则进入剪枝状态。
 
 two timers:
+
 - PrunePending Timer (PPT(S,G,I))：PPT 超时后进入剪枝状态，同时启动剪枝定时器 PT。
 - Prune Timer (PT(S,G,I))：PT 超时后重新恢复转发，进入 NI 状态。可以使用 SR 报文一直刷新 PT，让下游一直不能恢复转发。
-
-
 
 ## PIM SM
 
@@ -237,9 +241,9 @@ PIM-SM 路由器需要知道每个组的 RP 地址，RP 可通过**动态选举*
 
 一种常用的 BSR 选举机制（RFC 5059）流程大致如下：
 
-- 首先，选举一个路由器作为 BSR (Bootstrap Router) 
-    - 开始时，每个 PIM 路由器都认为自己是 BSR 候选者，因此都会发送 Bootstrap 报文。
-    - 当收到其他人发来的 Bootstrap 消息时，每个 PIM 路由器执行相同的选举算法，异步算出唯一 BSR（由守护进程处理）。
+- 首先，选举一个路由器作为 BSR (Bootstrap Router)
+  - 开始时，每个 PIM 路由器都认为自己是 BSR 候选者，因此都会发送 Bootstrap 报文。
+  - 当收到其他人发来的 Bootstrap 消息时，每个 PIM 路由器执行相同的选举算法，异步算出唯一 BSR（由守护进程处理）。
 - 接着，所有 RP 候选者向 BSR 发送单播 Advertisement 报文，报文中携带 C-RP 地址、服务的组范围和 C-RP 优先级。BSR 根据所有候选者 RP 发来的消息，汇总成为 RP-Set，周期性的通过 Boostrap 报文逐跳泛洪到全网。
 - 最后，全网 PIM-SM 路由器都收到 RP-Set 消息，并设置 RP 地址，到此 RP 选举完成。
 
@@ -267,8 +271,6 @@ TODO
 
 - 加入消息：检查 `RP(G)`
 - 剪枝消息：
-
-
 
 When a router receives a Join`(*,G)`, it must first check to see whether the RP in the message matches RP(G) (the router’s idea of who the RP is). If the RP in the message does not match RP(G), the Join(*,G) should be silently dropped. (Note that other source list entries, such as (S,G,rpt) or (S,G), in the same Group-Specific Set should still be processed.) If a router has no RP information (e.g., has not recently received a BSR message), then it may choose to accept Join(*,G) and treat the RP in the message as RP(G). Received Prune(*,G) messages are processed even if the RP in the message does not match RP(G).
 
@@ -307,7 +309,7 @@ MSDP 对等体之间交互 SA 消息，消息中携带组播源 DR 在 RP 上注
 
 当网络中存在多个 MSDP 对等体时，很容易导致 SA 消息在对等体之间泛滥。同时，MSDP 对等体对每一个到来的 SA 报文进行 RPF 检查，给系统造成很大的负担。将多个 MSDP 对等体加入同一个 Mesh Group，就可以大幅度减少在这些 MSDP 对等体之间传递的SA消息。
 
-## PIM-SSM 
+## PIM-SSM
 
 The Source-Specific Multicast (SSM) service model [6] can be implemented with a strict subset of the PIM-SM protocol mechanisms. Both regular IP Multicast and SSM semantics can coexist on a single router, and both can be implemented using the PIM-SM protocol. A range of multicast addresses, currently 232.0.0.0/8 in IPv4 and ff3x::/32 for IPv6, is reserved for SSM, and the choice of semantics is determined by the multicast group address in both data packets and PIM messages.
 
@@ -318,15 +320,13 @@ Hello messages, neighbor discovery, and DR election (Section 4.3) o Packet forwa
 ```
 oiflist = NULL
 if( iif == RPF_interface(S) AND UpstreamJPState(S,G) == Joined ) {
-	oiflist = inherited_olist(S,G)
+ oiflist = inherited_olist(S,G)
 } else if( iif is in inherited_olist(S,G) ) {
-	send Assert(S,G) on iif
+ send Assert(S,G) on iif
 }
 oiflist = oiflist (-) iif
 forward packet on all interfaces in oiflist
 ```
-
-
 
 ## PIM 协议消息格式
 
@@ -360,7 +360,6 @@ PIM 消息头如下所示，共计 4 字节（4b+4b+8b+16b=32b=4B）。
 |     Graft     |  6   | PIM-DM only |          Unicast to RPF’(S)          |
 |   Graft-Ack   |  7   | PIM-DM only |  Unicast to source of Graft packet   |
 |   C-RP-Adv    |  8   |             |       Unicast to Domain’s BSR        |
-
 
 不同类型的 PIM 消息具有结构各异的消息内容，除此之外，PIM 消息类型也会影响 IP 头中的目的地址。因此，根据目的 IP 是单播地址还是组播地址，PIM 消息被分为单播消息和组播消息两种。其中，组播消息目的地址为 ALL-PIM-ROUTERS 组（224.0.0.13/IPv4，ff02::d/IPv6），TTL 为 1。
 
@@ -399,9 +398,9 @@ Encoded-Group Address 格式如下：
 - Addr Family  （1 字节）
 - Encoding Type  （1 字节）
 - [B]idirectional PIM  
-- Reserved 
+- Reserved
 - Admin Scope [Z]one  
-- Mask Len 
+- Mask Len
 - Group multicast Address（IPv4 为 4 字节）
 
 Encoded-Source Address 格式如下：
@@ -454,14 +453,14 @@ Hello 消息采用 TLV 构建，其格式如下
 其中包括：
 
 - Holdtime TLV
-    - Type=1
-    - Length=2
-    - Holdtime=全 0 表示立即删除邻居；全 1 表示永不超时；默认为 Hello 周期的 3 倍（105 秒）。
+  - Type=1
+  - Length=2
+  - Holdtime=全 0 表示立即删除邻居；全 1 表示永不超时；默认为 Hello 周期的 3 倍（105 秒）。
 
 - DR Priority
-    - Type=19
-    - Length=4
-    - DR Priority=4 字节整型
+  - Type=19
+  - Length=4
+  - DR Priority=4 字节整型
 
 ### Register 消息
 
@@ -533,11 +532,11 @@ RP -> S
 - Unicast Upstream Neighbor Address：上游邻居单播地址
 - Group Number：该消息包含几个组。
 - 组条目
-    - 组地址
-    - 加入数量
-    - 剪枝数量
-    - 加入地址列表
-    - 剪枝地址列表
+  - 组地址
+  - 加入数量
+  - 剪枝数量
+  - 加入地址列表
+  - 剪枝地址列表
 
 ### Bootstrap 消息
 
@@ -659,8 +658,6 @@ C−RPs 周期性向 BSR 发送单播 Candidate-RP-Advertisement 消息。
 - DM 和 SM 虽然共享数据包格式，但却不能直接交互。
 - PIM 路由器无法通过 Hello 包来区分是 DM 邻居还是 SM 邻居。
 - DM 的加入、剪枝、嫁接消息都是指定源的，因此无需和 SSM 协议进行区分。
-
-
 
 ## RFC
 
