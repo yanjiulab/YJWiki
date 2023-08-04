@@ -1,200 +1,159 @@
-# 标签路由 - MPLS
+# 多协议标签交换 - MPLS
 
-多协议标签交换技术 (Multi Protocol Label Switching, MPLS) 的发展
+多协议标签交换技术 (Multi Protocol Label Switching, MPLS) 的发展经历了复杂的历程，本文将介绍 MPLS 的起源，以及为何是它变得广受欢迎。
 
-A frequently mentioned term that causes buzzing in some ears and intrigue in others is MPLS. Multi Protocol
+## MPLS 原理
 
-Label Switching is a complex technology whose functioning relies in sharply calibrated mechanisms working
+在计算机网络采用了分组交换，其中面向无连接的数据报交换被因特网所采用，最终发展成为了 IP 路由转发技术。当数据包进入 IP 网络中，每个路由器都是独立做出**路由决策**，路由决策包含两部分：
 
-together, resembling the internal mechanics of Swiss watch. In this blog post, I intend to introduce you to
+- 分类：将特定的数据包归属为一个**等价转发类**（Forwarding Equivalence Classes，FECs）。
+- 查找：查找 FEC 对应的**下一跳**（next hop）。
 
-this technology, not reinventing the wheel, but to make it simpler, as building towers with plastic blocks.
+对于 IP 路由来说，分类是依据最常掩码匹配得到的。如果两个数据包最长掩码匹配相同，则认为这两个数据包属于同一个 FEC，则转发到相同的下一跳。
 
-Before getting into the nitty-gritty of MPLS, let's talk about what it is, from where it came, and why it is so popular.
+具体而言，IP 路由转发步骤如下：
 
-## MPLS 起源
+1. 从输入队列中取出一个数据包，检查完整性和 TTL。
+2. 解封二层帧，解析三层报文头部目的 IP 地址。
+3. 将目的 IP 地址与路由表项（网络地址）逐项进行逻辑与运算，若运算结果和表项相同，则认为匹配。
+4. 在路由表中匹配最长掩码网络的表项，获取其出端口。
+5. 使用 ARP 协议获取下一跳接口的物理地址。
+6. 将三层路由报文重新封装为二层帧，将数据包放入输出队列，进而转发给下一跳路由器。
 
-在计算机网络采用了分组交换，其中面向无连接的数据报交换被因特网所采用，最终发展成为了 IP 路由转发技术。收到数据帧之后，IP 路由需要完成以下步骤才可以完成路由转发：
+在 IP 路由转发中，实际上路由器最终目的是获取下一跳，但是 IP 数据包中并没有下一跳信息，因此只能进行解包匹配。我们可以精心构造路由表的数据结构，例如 Linux 内核使用哈希和 trie 树的查找算法来进行快速匹配，那 MPLS 是如何进行“加速”的呢？在 MPLS 网络中，**数据包可以直接告诉路由器该数据包所匹配的网络前缀在路由表中的确切位置**！数据包来临时，路由器可以取出数据包中的“书签”，直接跳转到路由表中的确切位置，这就是 MPLS 的原理。
 
-1. 解封二层帧，解析三层报文头部目的 IP 地址。
-2. 在路由表中匹配最长掩码网络的表项，获取其出端口。
-3. 使用 ARP 协议获取下一跳接口的物理地址。
-4. 将三层路由报文重新封装为二层帧，转发给下一跳路由器。
+当路由器启用了 MPLS 时，它将**为其路由表中的每个网络前缀分配一个唯一的编号**。一旦分配了编号，路由器便会将这些信息向所有邻居传送，消息类似于：“前缀 `X.X.X.X` 在我的路由表中位于 `Y` 行中，因此，如果您想将我用作 `X.X.X.X` 的下一跳，请在该数据包上贴上带有数字 `Y` 的标签，以便我可以立即跳转到第 `Y` 行并更快地转发数据包”。于是，所有邻居路由器都知道了：发往该路由器的 `X.X.X.X` 网段数据包，只需要使用 `Y` 标记即可通过该路由器正确且快速的转发。
 
-IP 转发的过程复杂，硬件实现昂贵且困难，因此通常由软件完成。
+![mpls_01](mpls.assets/mpls_01.jpeg)
 
-对于面向连接的虚电路网络，上世纪 90 年代，各大 ISP 开始部署 Frame Relay、ATM 以及 IP-over-ATM 网络，各种技术层出不穷的原因很简单：网络需要更高的吞吐量和更低的延迟！对于 ATM、帧中继网络来说，他们的地址都是简单定长的数字，因此更易用使用硬件实现，从而减小时延以及解决 CPU 处理瓶颈。
+因此整个交换可以通过事先在两个路由器之间传递整数（即标签）来完成，当网络数据包在 MPLS 网络中传输时，路由决策都是基于标签的。路由器不再需要对网络数据包进行解包，并且标签是个整数，以整数作为 key，可以达到 `O(1)` 的查找时间，大大减少了路由决策的时间。**标签**即 MPLS 中的 L，是作为网络数据包的一部分，随着网络数据包传输的。
 
-在接下来的几年中，不同的供应商构思了几种解决方案，称为多层交换，其工作方式与他们试图成功的前身类似。但是，他们都未能达到这一里程碑。1997 年，IETF 决定成立一个工作组，创建一个可互操作的多层交换标准。它是利用一个聪明的想法创建的，这个想法在过去看起来很有前途，并且以类似的方式用于以前的 WAN 协议：标签！
+MPLS 网络就是由支持 MPLS 的设备组成的网络，其采用什么网络协议传输并不重要。因为数据包一旦进入了 MPLS 网络，那么网络数据包的内容就不再重要，路由决策（包括 FEC 归属的计算，next hop 的查找）都是基于标签来进行的。这也就是 MPLS 中 multi protocol 的含义。
 
-MPLS 从诞生以来迅速发展，并且随着时间的推移，它的采用率一直在增加，直到现在，它已成为服务提供商的事实标准。如今，由于硬件的进步，基于 IP 地址或标签的转发在性能上实际上没有区别，因为它都是在硬件中完成的。然而，MPLS 真正的实际价值在于可以使用 MPLS 构建什么以及它能够支持什么。它的可扩展性和互操作性，以及您可以在其上运行的服务和基础设施，使其成为推动企业和网络迈向新视野的关键工具。
+MPLS 从诞生以来因其加速转发能力而迅速发展，并且随着时间的推移，它的采用率一直在增加。如今由于硬件的进步，基于 IP 地址或标签的转发在性能上实际上没有区别，因为它都是在硬件中完成的。但 MPLS 如今已成为服务提供商的事实标准，只因**它在其他方面具备更多的价值**！它的可扩展性和互操作性，以及在其上运行的服务和基础设施，使其成为推动企业和网络迈向新视野的关键工具。
 
-MPLS became quickly a must and its adoption was increasing over the time, until now, when it’s the
+## MPLS 网络
 
-facto standard for Service Providers. Nowadays, thanks to advances in hardware engineering, there
+在进行 MPLS 介绍之前，有必要对 MPLS 中的一些术语和角色做一些解释。MPLS 网络是由支持 MPLS 的互联设备（路由器）构成的网络。
 
-is really no difference in performance between forwarding based on IP addresses or labels, as it is
+- LER（Label Edge Router）：MPLS 网络的边缘设备。包括：
+  - MPLS ingress node：进入 MPLS 网络的节点，也就是 MPLS 网络的入口路由器。该设备计算出 IP 协议报文归属的 FEC，并把相应的标签放入 IP 协议报文中。
+  - MPLS egress node：出 MPLS 网络的节点，也就是 MPLS 的出口路由器。IP 协议报文在这里回到传统的路由系统中。
+- LSR（Label Switching Router）：支持 MPLS 转发的路由器。如果一个 LSR 有一个邻接的节点在 MPLS 网络之外，那么这个 LSR 就是 LER。注意，这里的 MPLS 网络之外可以是传统路由网络或另一个 MPLS 网络。没错，MPLS 网络可以叠加，也就是 Muti Protocol 也包含 MPLS 协议自己。
+- LSP（Label Switching Path）：特定的 FEC 中的 IP 协议报文所经过的 LSR 的集合。LSP 通常也被称为 MPLS tunnel。
 
-all done in hardware, yet the real tangible value lies in what you can build using MPLS and what it is
+![mpls_02](mpls.assets/mpls_02.png)
 
-able to support. Its scalability and interoperability, along with the services and infrastructures you can
+## MPLS 转发流程
 
-run on top of it, made it a key tool to drive businesses and networks to a new horizon.
+传统的路由网络中，路由器是基于路由做转发。控制面可以采用 IGP/BGP 等动态路由器协议来发现路由，也可以采用静态路由配置路由。总之，路由协议会生成**路由表**（RIB），路由表包含了所有的转发信息。接着，路由器根据路由表选出最佳路由，生成**转发表**（FIB）下发给数据面，用于 IP 转发。
 
-现在我们知道为什么 MPLS 变得流行，那么它是如何工作的呢？MPLS 的工作方式与书签类似：它告诉路由器在路由表中的确切位置
+对于 MPLS 网络，路由器仍然是沿着 IP 路由确定的路径进行转发，只不过是基于标签做转发（交换），MPLS 网络控制面运行**标签交换协议**（LEP），路由器可以收集标签，生成**标签表**（LIB），同时结合 FIB 生成**标签转发表**（LFIB）下发给数据面，用于标签转发。因此，MPLS 并不是独立的东西，其层级架构如图所示。
 
-查找特定前缀。通常，路由器需要在其路由表中执行逐行查找对于特定条目，以便它可以正确转发/路由数据包，但是，如果可以阻止这种努力怎么办
+![mpls_03](mpls.assets/mpls_03.png)
 
-从发生超过需要的事情？如果有书签怎么办？是的！这就是MPLS所做的。
+LIB 里记录了两种标签：
 
-And now that we know why MPLS became popular, what about how it works?
+- 本地标签（Local label）：LSR 对路由表中的每个网络前缀分配一个唯一的本地标签，本地标签是和 IP prefix 相关的。这个标签需要告知邻居，以便于邻居可以将其封装到数据包内，这样收到该标签的数据包，就知道要去往哪个网络。
+- 邻居标签（Remote label）：LSR 通过收集的其所有邻居发来的标签作为邻居标签，邻居标签即邻居的本地标签。当需要发送数据时，需要将该信息注入数据包，以便于邻居可以进行查表转发。
 
-MPLS works in a similar way as bookmarks do: It tells routers where exactly in the routing table to
-
-look for an specific prefix. Usually, a router needs to perform a row-by-row lookup in its routing table
-
-for a specific entry so it can forward/route a packet properly but, what if that effort could be prevented
-
-from happening more than needed? What if a bookmark was available? Yes! That’s what MPLS does.
-
-当路由器启用了 MPLS 时，它将**为其路由表中的每个前缀分配一个唯一的编号**。一旦分配了编号，路由器便会将这些信息向所有邻居传送，消息类似于：“前缀 X.X.X.X 在我的路由表中位于 Y 行中，因此，如果您想将我用作 X.X.X.X 的下一跳，请在该数据包上贴上带有数字 Y 的标签，以便我可以立即跳转到第 Y 行并更快地转发数据包”。于是，所有邻居路由器都知道了：发往该路由器的 X.X.X.X 网段数据包，只需要使用 Y 标记即可通过该路由器正确转发。
-
-因此，整个交换可以通过事先在两个路由器之间传递整数（即标签）来完成，即：**每个路由器向其邻居通告分配给其路由表中每个前缀的本地标签号**。
-
-![img](mpls.assets/1.jpeg)
-
-在每个路由器中，相同的前缀关联了不同的本地有效标签，并且在邻居间无差别扩散。那么标签如何在路由器之间通告呢？其中最基本的协议是**标签分发协议（Label Distribution Protocol, LDP）**。LDP 协议允许路由器之间建立连接，创建、通告以及存储标签映射，LDP 协议允许路由器之间建立会话，创建、通告和存储标签绑定，帮助填充标签信息库（Label Information Base, LIB）和标签转发信息库（Label Forwarding Information Base, LFIB）的内容。
-
-大致流程如下：
-
-1. 通过 Hello 报文（目的地址为 224.0.0.2，UDP 端口 646）发现运行 LDP 的路由器。
-2. 通过 TCP 端口 646 建立会话连接。
-3. 标签通告和接收。
-4. 将标签存储在 LIB 中。
-5. 通过标签表 LIB 和路由表 RIB 内容构造标签转发表 LFIB（其过程类似于 IP 转发中通过路由表 RIB 构造转发表 FIB）。
-6. 会话保持（发送保活、更新和错误信息）。
-
-在上述过程中，构建 LFIB 和 LIB 是最小化转发延迟的关键部分。让我们快速描述它们，以便我们可以清楚地了解它们。
-
-在 LIB 中，
-
-To define the LIB, we need to remember in which way the labels are advertised, indiscriminately, without paying attention what prefix and label is being advertised and who is or is not the next hop for it. When a router binds a prefix with a label number, that association is called local binding for that router. Any binding received from another router, is called remote binding (because comes from another neighbor, its not local). So, in plain words, regarding bindings, from any router’s perspective: “what is not mine (local) is remote”.
-
-LIB 是一个数据库，其功能是存储目标网络/前缀和标签的关联关系，其中关联关系包括路由器本地产生的或者从邻居接收到的。LIB 本身不用于执行转发决策，而是指导 LFIB 的生成。
-
-| 目标网络/前缀 | 标签 |  类型  |
-| :-----------: | :--: | :----: |
-| 172.31.0.0/24 | 100  |  本地  |
-| 172.31.1.0/24 | 100  | 邻居 1 |
-|      ...      |      |        |
-
-当标签通告完成时，就可以进行转发了，那么不同类型的标签是如何使用呢？假设我们是路由器 R2，我们可以看到标签是如何在每个路由器中起作用的，收到的标签编号是入口标签（incoming/ingress label），发送的标签编号是出口标签（outgoing/egress label）。
+也就是说，每个路由器通过标签交换协议，向其邻居通告分配给自己路由表中每个前缀的本地标签号。路由器将本地标签和邻居标签存储到标签表中。
 
 ![img](mpls.assets/2.jpeg)
 
-通过 LDP，路由器将其本地关联向其邻居通告，同时将其他路由器通告的远程关联存储在 LIB 中。上图中，R2 向 R1 通告 `172.31.0.0/24 - 568` 关联，R1 将该关联作为远程关联存储下来，接着，R1可以使用该标签通过 R2 向 172.31.0.0/24 网络发送数据。因此对于路由器来说，其出口标签就是下一跳端口上的入口标签，也就是下一跳路由器的本地标签。当 R2 收到 R1 发送的数据时，由于 172.31.0.0/24 并不是直连网络，因此 R2 将会通过 R3 转发数据包。同 R1 一样， R3 也已经事先将其本地关联  `172.31.0.0/24 - 89` 通告给 R2，R2 此时将数据包中的 568 标签号替换为 89，然后向 R3 转发。
+上图中，R2 向 R1 通告 `172.31.0.0/24 - 568` 关联，R1 将该关联作为远程关联存储下来，接着，R1可以使用该标签通过 R2 向 172.31.0.0/24 网络发送数据。因此对于路由器来说，其出口标签就是下一跳端口上的入口标签，也就是下一跳路由器的本地标签。当 R2 收到 R1 发送的数据时，由于 172.31.0.0/24 并不是直连网络，因此 R2 将会通过 R3 转发数据包。同 R1 一样， R3 也已经事先将其本地关联  `172.31.0.0/24 - 89` 通告给 R2，R2 此时将数据包中的 568 标签号替换为 89，然后向 R3 转发。上图中 R2 的标签表如下：
 
-We can conclude that: downstream routers advertise labels that upstream routers use to send labeled
+| 目标网络/前缀 | 标签 |       类型       |
+| :-----------: | :--: | :--------------: |
+| 172.31.0.0/24 | 568  |      Local       |
+| 172.31.0.0/24 | 101  | Remote (from R1) |
+| 172.31.0.0/24 |  89  | Remote (from R3) |
 
-[packets. In](http://packets.in/) an analogous way as with IP routing, is not efficient to have a huge list of destinations and bindings
+根据标签表和转发表，则 R2 生成的标签转发表如下：
 
-and when the time to forward packets comes, jump into it like a kid into a ball pit. To make this task quicker and
+| 入标签（本地标签） | 出标签（邻居标签） | 网络前缀（Prefix） |  下一跳（Nexthop）   |
+| :----------------: | :----------------: | :----------------: | :------------------: |
+|        568         |         89         |   172.31.0.0/24    | R3 与 R2 相连接口 IP |
 
-efficient, the LFIB is constructed.
+我们发现，数据包在 R2 中转发时做了一次标签替换，然后就完成了标签转发。这个过程有点类似于 MAC 地址转发，在经过一个网段后，MAC 地址被重新改写了。其实，LSR 处理数据包时，对标签的操作包括三种：
 
-To build the LFIB it requires the router to collect and combine information from multiple sources/tables. An
+- 标签压栈（Label Push）：数据包进入 LER 时，在 IP 数据包或另一个标签之前添加标签。
+- 标签替换（Label Swap）：数据包在 LSR 中转发时，将入口标签（本地标签）替换为出口标签（邻居标签）。
+- 标签出栈（Label Pop）：数据包在离开 MPLS 网络时，需要将顶层标签弹出。这样其他网络设备看到的就是正常的 IP 数据包。
 
-entry for a specific network in the LFIB would be created in several steps. First, the router would check its
+## MPLS 数据包
 
-routing table (RIB) to find the next hop towards that network. Then, it would check in its LIB which one is
-
-the label advertised by that next hop (downstream router) for that prefix. Then, with that information, and its
-
-incoming label for that prefix, the entry is built in the LFIB. The essential parts of the LFIB entry would be:
-
-Incoming label assigned by the router itself, outgoing label learned from the proper next hop, and next hop
-
-information.
-
-Now that we have labels, tables, structures and forwarding clear, what are the operations required to move
-
-packets here and there?
-
-MPLS 处理数据包时，对标签的操作包括三种，当路由器执行这些功能时，称为标签交换路由器（Label Switching Router, LSR）。
-
-- 标签压栈（Label Push）
-- 标签替换（Label Swap）
-- 标签出栈（Label Pop）
-
-Label Push: Happens when a packet arrives to a LSR and it pushes or imposes a label on top of the IP packet, or another label, in case there is a label already on top. One of the situations where this occurs is when a packet arrives to a MPLS capable network and will be transported through it.
-
- Label Swap: This operation is performed if an LSR receives a labeled packet and it will be forwarded to its next hop as a labeled packet. Since each LSR assigns a locally significant label number for each destination network or prefix, forwarding them means replacing the incoming label with the outgoing label advertised by its next hop in the remote binding.
-
- Label Pop: Pop operation is implemented by removing the label from the packet, or in the case the packet possesses more than one label, removing the top label of the label stack (a label stack is a “pile” of labels on top of a packet).
-
-If a PUSH happens when a router receives a packet that will traverse the
-
-MPLS network, and a SWAP occurs in each intermediary hop to accommodate
-
-downstream router label, how does a LSR know when to POP them?
-
-To ensure this takes place in the correct moment, there is a mechanism called Penultimate Hop Popping, and its implemented to pop/remove the label one hop before its destination. It works in a clever way: the LSR having the destination network directly connected or summarized, advertises a specific label binding for that prefix using the reserved label range. Let’s take a closer look.
-
-Among the numbers used for labels, the range from 0 to 15 is reserved, and some of those numbers are used by the protocol itself to perform operations. Although there are several label numbers in the reserved range, we will take a look to the most used ones:
-
-Label Number 3 or Implicit NULL: This label number is advertised by the ultimate router (the one just
-
-next to the destination) so that the upstream neighbor POPs the label from the packet before sending it.
-
-The purpose is to prevent double lookups in the ultimate LSR. If a labeled packet arrived, the LSR would
-
-have to perform a lookup in the LFIB to realize the label must be removed, and then another one, but this
-
-time in the FIB (regular IP lookup) to find the next hop information and outgoing interface. If the label is
-
-removed by the penultimate hop LSR, the first (and unnecessary) lookup is prevented from happening.
-
-![img](mpls.assets/3.jpeg)
-
-Label numbers 0 and 2 (IPv4 and IPv6) or Explicit NULL: Although removing the label one hop before
-
-helps to prevent a second lookup, it also has a downside. QoS information can be poured in the MPLS
-
-header making use of the TC (Traffic Class) bits, but, if the label is removed one hop before, the QoS
-
-information is also lost. This label is used to prevent PHP (Penultimate Hop Popping) behavior from happening.
-
-The explicit NULL label will be advertised by the ultimate LSR (depending on IP version - 0 for IPv4 and
-
-2 for IPv6) and the upstream neighbor will send the packet using that number. Once it is received, the
-
-ultimate LSR will remove the implicit NULL label and check the QoS information to forward it accordingly.
-
-![img](mpls.assets/4.jpeg)
-
-Label number 1 or Router Alert: This label is used to troubleshoot MPLS as it assures packets are
-
-sent in “safe” mode to guarantee their arrival to their destination. When a LSR receives a packet with
-
-label 1, it will bypass hardware forwarding and will be punted to the CPU (process switched). The label 1 is not shown in the LFIB as it is forwarded by software. The forwarding is slightly different
-
-from the rest of the labels, because label 1 is not removed in each hop it goes through. The LSRs
-
-will swap the labels as commonly done (using contents of LFIB) and then label 1 will be placed on
-
-top of the existing label before forwarding, to guarantee it will be process switched by the next LSR.
-
-![img](mpls.assets/5.jpeg)
-
-目前为止，我们只是谈到了标记的数据包，现在让我们详细看看 MPLS 标签的内容及其在数据包中的位置：
+目前为止，我们只是谈到了标签标记的数据包，现在让我们详细看看 MPLS 标签的内容及其在数据包中的位置：
 
 ![img](mpls.assets/mpls-format.jpeg)
 
-如上所示，MPLS 首部长度为 32 比特（4 字节），位于二层帧头和三层包头之间，具体包括：
+如上所示，MPLS 首部长度为 32 比特（4 字节），位于二层帧头和三层包头之间，因此也常常被认为是 2.5 层协议。具体包括：
 
-- Label (20 bits): Identifies the label value used by LSRs to forward the packet through a MPLS enabled network. The value range for this field is <0 - 1,048,575> (220-1).
-- Traffic Class (3 bits): The traffic class field, formerly known as EXP field, is used to carry traffic class information so QoS policies can be implemented in the MPLS network by checking the value in the header.
-- Bottom Of Stack (1 bit): MPLS allows multiple labels to be placed onto a packet. They are then treated as a stack; the bottom label is the one closest to the Layer 3 header, the top label is the one closest to the Layer 2 header, and LSRs always operate on the top label only (with the exception of Router Alert label). To be able to tell which label is the last one -the bottom one - the BoS bit will be set to 1 on the bottom label, and to 0 on all other labels.
-- Time to Live (TTL) (8 bits): Analogous to IP forwarding, it is used to keep track of the number of hops that a labeled packet can take (or the number of routers it can traverse in its journey to its destination) before being dropped. Used as loop prevention mechanism. Range of values is <0 - 255> (28-1). Packets are forwarded and one unit it subtracted from the current value at each hop/router, this operation is repeated until it reaches its destination or the value reaches 0 (and it is dropped).
+- 标签 (20 bits)：用于 LSR 转发数据包，范围是 0 至 1,048,575。
+- 流量分类 (3 bits)：用于在 MPLS 中实现 QoS。
+- 栈底标识 (1 bit)：MPLS 支持多标签嵌套在同一个数据包中，栈底是最靠近三层数据包的标签，栈顶是最靠近二层数据包的标签。LSR 一般只操作栈顶标签。1 表示栈底，即最后一个标签，再 POP 之后便成为正常的 IP 报文。
+- 生存时间 (TTL) (8 bits):：TTL 在 IP 协议里面的作用主要是防止环路和用于 traceroute 等工具。MPLS 里面的 TTL 作用是一样的。当数据包进入 MPLS 网络，网络层中的 TTL 会被拷贝至 MPLS 的 TTL，每一次转发，TTL 减1，0 视为丢弃。数据包出 MPLS 网络，MPLS 中的 TTL 会拷贝至网络层中。
 
- 到目前为止，我们已经讨论了有关MPLS的许多主题，一些历史和几个组件，这些组件协同工作以提供一种传输方法，其应用是当今常见且有吸引力的特征。
+## MPLS 控制面
+
+通过前文我们已经了解到了控制面生成的产物标签表和转发表，以及数据是如何在 MPLS 网络之间转发的。接下来将介绍标签是如何在路由器之间通告的，即标签交换协议（LEP）。
+
+MPLS 网络架构中并没有规定一种 LEP，因为 LEP 协议所做的事情并不复杂，并且仅仅是自身与邻居之间进行通信。因此，实际上有多重实现协议：
+
+- 标签分发协议（Label Distribution Protocol, LDP）
+- MP-BGP
+- RSVP
+- ...
+
+这些协议都规定了下游 LSR 如何将本地标签通告给上游 LSR。这样上游 LSR 给下游 LSR 传输 MPLS 数据包时，才知道要事先打上什么标签。本文介绍最常用的 LDP 协议。LDP 协议包含两部分：
+
+- 组播 Hello 消息：通过 Hello 报文（目的地址为 224.0.0.2，UDP 端口 646）发现运行 LDP 的路由器。路由器使用 router id 作为 LDP 身份标识符，router id 一般设为 loopback 口的 IP。
+- TCP 会话：通过 TCP 端口 646 建立会话连接，并且进行会话保持（发送保活、更新和错误信息）。会话建立在两个 router id 的 IP 之间，通过 TCP 报文交换标签信息。
+
+综上所述，LSR 通过组播获取当前所有 LDP 邻居，然后与所有邻居建立 TCP 会话来交换 prefix-label binding，这样 LSR 就可以知道所有与自己相连的标签信息，并且在 LIB 中存储为 remote label，这样 LIB 就构建好了。
+
+假设 R1 需要与  `172.31.0.0/24` 网段进行通信，需要沿途的 LSR 都建立好转发路径才可以，即 LSP 建立之后才可以进行通信。LSP 的建立是从终点向起点并行开始的。
+
+![img](mpls.assets/2.jpeg)
+
+R2 向上游和下游都发布了 568 的标签信息，然而该信息对于下游 R3 而言是没有用的，因为该网段在 R3 上的代价更低，不会通过 R2 进行转发，因此也不会写入标签表中。因此，虽然会交换所有的标签信息，但只有最优的才会起作用，这与路由算法相同，本质上还是路由优先算法决定的。
+
+## MPLS 特殊标签
+
+通过建立 LSP，数据包可以通过 LSP 顺利到达 R4，然后 R4 做两件事：
+
+- 将标签弹出，这样就获得了一个 IP 数据包。
+- 在本地路由中查找网段，发现是直连路由，然后转发至  `172.31.0.0/24` 网段中。
+
+这样所有的 MPLS 流程就完成了，但是仍然有优化空间。MPLS 使用**特殊标签（0-15）**来实现特殊功能。
+
+细品一下可以发现，在 上述R4 中实际上已经可以直接处理 IP 路由包了，因为该网段是直连的，不再需要 MPLS 了，因此在 R3 中就已经可以将标签弹出了，这就是**倒数第二跳弹出机制**（ Penultimate Hop Popping, PHP），通过 PHP 机制可以优化一点转发性能。
+
+在 PHP 机制下，LSR 为直连路由生成 `Implicit NULL(3)` 特殊标签，然后通告给上游 LSR。当上游 LSR 发现出口标签是 Imp. NULL 时，也不再进行查找，便会直接弹出标签。这样最后一跳路由器在收到 IP 报文后，不再需要查找 LFIB。
+
+![img](mpls.assets/3.jpeg)
+
+PHP 机制也有一个缺陷，假如 MPLS 头中包含了 QoS 信息，即 TC 字段有效。那么 R4 收到的数据已经丢失了该部分信息。因此，R4 需要一个特殊标签用于避免这种情况发生，这就是 `Explicit NULL(0 for ipv4, 2 for ipv6)` 标签。当上游 LSR 发现出口标签是 Exp. NULL 时，直接替换为该标签。这样最后一跳路由器可以获取 QoS 信息。
+
+![img](mpls.assets/4.jpeg)
+
+另外，还有一个特殊标签 `Router Alert(1)` 用于启动安全模式，当 LSR 收到标签 1 时，其跳过硬件转发而上送到 CPU 处理，然后正常完成标签操作后，再将 1 放入标签栈顶，来保证下一个 LSR 也启动安全处理模式。
+
+![img](mpls.assets/5.jpeg)
+
+## MPLS L3 VPN
+
+前问题过，MPLS 的转发优势已经不明显，目前其中最重要的作用就是用于构建 VPN 网络。
+
+### 概念
+
+MPLS L3 VPN 是 MPLS 最广泛的应用。MPLS L3 VPN又称为 **BGP/MPLS IP VPN**，由 [RFC4364](https://link.zhihu.com/?target=https%3A//tools.ietf.org/html/rfc4364) 定义。这不是某个特定的而技术或者协议，而是一些技术的集合应用。
+
+## 参考
+
+- [MPLS基础 - 知乎肖宏辉](https://zhuanlan.zhihu.com/p/27232535)
+- [MPLS control plane - 知乎肖宏辉](https://zhuanlan.zhihu.com/p/27340628)
+- [MPLS L3 VPN - 知乎肖宏辉](https://zhuanlan.zhihu.com/p/27539826)
+- [RFC 3031 - Multiprotocol Label Switching Architecture](https://datatracker.ietf.org/doc/html/rfc3031)
+- [RFC 4364 -  BGP/MPLS IP Virtual Private Networks (VPNs)](https://datatracker.ietf.org/doc/html/rfc4364)
+

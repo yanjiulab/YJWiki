@@ -53,7 +53,7 @@ LVS 不同的转发方式具有不同的网络架构，也导致了不同的性�
 
 具体流程为：入站请求走 LVS，LVS 修改目的 MAC，将其转发给真正的 RS，RS 的回复报文绕过 LVS 直接发给 Client。具体数据包流向如下图所示。其中 LVS 和 RS 虽然有虚线连接，但只表示逻辑上的连接，实际数据包是通过交换机转发的。
 
-![lvs-dr](kernel-kernel-lvs.assets/lvs-dr.png)
+![lvs-dr](kernel-lvs.assets/lvs-dr.png)
 
 由于大部分情况下都是请求包小，回复包大，LVS 不容易成为流量瓶颈，同时 LVS 只需要修改进来的包的 MAC 地址，因此 DR 模式性能很好。
 
@@ -68,7 +68,7 @@ LVS 不同的转发方式具有不同的网络架构，也导致了不同的性�
 
 NAT 模式基于 NAT 技术完成转发，类似于 NAT 路由器的功能，只不过多了负载均衡的过程，这种方式配置简单，支持端口映射（看名字就知道），并且 RIP 一般是私有地址。其数据包流向如下图所示：
 
-![lvs-nat](kernel-kernel-lvs.assets/lvs-nat.png)
+![lvs-nat](kernel-lvs.assets/lvs-nat.png)
 
 这种模式的缺点为：
 

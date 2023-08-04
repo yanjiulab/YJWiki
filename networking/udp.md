@@ -4,7 +4,7 @@
 
 用户数据报协议（User Datagram Protocol, UDP）是 OSI 参考模型中一种**无连接**的传输层协议，提供**简单不可靠信息传送服务**。[IETF RFC 768](https://www.rfc-editor.org/rfc/rfc768) 是 UDP 的正式规范，其 IP 报文协议号是 17。与 TCP 相比，UDP 轻量、传输效率高，但是缺少可靠性，通常应用于游戏、流媒体以及 VoIP 等场合。
 
-## UDP 帧格式
+## 帧格式
 
 UDP 帧格式十分简单，由 8 字节固定包头以及载荷组成。其中 UDP 头格式为：
 
@@ -44,6 +44,10 @@ UDP 帧格式十分简单，由 8 字节固定包头以及载荷组成。其中 
 - length 字段为 TCP/UDP 头部长度加上数据长度。
 
 ?> ICMP 校验和的计算方法同 IP 一样，只不过是对 ICMP 包整个进行校验和，没有伪首部，也不包括 IP 包首部。
+
+## 通信模型
+
+![udp-socket](udp.assets/udp-socket.png)
 
 ## QUIC
 
