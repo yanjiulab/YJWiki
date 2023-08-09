@@ -149,11 +149,24 @@ MPLS 网络架构中并没有规定一种 LEP，因为 LEP 协议所做的事情
 - IP VPN：根据目的不同，VPN 的实现方式有多种，IP 表示 VPN 网络中传输的是 IP 数据包。
 - BGP/MPLS：表示控制面基于 BGP 协议实现，转发面基于 MPLS 协议实现。
 
-### 架构
+### VPN 架构
 
 
 
 ![img](mpls.assets/mpls_09.png)
+
+### 控制面
+
+- VRF
+- CE-PE
+- MP-BGP
+- VPNv4
+- RT
+- PE-CE
+
+### 转发面
+
+给出一个图
 
 ## 参考
 
