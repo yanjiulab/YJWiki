@@ -285,8 +285,6 @@ sudo chmod 640 /etc/frr/*.conf
 bin  include  lib  sbin  share
 ```
 
-最后进行配置，我们发现，
-
 ## FRR 基本使用
 
 FRR 提供了多种方式与用户进行交互。

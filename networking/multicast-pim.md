@@ -661,6 +661,5 @@ C−RPs 周期性向 BSR 发送单播 Candidate-RP-Advertisement 消息。
 
 ## RFC
 
-\- RFC 7761 4601
-
-\- RFC 5059
+- RFC 7761 4601
+- RFC 5059
