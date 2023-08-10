@@ -32,7 +32,7 @@ BGP 发展至今，早期发布的三个版本已经很少使用。
 
 AS 是指在一个实体管辖下的拥有相同选路策略的 IP 网络，每个 AS 都被分配一个唯一的 AS 号，用于区分不同的 AS。
 
-【图】
+![img](routing-bgp.assets/bgp_01.png)
 
 能不能使用现有的 IGP 协议来进行 AS 之间的路由交换呢？首先链路状态协议（OSPF、ISIS）不适合用于交换 AS 之间的路由，因为链路状态协议需要拥有全局拓扑，这样会导致每一台路由器上都生成庞大的数据库。那么采用 RIP 这种距离矢量协议可以吗？很明显 RIP 有两个致命的问题：
 
@@ -64,7 +64,7 @@ BGP 基于 TCP（179 端口）设计，那么就不能使用 RIP 那种通过组
 - EBGP：运行于 AS 之间两台设备建立的 BGP 关系。
 - IBGP：运行于 同一 AS 之内两台设备建立的 BGP 关系。
 
-![img](routing-bgp.assets/580889022547496960.png)
+![img](routing-bgp.assets/bgp_02.png)
 
 既然有了 OSPF，为何要有 IBGP 呢？假设没有 IBGP，R2 学到的 AS 65007 的路由和 R4 学到的 AS 65009 的路由是无法交互的。要想实现交互，则 R2 和 R4 必须将庞大的 BGP 路由和 OSPF 路由互相引入，这样 R1 上的路由才能扩散到 R5 上，然而，将数十万级别的 BGP 路由引入 IGP 中是无法容忍的。从上文可知，BGP 的邻居建立无需物理上相邻，只需路由可达即可，因此通过引入 IBGP，就可以实现 R2 和 R4 之间的路由同步。
 
@@ -77,7 +77,7 @@ BGP 基于 TCP（179 端口）设计，那么就不能使用 RIP 那种通过组
 - 物理全连接：任何两个路由器之间均为直连，那么 R2 就可以直接将数据转发至 R4，该方案弊端在于随着节点的增加，需要新增的链路数量几何增长。
 - 逻辑全连接：任何两个路由器之间均建立 IBGP 连接，该方案弊端在于随着节点的增加，IBGP  的连接数也会几何增长。
 
-![img](routing-bgp.assets/580889519702544384.png)
+![img](routing-bgp.assets/bgp_03.png)
 
 根据逻辑全连接的思路，BGP 提出了两种方案解决 IBGP 连接数量过多的问题。
 
@@ -85,7 +85,7 @@ BGP 基于 TCP（179 端口）设计，那么就不能使用 RIP 那种通过组
 
 联盟（Confederation）机制采用降低 AS 规模的思路来解决该问题。将 AS 域再次划分为多个 AS 域，被分割的 AS 称为**联盟**，分割后的多个 AS 称为**成员自治系统**，但联盟之外的 AS 将整个联盟视为一个 AS。成员自治系统之内运行 IBGP 全连接，成员自治系统之间运行一种特殊的 EBGP，称为**联盟 EBGP**。
 
-![img](routing-bgp.assets/580889519916453888-16915890418754.png)
+![img](routing-bgp.assets/bgp_04.png)
 
 AS 号分为两种：
 
@@ -98,7 +98,7 @@ AS 号分为两种：
 
 路由反射器（Route Reflector）机制采用了构建一个逻辑上的星型网络来解决该问题。星型拓扑结构是用一个节点作为中心节点，其他节点直接与中心节点相连构成的网络。因此，反射机制中指定一个路由器成为 RR，作为整个 IBGP 连接网络的核心，其他设备和 RR 建立 IBGP 连接即可。
 
-![img](routing-bgp.assets/580889521321545728.png)
+![img](routing-bgp.assets/bgp_05.png)
 
 此时，网络中的设备角色包括：
 
@@ -118,7 +118,93 @@ RR 向 IBGP 邻居发布路由规则如下：
 
 联盟和路由反射器都是在大规模自治系统中减少 IBGP 对等体数量的有效方法，有时两者共同使用将会更加方便。
 
-![img](routing-bgp.assets/580889522344955904.png)
+![img](routing-bgp.assets/bgp_06.png)
+
+## BGP 报文格式
+
+在 BGP 核心思想中，我们已经提到了几种报文，实际上 BGP 总共包括 5 种报文，每种报文都有一个通用 BGP 头部，其格式为：
+
+- 标记（Marker）：16 字节，固定全为 1。
+- 长度（Length）：2 字节，消息全部长度，包括头部。
+- 类型（Type）：1 字节，指示报文类型
+  - OPEN (1)
+  - UPDATE (2)
+  - NOTIFICATION (3)
+  - KEEPALIVE (4)
+  - ROUTE REFRESH (5)
+
+以如下简单拓扑为例，详细介绍各种报文格式。
+
+![img](routing-bgp.assets/bgp_07.png)
+
+### OPEN 报文
+
+OPEN 报文用于建立 BGP 邻居关系，其主要字段解释如下：
+
+- Version：BGP 版本号，一般为 BGPv4。
+- My AS：本地 AS 编号。通过比较报文中的 AS 编号，可以确认是 IBGP 还是 EBGP。
+- Holdtime：以两端的较小值协商保持时间。如果保持时间内未收到保活消息，则认为 BGP 连接中断。默认为保活报文发送周期 3 倍，即 180 秒。
+- BGP Identifier：BGP 路由器的 Router ID，用于标识 BGP 路由器。
+- Opt Para Len：可选参数长度。
+- Opt Paras：可选参数，每个可选参数为一个 TLV 字段。主要用于多协议扩展使用。
+
+![img](routing-bgp.assets/bgp_08.png)
+
+### UPDATE 报文
+
+UPDATE 报文用于 BGP 对等体之间进行路由表同步。一条 UPDATE 消息可以发布多条具有相同路由属性的可达路由，也就是这些路由共享一组路由属性。同样也可以撤销多条不可达路由信息。
+
+![img](routing-bgp.assets/bgp_09.png)
+
+其主要字段解释如下：
+
+- Withdraw Routes Length：不可达路由长度。为 0 表示没有不可达路由，则 Withdraw Routes 字段不会在 UPDATE 报文中显示。
+- Withdraw Routes：不可达路由，以 `length,prefix` 格式表示，例如 `192.168.10.0/24` 网段的十六进制表示为 `18 C0 A8 0A`。
+- Path Attribute Length：路由属性长度。为 0 表示没有路由属性，则 Path Attributes 字段不会在 UPDATE 报文中显示。
+- Path Attributes：路由属性，可变长度。
+- NLRI：网络可达路由，以 `length,prefix` 格式表示。
+
+R1 向 R2 发送 UPDATE 报文后，R2 上路由表为：
+
+![img](routing-bgp.assets/bgp_13.png)
+
+**路由属性**是 UPDATE 报文中最重要的字段，也是 BGP 路由实现各种拓展功能的基础。每个属性都由变长 TLV 组成，路由属性是对 NLRI 的特定描述，所有的 BGP 路由属性都可以分为以下 4 类：
+
+- 公认必须遵循（Well-known mandatory）：所有 BGP 设备都可以识别此类属性，且必须存在于 UPDATE 报文中。如果缺少这类属性，路由信息就会出错。
+- 公认任意（Well-known discretionary）：所有 BGP 设备都可以识别此类属性，但不要求必须存在于 UPDATE 报文中，即就算缺少这类属性，路由信息也不会出错。
+- 可选过渡（Optional transitive）：BGP 设备可以不识别此类属性，如果 BGP 设备不识别此类属性，但它仍然会接收这类属性，并通告给其他对等体。
+- 可选非过渡（Optional non-transitive）：BGP 设备可以不识别此类属性，如果 BGP 设备不识别此类属性，则会被忽略该属性，且不会通告给其他对等体。
+
+常用的属性如下，这里我们简单列出，后续结合其具体用途详细讨论。
+
+属性名|类型
+:---:|:---:
+Origin 属性|公认必须遵循
+AS_Path 属性|公认必须遵循
+Next_Hop 属性|公认必须遵循
+Local_Pref 属性公认任意
+MED 属性|可选非过渡
+团体属性|可选过渡
+Originator_ID 属性|可选非过渡
+Cluster_List 属性|可选非过渡
+
+### NOTIFICATION 报文
+
+NOTIFICATION 报文用于报告错误并中断连接。
+
+![img](routing-bgp.assets/bgp_10.png)
+
+### KEEPALIVE 报文
+
+KEEPALIVE 报文用于进行保活，只包含通用头。发送该报文的时间间隔为 60 秒。
+
+![img](routing-bgp.assets/bgp_11.png)
+
+### ROUTE REFRESH 报文
+
+通过 OPEN 报文告知对端本端支持路由刷新功能，如果入口策略发生改变，本地 BGP 路由器向对等体发送 ROUTE REFRESH 报文，对等体收到该报文后，将其路由信息重新发送给本地路由器。这样可以在不中断 BGP 连接的情况下进行 BGP 路由刷新。
+
+![img](routing-bgp.assets/bgp_12.png)
 
 ## 路由环路
 
@@ -132,12 +218,6 @@ EBGP 发生路由环路的**根本原因是路由的起源和经过的 AS 是不
 
 IBGP路由环路产生的原因和 EBGP 类似，但是由于 IBGP 是在 AS 内部建立的 BGP 关系，所以无法通过记录路由经过的 AS 号来进行防环。对于 IBGP，协议采用了类似 RIP 的水平分割的机制，称之为 IBGP 水平分割，其内容为：从 IBGP 对等体接收到的路由不会通告给其他的IBGP邻居。
 
-## BGP 属性
-
-## 路由聚合
-
-## 路由选路
-
 ## 参考
 
-参考：<https://forum.huawei.com/enterprise/zh/thread-243715.html>
+- [交换机在江湖 BGP 篇](https://forum.huawei.com/enterprise/zh/thread-243715.html)
