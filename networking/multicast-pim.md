@@ -96,7 +96,7 @@ PIM DM 协议由 **RFC 3973** 描述，是一种状态较为简单的协议，�
 
 综上所述，PIM-DM 通过周期性的进行“扩散、剪枝、嫁接”，来构建并维护了若干棵**连接组播源和组成员的单向无环源最短路径树（Source Specific Shortest Path Tree, SPT）**，这些树以组播转发表的形式保存，每棵树对应了组播转发表的其中一个表项。
 
-除此之外，PIM-DM 的关键工作机制包括邻居发现、扩散、剪枝、嫁接、断言和状态刷新。其中，扩散、剪枝、嫁接是构建SPT的主要方法。
+除此之外，PIM-DM 的关键工作机制包括邻居发现、扩散、剪枝、嫁接、断言和状态刷新。其中，扩散、剪枝、嫁接是构建 SPT 的主要方法。
 
 ### 协议状态信息
 
@@ -177,6 +177,10 @@ two timers:
 
 - PrunePending Timer (PPT(S,G,I))：PPT 超时后进入剪枝状态，同时启动剪枝定时器 PT。
 - Prune Timer (PT(S,G,I))：PT 超时后重新恢复转发，进入 NI 状态。可以使用 SR 报文一直刷新 PT，让下游一直不能恢复转发。
+
+## PIM DM 总结
+
+DM 是一种数据驱动型组播模式。
 
 ## PIM SM
 
@@ -617,7 +621,7 @@ PIM 路由器在接收到邻居路由器发送的相同组播报文后，会以�
 
 ### Graft 消息
 
-嫁接消息格式与加入/剪枝消息格式相同，区别在于嫁接消息类型为 6，
+嫁接消息格式与加入/剪枝消息格式相同，区别在于嫁接消息类型为 6。
 
 ### Graft-Ack 消息
 
@@ -658,6 +662,85 @@ C−RPs 周期性向 BSR 发送单播 Candidate-RP-Advertisement 消息。
 - DM 和 SM 虽然共享数据包格式，但却不能直接交互。
 - PIM 路由器无法通过 Hello 包来区分是 DM 邻居还是 SM 邻居。
 - DM 的加入、剪枝、嫁接消息都是指定源的，因此无需和 SSM 协议进行区分。
+
+## PIM 实战
+
+下图是一个示例拓扑。
+
+![pim-topo](multicast-pim.assets/pim_topo.png)
+
+在进行配置时需要注意以下几点：
+
+- 全网设备单播可达：这是进行 PIM 组播的基础。
+- PIM/IGMP 是**三层组播协议**，需要配置在三层接口（有 IP 地址）之上。
+- 组播源 DR R1：
+  - 全局开启组播协议支持。
+  - GE0/0/1 和 需要开启 PIM 协议，用于与 PIM 邻居 R2 交换 PIM 信令。
+  - **GE0/0/2 虽然没有 PIM 邻居需要交互，但同样需要开启 PIM 协议**。因为当组播流到达时，需要进行组播流程，主要包括：进行 RPF 检查，数据驱动生成组播转发表等。
+- 组播接收者 DR R2：
+  - 全局开启组播协议支持。
+  - GE0/0/1 需要开启 PIM 协议。
+  - GE0/0/2 和 GE0/0/3 需要开启 IGMP 协议。
+- 接收者 PC2/PC3：
+  - 发送 IGMP Report 消息加入组播组。
+- 发送者 PC1：
+  - 数据流目的 IP 为组播组 IP 地址，为了匹配路由器的 `(S, G)` 组播转发表项。
+  - 数据流目的 MAC 地址为组播组 MAC 地址，如果使用测试仪/组播视频软件发包，一般能正确计算 MAC 地址；如果是利用自定义软件发包，常见的错误是配置 目的 MAC 地址为全 F 广播 MAC，这会导致路由器无法进行组播转发。
+  - 数据流 TTL 应当合适，如果是 0 或 1 将会被路由器丢弃。
+
+### DM 示例
+
+TODO
+
+### SM (ASM) 示例
+
+在 SM-ASM 模式下，关键角色是 RP，首先将 RP 设置在 R2 上。
+
+当 PC1 向 `225.0.0.1` 发送组播数据时，首先 R1 会向 RP 发送 Register 数据包。
+
+![pim_xx](multicast-pim.assets/pim_sm_reg.png)
+
+RP 收到该包后，立即向上游发送 `(S, G)` Join 数据包。
+
+![pim_xx](multicast-pim.assets/pim_sm_join.png)
+
+该 Join 消息将会逐跳发送至组播源 DR，沿途每一个 PIM 路由器都会建立 `(S, G)` 表项。在本例中，R1 将会建立 `(S, G)` 表项。此后，从 S 发来的 G 组播数据将会根据 `(S, G)` 表项向 RP 转发，该路径称为 SPT，组播数最终到达 RP，
+
+![pim_xx](multicast-pim.assets/pim_sm_r1.png)
+
+此时 RP 收到两份数据包，一份来自 SPT 直接转发，一份来自 Register 数据包，因此，RP 将会向上游发送 RegisterStop 消息，用于取消 Register 数据包发送。
+
+![pim_xx](multicast-pim.assets/pim_sm_regstop.png)
+
+此后，R1 将不会发送 Register 消息。
+
+再观察 R2 的组播树，R2 上有两种表项，一种是由 SPT 生成的 `(S, G)` 表项，另一种是 RPT 生成的 `(*, G)` 表项。
+
+![pim_xx](multicast-pim.assets/pim_sm_r2.png)
+
+当 RP 设置为 R1 时，PC2 向 R2 发送 IGMP Join 消息。R2 收到接收者发送的对于某个组 G 的 IGMP Join 消息时，便生成 `(*, G)` 表项。
+
+![pim_xx](multicast-pim.assets/pim_sm1_r2.png)
+
+同时，向 RP 发送一个对该组的 PIM Join 消息，即 `(*, G)` Join。该 Join 消息逐跳发送至 RP，沿途每一个 PIM 路由器都会建立 `(*, G)` 表项。注意 Source 是 RP 的地址，标志为 SWR，而不是组播源。
+
+![pim_xx](multicast-pim.assets/pim_sm1_join.png)
+
+最后 RP 上生成的 PIM 表如下。
+
+![pim_xx](multicast-pim.assets/pim_sm1_r1.png)
+
+当由数据来临时，R1 生成 `(S, G)` 表项，并完成 SPT 切换过程。
+
+![pim_xx](multicast-pim.assets/pim_sm2_r1.png)
+
+当数据到达 R2 时，也会触发生成 `(S,G)` Join 消息并生成 `(S,G)` 表项。注意：此时 R2 向 RP 发送两个 Join 消息，一个是前面的 `(*, G)` Join，一个是 `(S,G)` Join。
+
+![pim_xx](multicast-pim.assets/pim_sm2_join.png)
+
+### SM (SSM) 示例
+
+SSM 中需要使用 IGMPv3 协议。
 
 ## RFC
 
