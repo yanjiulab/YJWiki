@@ -396,14 +396,14 @@ ip link add <p1-name> type veth peer name <p2-name>
 
 虚拟路由转发（Virtual Routing Forwarding, VRF）是一种三层虚拟化技术，简单而言就是把一台路由器当作多台虚拟路由器使用。虚拟路由器之间从物理网卡设备到三层路由之间全是隔离的。另外，VRF 可以嵌套在 net 命名空间中使用。
 
+### 实现原理
+
 Linux 中通过虚拟网卡技术实现 VRF，每个 VRF 域表现为一个虚拟网卡，通过将物理网卡“绑到”虚拟网卡上，从而实现将该物理网卡划分到不同 VRF 域中隔离。
 
 VRF 的实现经历了两个阶段：
 
 1. 内核 v4.3 - v4.8：基础阶段，需要结合外部策略路由规则才能使用。
 2. 内核 v4.8 之后：完善阶段，通过引入 l3mdev 提供完整的设施支持。
-
-### 第一阶段
 
 在第一阶段中，VRF 的实现简单粗暴，通过配置**策略路由**，将流量导入不同的路由表中匹配，从而实现隔离。
 
@@ -420,11 +420,11 @@ ip rule add iif vrf-blue table 10
 
 由于数据包中 dev 已经是 VRF 设备，表明数据是通过 VRF 设备来接受的，自然进入策略路由匹配流程，由此实现了 VRF 隔离逻辑。
 
-### 第二阶段
+通过原理可知，此时的隔离仅仅是路由表的隔离，其二三层的邻居表都是共享的。
 
 在 Linux 4.8 之后，内核提供了一种更加优雅的实现方式。即引入了 l3mdev (Layer 3 master device) 机制，通过 l3mdev 便省去了显式配置策略路由的过程。在创建一个 VRF 虚拟网卡的时候，系统便自动将其与一个特定的策略路由表关联，l3mdev 机制基于这种关联来完成策略路由表的定向操作。
 
-### 操作
+### 控制路径
 
 首先，创建两个 VRF 虚拟网卡 vrf-blue 和 vrf-blue 及其关联路由表 table 1 和 table 2，然后启动两个网卡。
 
@@ -455,6 +455,39 @@ vrf-blue         UP             72:ea:fe:db:f3:57 <NOARP,MASTER,UP,LOWER_UP>
 ```
 # ip link set dev eth0 master vrf-blue
 ```
+
+总结一下，控制路径完成了两件事：
+
+1. 将 VRF 虚拟网卡与特定路由表关联。
+2. 将物理网卡与 VRF 虚拟网卡关联。
+
+### 数据接收路径
+
+当完成上述两步关联之后，物理网卡就可以通过 VRF 与特定路由表进行联系。
+
+具体而言，当数据从物理网卡收到时，依次经过网卡驱动，netif_receive_skb，ip_rcv 等调用，然后再 ip_rcv_finish 最后，调用了 l3mdev_ip_rcv 函数，在该函数中，**将 skb 的 dev 字段修改为该 dev 的主设备 VRF 虚拟网卡**。
+
+数据在经过一些步骤后，进入策略路由的处理逻辑 fib_rule_match，在这里系统遍历所有的 rule 链表，然后进入 `[l3mdev-table]` 的处理逻辑 l3mdev_fib_rule_match，在这里进行了隐式处理，即系统发现该 dev 是 VRF 虚拟网卡，便通过其回调函数获得其关联的路由表，最终在该路由表中进行路由查找。
+
+### 数据发送路径
+
+本地数据的发送一般是来源于 socket 而不是网卡，但 socket 并不和网卡绑定，通常情况下，进行路由查找后，才能知道从哪个网卡发出。因此，socket 若想使用 VRF 机制，就必须与特定网卡绑定。
+
+```c
+int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+// OK: Some AF_INET: SOCK_DGRAM, SOCK_STREAM, SOCK_RAW
+// Not OK: AF_PACKET, must bind() to `struct sockaddr_ll`
+char *vrf_dev = "vrf-red";
+setsockopt(sockfd, SOL_SOCKET, SO_BINDTODEVICE, vrf_dev, strlen(vrf_dev)+1);
+```
+
+由于绑定 VRF 虚拟网卡设备的 setsockopt 是针对特定 socket 的，如果仅仅针对 listener socket 做了绑定，那么对于这个 listener socket  的 acceptor socket 如何绑定呢？系统可以自动做到这一点。
+
+```shell
+sysctl -w net.ipv4.tcp_l3mdev_accept=0
+```
+
+该参数可以自动识别从隶属于某 VRF 域的网卡是上收到的数据包所属的具体 VRF 域。
 
 ## 单播路由（ip route）
 
