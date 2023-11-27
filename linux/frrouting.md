@@ -75,80 +75,129 @@ nhrpd         2612/tcp    # nhrpd vty
 
 FRRouting（以下简称 FRR）目前仍然在不断更新中，从使用者角度而言，Quagga 与 FRR 使用基本差别不大，特别是两者都支持的协议，其配置使用基本一致。因此，下文中关于 FRR 的配置介绍，绝大部分都适用于 Quagga，关于更多信息详见[官网](http://docs.frrouting.org/en/latest/index.html)。
 
-## FRR 安装
+## FRR 源码编译安装
 
-以 CentOS 8 系统为例，其余操作系统请参考官方文档。总体而言与 Quagga 类似，但依赖安装更为繁琐一些。
+如果是仅需要使用 FRR，可以通过包管理器（如 Ubuntu 的 apt）安装，这种安装方式比较简单。但大多数情况下 FRR 使用者需要定制功能，或者进行二次开发，此时需要编译安装，本文主要介绍编译安装的方式，总体而言与 Quagga 类似，但依赖安装更为繁琐一些。大致流程如下：
 
-### 安装依赖
+1. 下载源码
+2. 更新构建系统
+3. 配置 configure 参数
+4. make 编译安装
 
-```shell
-sudo dnf install --enablerepo=PowerTools git autoconf pcre-devel automake libtool make readline-devel texinfo net-snmp-devel pkgconfig groff pkgconfig json-c-devel pam-devel bison flex python2-pytest c-ares-devel python2-devel libcap-devel elfutils-libelf-devel libunwind-devel
+上述步骤命令如下：
+
+```sh
+git clone https://github.com/frrouting/frr.git frr
+cd frr
+./bootstrap.sh
+./configure [...]
+make [-j] # 根据需求是否开启并行编译加速
+make check
+sudo make install
 ```
 
-> 如果提示没有 Powertools 库，需要先安装 dnf-plugins-core 并启用 PowerTools 库。
+后文以 Ubuntu 22.04 系统为例，进行详细的描述。
 
-```shell
-sudo dnf install dnf-plugins-core
-sudo dnf config-manager --set-enabled powertools
+## 安装依赖
+
+在正式安装之前，需要首先安装好依赖。依赖可以分为两类：
+
+1. 安装工具依赖：这些是编译安装时依赖的工具，通过包管理器二进制安装即可。不同的发行版具有不同的安装方式，这一步参考 FRR 开发文档。但 FRR 有些依赖在包管理器中可能没有，或是版本不适配，因此也需要通过源码编译安装。
+2. 功能模块依赖：根据 configure 的参数不同，FRR 编译的模块也不同。有些可选的模块，如果不需要编译该功能，也可以不安装对应的依赖。功能模块的依赖主要以源码编译安装为主，个别如果有二进制，也可以进行 apt 等方式安装。
+
+下面列出 FRR 可能用到的需要源码编译的依赖。
+
+```sh
+sudo apt-get install git cmake build-essential bison flex libpcre3-dev libev-dev libavl-dev libprotobuf-c-dev protobuf-c-compiler libcmocka0 libcmocka-dev doxygen libssl-dev libssl-dev libssh-dev
 ```
 
-查看是否启用 PowerTools 库。
-
-```shell
-$ dnf repolist
-repo id                                                  repo name
-appstream                                                CentOS Linux 8 - AppStream
-baseos                                                   CentOS Linux 8 - BaseOS
-extras                                                   CentOS Linux 8 - Extras
-powertools                                               CentOS Linux 8 - PowerTools
-```
-
-> 如果提示无法找到 libunwind ，可以跳过安装不影响 FRR 功能使用。
+### libyang
 
 FRR 需要依赖 libyang 2.0 版本以上，libyang 源码安装如下。
 
 ```shell
-sudo dnf install cmake pcre2-devel # libyang's dependencies
 git clone https://github.com/CESNET/libyang.git
 cd libyang
-git checkout v2.0.0
 mkdir build; cd build
 cmake -D CMAKE_INSTALL_PREFIX:PATH=/usr -D CMAKE_BUILD_TYPE:String="Release" ..
 make
 sudo make install
 ```
 
-### 获取源码
+注意：最好指定 `/usr/` 前缀，这样可以避免一些搜索路径的问题。否则默认安装到 `/usr/local` 中。另外如果编译 libyang 失败，则可以通过 apt 安装缺失的工具。
 
-通过 git 获取源码，并且进行初始化。
+### gRPC
 
-```shell
-git clone https://github.com/frrouting/frr.git frr
-cd frr
-./bootstrap.sh
-```
+如果需要北向 gRPC 接口需要安装 gRPC 依赖。
 
-### 环境配置
+sudo apt install -y build-essential autoconf libtool pkg-config
 
-首先，根据需求配置 FRR 成员和组。
+### sysrepo
 
-```shell
-sudo groupadd -g 92 frr
-sudo groupadd -r -g 85 frrvty
-sudo useradd -u 92 -g 92 -M -r -G frrvty -s /sbin/nologin -c "FRR FRRouting suite" -d /var/run/frr frr
-```
+如果需要 YANG 数据库，则需要使能 sysrepo。
 
-其次，根据需求对 `./configure` 命令选择适当的参数。 这部分类似于 Quagga。
-
-### 编译安装
-
-配置完毕之后，可以进行编译、检查、安装过程。
-
-```shell
-make [-j] # 根据需求是否开启并行编译加速
-make check
+```sh
+git clone https://github.com/sysrepo/sysrepo.git
+mkdir build; cd build
+cmake -D CMAKE_INSTALL_PREFIX:PATH=/usr -D CMAKE_BUILD_TYPE:String="Release" ..
+make
 sudo make install
 ```
+
+### libnetconf2
+
+如果需要北向接口 NETCONF 协议，则需要安装 libnetconf2。
+
+```sh
+git clone https://github.com/CESNET/libnetconf2.git
+cd libnetconf2/
+mkdir build; cd build
+cmake -D CMAKE_INSTALL_PREFIX:PATH=/usr -D CMAKE_BUILD_TYPE:String="Release" ..
+make
+sudo make install
+```
+
+### netopeer2
+
+如果需要通过北向 NETCONF 协议操作 YANG 数据库，则可以使用 Netopeer2 套件。
+
+```sh
+$ git clone https://github.com/CESNET/netopeer2.git
+$ cd netopeer2
+$ mkdir build; cd build
+cmake -D CMAKE_INSTALL_PREFIX:PATH=/usr -D CMAKE_BUILD_TYPE:String="Release" ..
+make
+sudo make install
+```
+
+## 配置用户和组
+
+如果需要，可以根据需求配置 FRR 成员和组。如果不想创建这些组和用户，可以直接用 root，因此就不需要本节的配置。
+
+```shell
+sudo groupadd -r -g 92 frr
+sudo groupadd -r -g 85 frrvty
+sudo adduser --system --ingroup frr --home /var/run/frr/ --gecos "FRR suite" --shell /sbin/nologin frr
+sudo usermod -a -G frrvty frr
+```
+
+## 编译安装
+
+```sh
+./configure \
+    CFLAGS=-Wl,--copy-dt-needed-entries \
+    --prefix=/opt/frr \
+    --localstatedir=/var/run/frr \
+    --enable-snmp=agentx \
+    --enable-multipath=64 \
+    --enable-user=root \
+    --enable-group=root \
+    --enable-fpm \
+    --enable-config-rollbacks \
+    --enable-sysrepo=yes 
+```
+
+使用 GCC 11 编译时，需要加上 `-Wl,--copy-dt-needed-entries` 参数，否则会产生 DSO missing 问题。
 
 ## FRR 配置
 
@@ -484,19 +533,154 @@ zebra is an IP routing manager. It provides kernel routing table updates, interf
 
 ### RIP 协议
 
+RIP 简要配置如下：
+
+```
+debug rip events
+debug rip packet
+
+router rip
+ network 11.0.0.0/8
+ network eth0
+ route 10.0.0.0/8
+ distribute-list private-only in eth0
+
+access-list private-only permit 10.0.0.0/8
+access-list private-only deny any
+```
+
 ### IS-IS 协议
 
 ### OSPF 协议
 
+重分布
+
 ### BGP 协议
+
+### 调试相关
+
+命令|描述
+:---:|:---:
+`terminal monitor`|将日志显示在控制台中
+
+## FRR 北向接口
+
+### SYSREPO + NETCONF
+
+首先需要检查依赖，安装 sysrepo、libnetconf2 和 netopper2 库。
+
+然后，使用 `./configure --enable-sysrepo=yes` 参数构建 FRR。
+
+安装 FRR 的 YANG 模型到 sysrepo 数据库中。YANG 模型的路径为 `${PREFIX}/share/yang/`，首先把模型都安装到数据库中，其次根据需求更改用户和组。例如：
+
+```sh
+sudo sysrepoctl --install ${PREFIX}/share/yang/frr-isisd.yang 
+sudo sysrepoctl -c frr-isisd --owner frr --group frr
+sudo sysrepoctl -u examples # uninstall module
+```
+
+这一步可能出现 install 错误的情况，是因为 frr-ripd 模型中引用了其他的 YANG 模型文件，因此把所有模型都安装一遍就行了。
+
+`sudo sysrepoctl -c :ALL -p 666` 可将所有模块权限设为 rw-rw-rw-。
+
+后台启动 NETCONF 服务端。
+
+```sh
+sudo netopeer2-server -d &
+```
+
+单独启动 ripd 进程，启动时选择 sysrepo 模块，并且在前台打印。或者在 `daemon` 配置中指定启动参数，效果相同。
+
+```sh
+sudo isisd -M sysrepo --log=stdout
+```
+
+编写 NETCONF 客户端脚本，进行配置管理。脚本使用 Python 编写，依赖 ncclient 库，可以通过 `apt install -y python3-ncclient` 进行安装。
+
+```sh
+sudo ./netconf-edit.py 127.0.0.1
+sudo ./netconf-get-config.py 127.0.0.1
+<?xml version="1.0" encoding="UTF-8"?><data xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"><isis xmlns="http://frrouting.org/yang/isisd"><instance><area-tag>testnet</area-tag><is-type>level-1</is-type></instance></isis></data>
+```
+
+`netconf-edit.py` 脚本内容如下：
+
+```py
+#! /usr/bin/env python3
+#
+# Change the running configuration using edit-config
+# and the test-option provided by the :validate capability.
+#
+# $ sudo ip vrf exec testnet ./netconf-edit.py 10.254.254.7
+
+import sys, os, warnings
+warnings.simplefilter("ignore", DeprecationWarning)
+from ncclient import manager
+
+def demo(host):
+    snippet = """
+      <config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0">
+        <isis xmlns="http://frrouting.org/yang/isisd">
+          <instance>
+            <area-tag>testnet</area-tag>
+            <is-type>level-1</is-type>
+          </instance>
+        </isis>
+      </config>"""
+
+    with manager.connect(host=host, port=830, username="root", password='vagrant', hostkey_verify=False) as m:
+        assert(":validate" in m.server_capabilities)
+        m.edit_config(target='running', config=snippet,
+                      test_option='test-then-set')
+
+if __name__ == '__main__':
+    demo(sys.argv[1])
+```
+
+`netconf-get-config.py` 脚本内容如下：
+
+```py
+#! /usr/bin/env python3
+#
+# Get the running configuration.
+#
+# $ sudo ip vrf exec testnet ./netconf-get-config.py 10.254.254.7
+
+import sys, os, warnings
+warnings.simplefilter("ignore", DeprecationWarning)
+from ncclient import manager
+
+def demo(host):
+    with manager.connect(host=host, port=830, username="root", password='vagrant', hostkey_verify=False) as m:
+        c = m.get_config(source='running').data_xml
+        print(c)
+
+if __name__ == '__main__':
+    demo(sys.argv[1])
+```
+
+上述脚本的 username 和 password 换位自己主机的用户名和密码。
 
 ## FRR 源码分析
 
 ### 架构分析
 
-### 基础工具
+### 命令行
 
-### PIM 协议
+```c
+static int ospf_config_write(struct vty *vty);
+static struct cmd_node ospf_node = {
+    .name = "ospf",
+    .node = OSPF_NODE,
+    .parent_node = CONFIG_NODE,
+    .prompt = "%s(config-router)# ",
+    .config_write = ospf_config_write,
+};
+```
+
+ospf_config_write() 负责将配置的命令写回配置文件。
+
+## RIP 源码分析
 
 以 PIM 为例
 
@@ -547,6 +731,31 @@ int receive_pim_hello(src, dst, pim_message, datalen)
 ```
 
 char* packet_kind(proto, type, code)
+
+## OSPF 源码分析
+
+### 核心数据结构
+
+OSPF LSDB 数据库结构定义如下：
+
+```c
+/* OSPF LSDB structure. */
+struct ospf_lsdb {
+    struct {
+        unsigned long count;
+        unsigned long count_self;
+        unsigned int checksum;
+        struct route_table *db;
+    } type[OSPF_MAX_LSA];
+    unsigned long total;
+#define MONITOR_LSDB_CHANGE 1 /* XXX */
+#ifdef MONITOR_LSDB_CHANGE
+    /* Hooks for callback functions to catch every add/del event. */
+    int (*new_lsa_hook)(struct ospf_lsa *);
+    int (*del_lsa_hook)(struct ospf_lsa *);
+#endif /* MONITOR_LSDB_CHANGE */
+};
+```
 
 ## FRR debug
 

@@ -26,8 +26,8 @@ lrwxrwxrwx 1 liyanjiu liyanjiu 0 6月  27 21:00 uts -> 'uts:[4026531838]'
 
 命名空间的实现主要涉及三个系统调用：
 
-- `clone()` – 实现线程的系统调用，用来创建一个新的进程，并可以通过设计上述参数设置命名空间。
-- `unshare()` – 使某进程脱离某个 Namespace，加入到新建的 Namespace 中。
+- `clone()` – 实现线程的系统调用，用来创建一个新的进程，并可以通过设计上述参数设置是否使用新的命名空间。
+- `unshare()` – 使某进程脱离某个 Namespace，并加入到新建的 Namespace 中。
 - `setns()` – 把某进程加入到某个已存在的 Namespace。
 
 其中 unshare() 函数有一个同名包装命令，因此用起来比较简单，下文中使用 `unshare` 命令来进行实验。
