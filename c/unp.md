@@ -32,8 +32,6 @@ raw
 | `netdb.h`      | POSIX | 域名相关                | 与域名和 IP 地址转换相关的函数                                                             | 需要域名解析时引入           |
 |                |       |                         |                                                                                            |                              |
 
-
-
 ## 套接字地址结构
 
 大多数套接字函数都需要一个**指向套接字地址结构的指针作为参数**，每个协议族都定义了自己的套接字地址结构，这些结构名均以 `sockaddr_` 开头。
@@ -84,12 +82,12 @@ struct sockaddr {
 ```c
 struct sockaddr
 {
-    __SOCKADDR_COMMON (sa_);	/* Common data: address family and length.  */
-    char sa_data[14];		/* Address data.  */
+    __SOCKADDR_COMMON (sa_);    /* Common data: address family and length.  */
+    char sa_data[14];        /* Address data.  */
 };
 ```
 
-其中 `__SOCKADDR_COMMON (sa_)` 是一个宏定义，其定义为 `#define __SOCKADDR_COMMON(sa_prefix) sa_family_t sa_prefix##family`，其中使用了 `##` 连接符，将 `sa_prefix` 和 `family` 进行连接。例如，`__SOCKADDR_COMMON (sa_)` 将会被简单的替换为 ` sa_family_t sa_family`。
+其中 `__SOCKADDR_COMMON (sa_)` 是一个宏定义，其定义为 `#define __SOCKADDR_COMMON(sa_prefix) sa_family_t sa_prefix##family`，其中使用了 `##` 连接符，将 `sa_prefix` 和 `family` 进行连接。例如，`__SOCKADDR_COMMON (sa_)` 将会被简单的替换为 `sa_family_t sa_family`。
 
 ### IPv4 地址结构
 
@@ -104,11 +102,11 @@ struct in_addr {
 
 /* Structure describing an Internet socket address.  */
 struct sockaddr_in {
-    __SOCKADDR_COMMON (sin_);									// 2 字节
-    in_port_t sin_port;            /* Port number.  */			// 2 字节
-    struct in_addr sin_addr;        /* Internet address.  */	// 4 字节
+    __SOCKADDR_COMMON (sin_);                                    // 2 字节
+    in_port_t sin_port;            /* Port number.  */            // 2 字节
+    struct in_addr sin_addr;        /* Internet address.  */    // 4 字节
 
-    /* Pad to size of `struct sockaddr'.  */					// 8 字节
+    /* Pad to size of `struct sockaddr'.  */                    // 8 字节
     unsigned char sin_zero[sizeof(struct sockaddr) -
                            __SOCKADDR_COMMON_SIZE -
                            sizeof(in_port_t) -
@@ -139,11 +137,11 @@ struct in6_addr {
 
 /* Structure describing an IPv6 socket address.  */
 struct sockaddr_in6 {
-    __SOCKADDR_COMMON (sin6_);								// 2 字节
-    in_port_t sin6_port;    /* Transport layer port # */	// 2 字节
-    uint32_t sin6_flowinfo;    /* IPv6 flow information */	// 4 字节
-    struct in6_addr sin6_addr;    /* IPv6 address */		// 16 字节
-    uint32_t sin6_scope_id;    /* IPv6 scope-id */			// 4 字节
+    __SOCKADDR_COMMON (sin6_);                                // 2 字节
+    in_port_t sin6_port;    /* Transport layer port # */    // 2 字节
+    uint32_t sin6_flowinfo;    /* IPv6 flow information */    // 4 字节
+    struct in6_addr sin6_addr;    /* IPv6 address */        // 16 字节
+    uint32_t sin6_scope_id;    /* IPv6 scope-id */            // 4 字节
 };
 ```
 
@@ -159,8 +157,6 @@ struct sockaddr_in6 {
 | `memset(s, c, n)`     | 将 s 的 n 字节设为 c       |
 | `memcmp(s1, s2, n)`   | 比较 s1 和 s2 的 n 字节    |
 
-
-
 ### 字节序函数
 
 内存存储 16 位整数有两种形式：
@@ -172,7 +168,7 @@ struct sockaddr_in6 {
 
 这两种字节序没有标准可寻，都在系统中使用着。某个系统所使用的字节序称为**主机字节序**（host byte order），网络协议使用的字节序称为**网络字节序**（network byte order）。通常情况下，Linux 系统使用小端字节序，网络协议使用大端字节序，我们只需要在合适的情况下调用字节序转换函数即可。
 
-以下函数包含在头文件  `#include<arpa/inet.h>` 中，其中 `s` 表示 `unsigned short int ` ，`l` 表示  `unsigned long int `。
+以下函数包含在头文件  `#include<arpa/inet.h>` 中，其中 `s` 表示 `unsigned short int` ，`l` 表示  `unsigned long int`。
 
 | 函数名  |           主要功能           |
 | :-----: | :--------------------------: |
@@ -230,7 +226,7 @@ int socket(int domain, int type, int protocol);
 - AF_NETLINK
 - AF_PACKET
 
-协议族中的 AF_* 前缀意为 Address Family，4.x BSD 使用 PF_* 前缀，意为 Protocol Family，两者是完全相同的。
+协议族中的 AF_*前缀意为 Address Family，4.x BSD 使用 PF_* 前缀，意为 Protocol Family，两者是完全相同的。
 
 `type` 指定了通信的类型，从而决定了通信的语义，如可靠性，序列性，等。常用的类型有：
 
@@ -242,14 +238,15 @@ int socket(int domain, int type, int protocol);
 `protocol` 指定了通信时使用的具体协议，通常对于给定的协议族和类型，只会有一种协议与之对应，这种情况下 protocol 值设为 0 即可，然而当该类型有多种协议可选时，必须指定协议。
 
 创建一个合适的 socket 是第一步，因此要明确自己的需求。
+
 - 如果需要捕获一个帧 (2 层) 的全部信息，应当使用底层的接口 AF_PACKE
-    - 如果你需要自己处理帧头，指明类型为 SOCK_RAW
-    - 如果帧头交由系统自动处理指明类型为 SOCK_DGRAM
-    - 如果你明确需要只接收某种二层以上协议的帧，指明第三个协议参数，例如 ETH_P_IP 或者 ETH_P_ARP 表示只接收 IP 帧或者 ARP 帧，否则可以使用 ETH_P_ALL 来表示收发所有协议的帧。
+  - 如果你需要自己处理帧头，指明类型为 SOCK_RAW
+  - 如果帧头交由系统自动处理指明类型为 SOCK_DGRAM
+  - 如果你明确需要只接收某种二层以上协议的帧，指明第三个协议参数，例如 ETH_P_IP 或者 ETH_P_ARP 表示只接收 IP 帧或者 ARP 帧，否则可以使用 ETH_P_ALL 来表示收发所有协议的帧。
 - 如果你需要处理 IP 层信息，可以使用较高的接口 AF_INET，进行 IP 包收发。
-    - 如果你需要自己处理 IP 头，则指明类型为 SOCK_RAW 
-    - 如果你只关心应用层信息，并且想使用 TCP，则指明类型为 SOCK_STREAM，协议默认为 0 即可。
-    - 如果你只关心应用层信息，并且想使用 UDP，则指明类型为 SOCK_DGRAM，协议默认为 0 即可。
+  - 如果你需要自己处理 IP 头，则指明类型为 SOCK_RAW
+  - 如果你只关心应用层信息，并且想使用 TCP，则指明类型为 SOCK_STREAM，协议默认为 0 即可。
+  - 如果你只关心应用层信息，并且想使用 UDP，则指明类型为 SOCK_DGRAM，协议默认为 0 即可。
 
 ```c
 // Full frame including the link-level header (L2 header + L2 payload)
@@ -273,23 +270,27 @@ int sock_tcp = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);     // (TCP header + T
 ```
 
 ### bind 函数
+
 ```c
 /* Give the socket FD the local address ADDR (which is LEN bytes long).  */
 int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 ```
 
 bind 操作将给 sockfd 分配一个长度为 addrlen 的 addr 地址。第二个参数 sockaddr 是一个通用 socket 地址，然而任何具体的 bind 调用必须要将指向特定协议的套接字地址结构的指针进行强制类型转换，变成指向某个通用套接字地址结构的指针。以下是三种常用结构体。
+
 - struct sockaddr     - 通用 socket 地址
 - struct sockaddr_in  - Internet socket 地址 (IPv4)
 - struct sockaddr_in6 - Internet socket 地址 (IPv6)
 
 因此，强制类型转换的代码需要写成以下形式，即：将 address 的地址强行按照 sockaddr 结构体的方式读取。避免了编译器报不兼容指针类型的错误。
+
 ```c
 struct sockaddr_in address;     /* IPv4 socket address structure */
 bind(sockfd, (structure sockaddr *) &address, sizeof(address))
 ```
 
 ### listen 函数
+
 ```c
 /* Prepare to accept connections on socket FD.
    N connection requests will be queued before further requests are refused.
@@ -304,6 +305,7 @@ listen() 将 sockfd 指向的套接字标记为一个**被动套接字 (passive 
 > 虽然 listen 表面上作为监听之意，但 listen 并不是一个阻塞的调用，它将会立即返回调用程序。
 
 ### accept 函数
+
 ```c
 int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 ```
@@ -324,6 +326,7 @@ connfd = accept(listenfd, (struct sockaddr *)&clientaddr, &clientlen);
 > 执行完三次握手的连接将会在内核中排队，然而如果内核队列中没有连接时，则应用程序会阻塞在 accept 这里，等待一个连接的到来。
 
 ### connect 函数
+
 ```c
 int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 ```
@@ -354,12 +357,14 @@ close 并非立即终止 TCP 连接，其默认行为是把该套接字标记成
 父进程关闭己连接套接字只是导致相应描述符的引用数值减 1 ，如果引用计数值仍大于 0，则这个 close 调用并不引发 TCP 的终止序列。如果我们确实想在某个 TCP 连接发送一个 FIN 终止序列，那么可以改用 shutdown 函数。
 
 ### read & write 函数
+
 ```c
 #include <unistd.h>
 ssize_t read(int fd, void *buf, size_t count);
 ```
 
 read 函数尝试从文件描述符 fd 读取最多 count 字节的数据到 buf 中。
+
 - 成功：返回读取字节数
 - 失败：返回 -1
 - 到达文件末尾：返回 0
@@ -370,12 +375,14 @@ ssize_t write(int fd, const void *buf, size_t count);
 ```
 
 write 函数尝试从 buf 缓冲区提取最多 count 字节的数据写入到文件描述符 fd 中。
+
 - 成功：返回写入字节数
 - 失败：返回 -1
 
 > read/write 的返回值和 count 不相等并不是一个错误，这个现象的原因在于内核中用于套接宇的缓冲区可能已达到极限，这时候需要多次调用 read/wirte 函数才能读写剩余的字节。
 
 ### readn & writen 函数
+
 为了解决 read 和 write 的潜在问题，可以通过自己定义的函数来确保每次都读取 n 个字节数据。
 
 ```c
@@ -501,8 +508,6 @@ printf("[child] recieve %s from server %s\n",(char *) recvbuf, remoteaddr.sun_pa
 return 0; 
 ```
 
-
-
 ## 套接字选项
 
 |    函数名     |        主要功能        |
@@ -585,8 +590,6 @@ Official hostname: dns.google
         IPv4 address: 8.8.8.8
         IPv4 address: 8.8.4.4
 ```
-
-
 
 ### `gethostbyaddr` 函数
 
@@ -705,20 +708,20 @@ TODO
 
 ### 打包我们自己的函数
 
-
-
 ## Unix I/O 模型
 
 对于一次 I/O 访问 (以 read 举例) ，数据会先被拷贝到操作系统内核的缓冲区中，然后才会从操作系统内核的缓冲区拷贝到应用程序的地址空间。所以说，当一个 read 操作发生时，它会经历两个阶段：
+
 1. 等待数据准备完毕 (Waiting for the data to be ready)
 2. 将数据从内核拷贝到进程中 (Copying the data from the kernel to the process)
 
 Unix 下有五种基本的 I/O 模型：
-- **阻塞 I/O (blocking I/O)** 
-- **非阻塞 I/O (nonblocking I/O)** 
-- **I/O 多路复用 (IO multiplexing/Event-driven I/O)** 
-- 信号驱动 I/O (signal driven I/O) 
-- 异步 I/O (asynchronous I/O) 
+
+- **阻塞 I/O (blocking I/O)**
+- **非阻塞 I/O (nonblocking I/O)**
+- **I/O 多路复用 (IO multiplexing/Event-driven I/O)**
+- 信号驱动 I/O (signal driven I/O)
+- 异步 I/O (asynchronous I/O)
 
 信号驱动 I/O 思路是为套接字设置信号处理函数，当 I/O 就绪时内核触发信号通知进程可以启动一个 I/O 操作，例如 recvfrom 读取数据。异步 I/O 类似于信号驱动，但是由内核通知进程 IO 操作何时完成。由于两者适用场景较少，本文不做过多介绍。
 
@@ -743,8 +746,6 @@ Unix 下有五种基本的 I/O 模型：
 I/O 复用是指所有 I/O 事件复用一个等待时机，系统不阻塞在真正的系统调用上，而是阻塞在 select 或 poll 上。
 
 ![image-20221130170247105](unp.assets/image-20221130170247105.png)
-
-
 
 ## I/O 复用
 
@@ -873,8 +874,8 @@ int main(int argc, char *argv[]) {
 通过如下方式编译并使用。其中相关打印已经注释掉，避免影响计时。
 
 ```
-$ gcc tcpcli.c -o cli -lpthread
-$ ./cli
+gcc tcpcli.c -o cli -lpthread
+./cli
 ```
 
 ### select
@@ -889,6 +890,7 @@ $ ./cli
 int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
             struct timeval *timeout);
 ```
+
 最后一个参数 timeout 指针用来设置**超时时间**，这可能有以下三种情况：
 
 - NULL：永远等待，直到有一个描述符准备好后而返回。
@@ -903,6 +905,7 @@ int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 - 如果该比特位为 0，则表示将该位对应的文件描述符移出这个描述符集。
 
 以下用到四个宏来实现对 fd_set 的操作：
+
 ```c
 void FD_ZERO(fd_set *fdset);            /* clear all bits in fdset */
 void FD_SET(int fd, fd_set *fdset);     /* turn on the bit for fd in fdset */
@@ -1212,8 +1215,6 @@ epoll 和 select/poll 主要区别在于：
 - epoll 减少了用户态和内核态之间的文件描述符拷贝。
 - epoll 减少了对就绪文件描述符的遍历，若 n 为 文件描述符总量，则 epoll 的该过程复杂度为 `O(1)`，而 select/poll 复杂度为 `O(n)`。
 
-
-
 ### 用户空间与内核的接口
 
 内核通过各种不同的接口把内部信急输出到用户空hl
@@ -1225,8 +1226,6 @@ epoll 和 select/poll 主要区别在于：
 ioctl 系统调用
 
 - Netlink 套接字 这是网络应用程序与内核通信时最新的首选机制，IPROUTE2 包中大多数命令都使用此接口。对 Linux 而言，Netlink 代表的就是 BSD 世界中的路由套接字 (routing socket)。
-
-
 
 ## 用户空间与内核接口
 
@@ -1242,12 +1241,12 @@ ioctl 系统调用
 Linux 提供的 PF_NETLINK 套接字是 BSD 中路由套接字（AF_ROUTE）的超集。
 
 ```
-#define PF_ROUTE	PF_NETLINK /* Alias to emulate 4.4BSD.  */
+#define PF_ROUTE    PF_NETLINK /* Alias to emulate 4.4BSD.  */
 ```
 
 ### procfs
 
-https://www.kernel.org/doc/html/latest/filesystems/proc.html
+<https://www.kernel.org/doc/html/latest/filesystems/proc.html>
 
 ### ioctl - 设备控制
 
@@ -1289,316 +1288,9 @@ int ioctl(int fd, unsigned long request, ...);
 
 Netlink 是一种在内核与用户应用间进行**双向数据传输**的方式。
 
-### Netlink 创建
 
-用户态应用使用标准的 socket API 就可以使用 netlink 提供的强大功能。
 
-```c
-#include <asm/types.h>
-#include <sys/socket.h>
-#include <linux/netlink.h>
 
-netlink_socket = socket(AF_NETLINK, SOCK_RAW, netlink_family);
-```
-
-其中 `netlink_family` 表示了 Netlink 通信使用的协议。在 Linux 中已经预先定义了许多协议供用户使用。
-
-```c
-#define NETLINK_ROUTE		0	/* Routing/device hook				*/
-#define NETLINK_UNUSED		1	/* Unused number				*/
-#define NETLINK_USERSOCK	2	/* Reserved for user mode socket protocols 	*/
-#define NETLINK_FIREWALL	3	/* Unused number, formerly ip_queue		*/
-#define NETLINK_SOCK_DIAG	4	/* socket monitoring				*/
-#define NETLINK_NFLOG		5	/* netfilter/iptables ULOG */
-#define NETLINK_XFRM		6	/* ipsec */
-#define NETLINK_SELINUX		7	/* SELinux event notifications */
-#define NETLINK_ISCSI		8	/* Open-iSCSI */
-#define NETLINK_AUDIT		9	/* auditing */
-#define NETLINK_FIB_LOOKUP	10	
-#define NETLINK_CONNECTOR	11
-#define NETLINK_NETFILTER	12	/* netfilter subsystem */
-#define NETLINK_IP6_FW		13
-#define NETLINK_DNRTMSG		14	/* DECnet routing messages */
-#define NETLINK_KOBJECT_UEVENT	15	/* Kernel messages to userspace */
-#define NETLINK_GENERIC		16
-/* leave room for NETLINK_DM (DM Events) */
-#define NETLINK_SCSITRANSPORT	18	/* SCSI Transports */
-#define NETLINK_ECRYPTFS	19
-#define NETLINK_RDMA		20
-#define NETLINK_CRYPTO		21	/* Crypto layer */
-#define NETLINK_SMC		22	/* SMC monitoring */
-```
-
-内核态需要使用专门的内核 API 来使用 netlink。
-
-```c
-struct sock *netlink_kernel_create(
-    struct net *net, int unit, struct netlink_kernel_cfg *cfg);
-```
-
-其中第二个参数 unit 含义和用户态 netlink_family 参数相同。
-
-
-
-相对于其他用户和内核通信方式，Netlink 具有以下优点：
-
-- netlink是一种异步通信机制，并且是双向通信的。
-- 使用 netlink 的内核部分可以采用模块的方式实现。
-
-### Netlink 地址
-
-netlink 使用 `sockaddr_nl` 结构体来表示地址。
-
-```
-struct sockaddr_nl {
-    sa_family_t     nl_family;  /* AF_NETLINK */
-    unsigned short  nl_pad;     /* Zero */
-    pid_t           nl_pid;     /* Port ID */
-    __u32           nl_groups;  /* Multicast groups mask */
-};
-```
-
-`nl_pid` 为单播通信端口号，用于唯一标识一个单播通信实体。
-
-作为本地地址时：如果置 0，则内核自动使用进程 PID 来进行填充，如果用户在 bind 前为该变量赋值，则由应用程序保证该值的唯一性。
-
-```c
-memset(&src_addr, 0, sizeof(src_addr));
-src_addr.nl_family = AF_NETLINK;
-src_addr.nl_pid = getpid(); /* self pid */		// this line can be omitted
-bind(sock_fd, (struct sockaddr *)&src_addr, sizeof(src_addr));
-```
-
-作为对端地址时：如果目的是内核则填 0，如果是用户应用则填写该 nl_pid 值。
-
-```c
-memset(&dest_addr, 0, sizeof(dest_addr));
-dest_addr.nl_family = AF_NETLINK;
-dest_addr.nl_pid = 0; /* For Linux Kernel */
-sendto(sock_fd, ..., ..., 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
-```
-
-以上是 Netlink 单播通信，其中 `nl_groups` 应当设为 0。但 Netlink 还支持 netlink 组通信。内核模块或用户应用可以把消息多播给一个 netlink 组，属于该 neilink 组的任何内核模块或应用都能接收到该消息，内核事件向用户态的通知机制就使用了这一特性。
-
-`nl_groups` 为组播通信组掩码，某位为 1 表示希望加入该组。由于位数限制，因此 netlink 最多具有 32 个组。目前 netlink 组定义位于 `retnetlink.h`，格式为 `RTMGRP_*`，以下是常用的几个：
-
-- RTMGRP_LINK - 当网卡变动时会触发这个多播组，例如插拔网线、增减网卡设备、启用禁用接口等。
-- RTMGRP_IPV4_IFADDR - 当 ipv4 地址变动时会触发这个多播组，例如修改 IP。
-- RTMGRP_IPV4_ROUTE - 当 ipv4 路由变动时会触发这个多播组。
-
-?> 只有 root 用户可以对组进行 send 或者 listen 操作。从 Linux 3 开始，NETLINK_KOBJECT_UEVENT, NETLINK_GENERIC, NETLINK_ROUTE 和 NETLINK_SELINUX 组允许其他用户接收消息，但所有组都不允许其他用户发送消息。
-
-### Netlink 消息
-
-Netlink 消息由 `nlmsghdr` 首部及其载荷组成，多条消息可以共同组成消息字节流一同传输。
-
-```c
-struct nlmsghdr {
-    __u32 nlmsg_len;    /* Length of message including header. */
-    __u16 nlmsg_type;   /* Type of message content. */
-    __u16 nlmsg_flags;  /* Additional flags. */
-    __u32 nlmsg_seq;    /* Sequence number. */
-    __u32 nlmsg_pid;    /* Sender port ID. */
-};
-```
-
-如果字节流中包含多条消息，则最后一条消息的类型为 `NLMSG_DONE`，其余所有消息的 nlmsg_flags 属性都被设置 `NLM_F_MULTI` 有效。
-
-Netlink 消息的操作一般通过标准 `NLMSG_*` 宏完成，具体包括：
-
-```c
-// 对齐字节数
-#define NLMSG_ALIGNTO	4U
-// 得到 len 字节进行 4 字节对齐后实际占用的字节数
-#define NLMSG_ALIGN(len) ( ((len)+NLMSG_ALIGNTO-1) & ~(NLMSG_ALIGNTO-1) )
-// 获取消息头长度
-#define NLMSG_HDRLEN	 ((int) NLMSG_ALIGN(sizeof(struct nlmsghdr)))
-// 获取具有 len 字节数据的整个消息的真实长度
-#define NLMSG_LENGTH(len) ((len) + NLMSG_HDRLEN)
-// 获取具有 len 字节数据的消息实际占用的字节数（字节对齐）
-#define NLMSG_SPACE(len) NLMSG_ALIGN(NLMSG_LENGTH(len))
-// 获取数据部分首地址
-#define NLMSG_DATA(nlh)  ((void*)(((char*)nlh) + NLMSG_LENGTH(0)))
-// 得到下一个消息首地址，同时 len 变为剩余长度
-#define NLMSG_NEXT(nlh,len)	 ((len) -= NLMSG_ALIGN((nlh)->nlmsg_len), \
-				  (struct nlmsghdr*)(((char*)(nlh)) + NLMSG_ALIGN((nlh)->nlmsg_len)))
-// 判断是否是合法消息
-#define NLMSG_OK(nlh,len) ((len) >= (int)sizeof(struct nlmsghdr) && \
-			   (nlh)->nlmsg_len >= sizeof(struct nlmsghdr) && \
-			   (nlh)->nlmsg_len <= (len))
-// 得到减去 len 字节对齐长度后剩余数据长度。一般用于多消息字节流，每次减去一个消息长度。
-#define NLMSG_PAYLOAD(nlh,len) ((nlh)->nlmsg_len - NLMSG_SPACE((len)))
-```
-
-初始化一个包含 hello 字符串的 Netlink 消息的简单步骤为：
-
-```c
-nlh = (struct nlmsghdr *)malloc(NLMSG_SPACE(MAX_PAYLOAD));
-memset(nlh, 0, NLMSG_SPACE(MAX_PAYLOAD));
-nlh->nlmsg_len = NLMSG_SPACE(MAX_PAYLOAD);
-nlh->nlmsg_pid = getpid();
-nlh->nlmsg_flags = 0;
-strcpy(NLMSG_DATA(nlh), "Hello");
-```
-
-Netlink 消息可以通过 `sendto` 函数发送。
-
-```c
-sendto(nl->sock, &nlh, nlh.nlmsg_len, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr))
-```
-
-### Netlink 示例
-
-用户代码
-
-```
-#include <linux/netlink.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <unistd.h>
-
-#define NETLINK_USER 31
-
-#define MAX_PAYLOAD 1024 /* maximum payload size*/
-struct sockaddr_nl src_addr, dest_addr;
-struct nlmsghdr *nlh = NULL;
-struct iovec iov;
-int sock_fd;
-struct msghdr msg;
-
-int main()
-{
-    sock_fd = socket(PF_NETLINK, SOCK_RAW, NETLINK_USER);
-    if (sock_fd < 0)
-        return -1;
-
-    memset(&src_addr, 0, sizeof(src_addr));
-    src_addr.nl_family = AF_NETLINK;
-    src_addr.nl_pid = getpid(); /* self pid */
-
-    bind(sock_fd, (struct sockaddr *)&src_addr, sizeof(src_addr));
-
-    memset(&dest_addr, 0, sizeof(dest_addr));
-    dest_addr.nl_family = AF_NETLINK;
-    dest_addr.nl_pid = 0; /* For Linux Kernel */
-    dest_addr.nl_groups = 0; /* unicast */
-
-    nlh = (struct nlmsghdr *)malloc(NLMSG_SPACE(MAX_PAYLOAD));
-    memset(nlh, 0, NLMSG_SPACE(MAX_PAYLOAD));
-    nlh->nlmsg_len = NLMSG_SPACE(MAX_PAYLOAD);
-    nlh->nlmsg_pid = getpid();
-    nlh->nlmsg_flags = 0;
-
-    strcpy(NLMSG_DATA(nlh), "Hello");
-
-    iov.iov_base = (void *)nlh;
-    iov.iov_len = nlh->nlmsg_len;
-    msg.msg_name = (void *)&dest_addr;
-    msg.msg_namelen = sizeof(dest_addr);
-    msg.msg_iov = &iov;
-    msg.msg_iovlen = 1;
-
-    printf("Sending message to kernel\n");
-    sendmsg(sock_fd, &msg, 0);
-    printf("Waiting for message from kernel\n");
-
-    /* Read message from kernel */
-    recvmsg(sock_fd, &msg, 0);
-    printf("Received message payload: %s\n", NLMSG_DATA(nlh));
-    close(sock_fd);
-}
-```
-
- 内核代码
-
-```
-#include <linux/module.h>
-#include <net/sock.h> 
-#include <linux/netlink.h>
-#include <linux/skbuff.h> 
-#define NETLINK_USER 31
-
-struct sock *nl_sk = NULL;
-
-static void hello_nl_recv_msg(struct sk_buff *skb)
-{
-
-    struct nlmsghdr *nlh;
-    int pid;
-    struct sk_buff *skb_out;
-    int msg_size;
-    char *msg = "Hello from kernel";
-    int res;
-
-    printk(KERN_INFO "Entering: %s\n", __FUNCTION__);
-
-    msg_size = strlen(msg);
-
-    nlh = (struct nlmsghdr *)skb->data;
-    printk(KERN_INFO "Netlink received msg payload:%s\n", (char *)nlmsg_data(nlh));
-    pid = nlh->nlmsg_pid; /*pid of sending process */
-
-    skb_out = nlmsg_new(msg_size, 0);
-    if (!skb_out) {
-        printk(KERN_ERR "Failed to allocate new skb\n");
-        return;
-    }
-
-    nlh = nlmsg_put(skb_out, 0, 0, NLMSG_DONE, msg_size, 0);
-    NETLINK_CB(skb_out).dst_group = 0; /* not in mcast group */
-    strncpy(nlmsg_data(nlh), msg, msg_size);
-
-    res = nlmsg_unicast(nl_sk, skb_out, pid);
-    if (res < 0)
-        printk(KERN_INFO "Error while sending bak to user\n");
-}
-
-static int __init hello_init(void)
-{
-
-    printk("Entering: %s\n", __FUNCTION__);
-    //nl_sk = netlink_kernel_create(&init_net, NETLINK_USER, 0, hello_nl_recv_msg, NULL, THIS_MODULE);
-    struct netlink_kernel_cfg cfg = {
-        .input = hello_nl_recv_msg,
-    };
-
-    nl_sk = netlink_kernel_create(&init_net, NETLINK_USER, &cfg);
-    if (!nl_sk) {
-        printk(KERN_ALERT "Error creating socket.\n");
-        return -10;
-    }
-
-    return 0;
-}
-
-static void __exit hello_exit(void)
-{
-
-    printk(KERN_INFO "exiting hello module\n");
-    netlink_kernel_release(nl_sk);
-}
-
-module_init(hello_init); module_exit(hello_exit);
-
-MODULE_LICENSE("GPL");
-```
-
-其中内核模块程序可以通过以下 Makefile 编译链接，然后通过 `insmod hello.ko` 来载入。
-
-```
-obj-m = hello.o
-KVERSION = $(shell uname -r)
-all:
-    make -C /lib/modules/$(KVERSION)/build M=$(PWD) modules
-clean:
-    make -C /lib/modules/$(KVERSION)/build M=$(PWD) clean
-```
-
-参考
-
-- [How to use netlink socket to communicate with a kernel module?](https://stackoverflow.com/questions/3299386/how-to-use-netlink-socket-to-communicate-with-a-kernel-module) 
 
 ## 接口操作
 
@@ -1614,13 +1306,13 @@ clean:
  * must know all networks accessible).
  */
 struct ifconf {
-    int ifc_len; /* size of buffer	*/
+    int ifc_len; /* size of buffer    */
     union {
         char __user *ifcu_buf;
         struct ifreq __user *ifcu_req;
     } ifc_ifcu;
 };
-#define ifc_buf ifc_ifcu.ifcu_buf /* buffer address	*/
+#define ifc_buf ifc_ifcu.ifcu_buf /* buffer address    */
 #define ifc_req ifc_ifcu.ifcu_req /* array of structures */
 ```
 
@@ -1655,22 +1347,22 @@ struct ifreq {
         struct if_settings ifru_settings;
     } ifr_ifru;
 };
-#define ifr_name ifr_ifrn.ifrn_name           /* interface name 	*/
-#define ifr_hwaddr ifr_ifru.ifru_hwaddr       /* MAC address 		*/
-#define ifr_addr ifr_ifru.ifru_addr           /* address		*/
-#define ifr_dstaddr ifr_ifru.ifru_dstaddr     /* other end of p-p lnk	*/
-#define ifr_broadaddr ifr_ifru.ifru_broadaddr /* broadcast address	*/
-#define ifr_netmask ifr_ifru.ifru_netmask     /* interface net mask	*/
-#define ifr_flags ifr_ifru.ifru_flags         /* flags		*/
-#define ifr_metric ifr_ifru.ifru_ivalue       /* metric		*/
-#define ifr_mtu ifr_ifru.ifru_mtu             /* mtu			*/
-#define ifr_map ifr_ifru.ifru_map             /* device map		*/
-#define ifr_slave ifr_ifru.ifru_slave         /* slave device		*/
-#define ifr_data ifr_ifru.ifru_data           /* for use by interface	*/
-#define ifr_ifindex ifr_ifru.ifru_ivalue      /* interface index	*/
-#define ifr_bandwidth ifr_ifru.ifru_ivalue    /* link bandwidth	*/
-#define ifr_qlen ifr_ifru.ifru_ivalue         /* Queue length 	*/
-#define ifr_newname ifr_ifru.ifru_newname     /* New name		*/
+#define ifr_name ifr_ifrn.ifrn_name           /* interface name     */
+#define ifr_hwaddr ifr_ifru.ifru_hwaddr       /* MAC address         */
+#define ifr_addr ifr_ifru.ifru_addr           /* address        */
+#define ifr_dstaddr ifr_ifru.ifru_dstaddr     /* other end of p-p lnk    */
+#define ifr_broadaddr ifr_ifru.ifru_broadaddr /* broadcast address    */
+#define ifr_netmask ifr_ifru.ifru_netmask     /* interface net mask    */
+#define ifr_flags ifr_ifru.ifru_flags         /* flags        */
+#define ifr_metric ifr_ifru.ifru_ivalue       /* metric        */
+#define ifr_mtu ifr_ifru.ifru_mtu             /* mtu            */
+#define ifr_map ifr_ifru.ifru_map             /* device map        */
+#define ifr_slave ifr_ifru.ifru_slave         /* slave device        */
+#define ifr_data ifr_ifru.ifru_data           /* for use by interface    */
+#define ifr_ifindex ifr_ifru.ifru_ivalue      /* interface index    */
+#define ifr_bandwidth ifr_ifru.ifru_ivalue    /* link bandwidth    */
+#define ifr_qlen ifr_ifru.ifru_ivalue         /* Queue length     */
+#define ifr_newname ifr_ifru.ifru_newname     /* New name        */
 #define ifr_settings ifr_ifru.ifru_settings   /* Device/proto settings*/
 ```
 
@@ -1699,7 +1391,7 @@ main(int argc, char *argv[])
     }
 
     for (i = if_ni; ! (i->if_index == 0 && i->if_name == NULL); i++)
-		printf("%u: %s\n", i->if_index, i->if_name);
+        printf("%u: %s\n", i->if_index, i->if_name);
 
     if_freenameindex(if_ni);
 
@@ -1791,7 +1483,7 @@ TCP/IP 协议栈中的寻址类型包括：
 ```c
 const int on = 1;
 if (setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on)) < 0) {
-	// process error
+    // process error
 }
 ```
 
@@ -1819,7 +1511,7 @@ fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
 ```c
 const int on = 1;
 if (setsockopt(daemon_socket, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) < 0) {
-	log_warn("setsockopt error");
+    log_warn("setsockopt error");
 }
 ```
 
@@ -1832,7 +1524,7 @@ addr.sin_family = AF_INET;
 addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
 if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-	log_error("daemon connect error (%s)", strerror(errno));
+    log_error("daemon connect error (%s)", strerror(errno));
 }
 ```
 
@@ -1904,8 +1596,8 @@ fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
 其中：
 
 - 第二个参数表示抓包获取的帧格式：
-    - `SOCK_RAW` 表示整个链路层帧
-    - `SOCK_DGRAM` 表示去除了首部的分组
+  - `SOCK_RAW` 表示整个链路层帧
+  - `SOCK_DGRAM` 表示去除了首部的分组
 - 第三个参数表示抓包感兴趣的协议类型
 
 Linux 链路套接字提供了内核过滤方式，代码片如下：
@@ -1915,8 +1607,8 @@ Linux 链路套接字提供了内核过滤方式，代码片如下：
 struct sock_filter filter[] = {{0x28, 0, 0, 0x0000000c}, {0x15, 2, 0, 0x00000800}, {0x15, 1, 0, 0x00000886},
                                {0x15, 0, 1, 0x00000806}, {0x6, 0, 0, 0x00040000},  {0x6, 0, 0, 0x00000000}};
 struct sock_fprog prog = {
-	.len = sizeof(filter) / sizeof(filter[0]),
-	.filter = filter,
+    .len = sizeof(filter) / sizeof(filter[0]),
+    .filter = filter,
 };
 setsockopt(fd, SOL_SOCKET, SO_ATTACH_FILTER, &prog, sizeof(prog))
 ```

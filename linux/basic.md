@@ -358,17 +358,9 @@ tar xvf archive.tar.bz2 -C /opt/    # 解压包 archive 到指定目录（自动
 
 ### 用户空间与内核的接口
 
-内核通过各种不同的接口把内部信急输出到用户空hl
+见 NETLINK。
 
-- 系统调用
-- procfs 这是个虚拟文件系统，通常是挂载到 /proc:，允许内核以文件的形式向用户空间输出内部信息，这些文件并没有实际存在于磁盘中，但是可以通过 cat 以及 > shell 重定向运算符写入。
-- sysctl /proc/sys 此接口允许用户空间读取或修改内核变量的值。
-
-ioctl 系统调用
-
-- Netlink 套接字 这是网络应用程序与内核通信时最新的首选机制，IPROUTE2 包中大多数命令都使用此接口。对 Linux 而言，Netlink 代表的就是 BSD 世界中的路由套接字 (routing socket)。
-
-## 内核模块
+### 内核模块
 
 内核模块 (Kernel Module) 是可以根据需要加载和卸载到内核中的代码段，它们扩展了内核的功能，但无需重新引导系统。
 
@@ -392,14 +384,14 @@ modprobe --show-depends module_name   # 列出模块的依赖项（包括模块�
 
 - 当需要加载 Linux 内核中的标准内核模块时，通过内核模块守护程序 `kmod` 执行 `modprobe` 来加载/卸载模块。`modprobe` 需要模块名称或模块标识符之一的字符串作为参数。
 
-    ```
+    ```sh
     modprobe module_name  # 加载标准内核模块
     modprobe -r module_name # 卸载标准内核模块
     ```
 
 - 当需要加载自定义内核模块时，通过 `insmod` 来加载模块，通过 `rmmod` 来卸载模块。
 
-    ```
+    ```sh
     insmod filename [args]    # 不在标准目录下的内核模块，可以通过文件名加载。
     rmmod module_name   # 不在标准目录下的内核模块，可以通过文件名卸载。
     ```

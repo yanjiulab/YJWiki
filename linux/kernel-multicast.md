@@ -62,7 +62,33 @@ struct vif_device {
     /* Physical interface index */
     int link;
 };
+```
 
+```c
+void k_add_vif(socket, vifi, v)
+    int socket;
+    vifi_t vifi;
+    struct uvif *v;
+{
+    struct vifctl vc;
+
+    vc.vifc_vifi            = vifi;
+    /* TODO: only for DVMRP tunnels?
+    vc.vifc_flags           = v->uv_flags & VIFF_KERNEL_FLAGS;
+    */
+    vc.vifc_flags           = v->uv_flags;
+    vc.vifc_threshold       = v->uv_threshold;
+    vc.vifc_rate_limit      = v->uv_rate_limit;
+    vc.vifc_lcl_addr.s_addr = v->uv_lcl_addr;
+    vc.vifc_rmt_addr.s_addr = v->uv_rmt_addr;
+    printf("add interface %d %d %0x \n",v->uv_flags,v->uv_threshold,v->uv_lcl_addr);
+    if (setsockopt(socket, IPPROTO_IP, MRT_ADD_VIF,
+           (char *)&vc, sizeof(vc)) < 0)
+    log(LOG_ERR, errno, "setsockopt MRT_ADD_VIF on vif %d", vifi);
+}
+```
+
+```c
 struct mfc_cache {
     /* Next entry on cache line */
     struct mfc_cache* next;
@@ -174,8 +200,6 @@ typedef void nf_nfy_msg(
 ```
 
 其中：hook 为 AF_INET，msgno 表示内核的动作，例如添加 mfc_entry。dev 为当前流程涉及到的网络设备。
-
-
 
 ## 参考
 
