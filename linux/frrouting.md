@@ -132,44 +132,6 @@ sudo make install
 
 sudo apt install -y build-essential autoconf libtool pkg-config
 
-### sysrepo
-
-如果需要 YANG 数据库，则需要使能 sysrepo。
-
-```sh
-git clone https://github.com/sysrepo/sysrepo.git
-mkdir build; cd build
-cmake -D CMAKE_INSTALL_PREFIX:PATH=/usr -D CMAKE_BUILD_TYPE:String="Release" ..
-make
-sudo make install
-```
-
-### libnetconf2
-
-如果需要北向接口 NETCONF 协议，则需要安装 libnetconf2。
-
-```sh
-git clone https://github.com/CESNET/libnetconf2.git
-cd libnetconf2/
-mkdir build; cd build
-cmake -D CMAKE_INSTALL_PREFIX:PATH=/usr -D CMAKE_BUILD_TYPE:String="Release" ..
-make
-sudo make install
-```
-
-### netopeer2
-
-如果需要通过北向 NETCONF 协议操作 YANG 数据库，则可以使用 Netopeer2 套件。
-
-```sh
-$ git clone https://github.com/CESNET/netopeer2.git
-$ cd netopeer2
-$ mkdir build; cd build
-cmake -D CMAKE_INSTALL_PREFIX:PATH=/usr -D CMAKE_BUILD_TYPE:String="Release" ..
-make
-sudo make install
-```
-
 ## 配置用户和组
 
 如果需要，可以根据需求配置 FRR 成员和组。如果不想创建这些组和用户，可以直接用 root，因此就不需要本节的配置。
@@ -563,37 +525,151 @@ access-list private-only deny any
 :---:|:---:
 `terminal monitor`|将日志显示在控制台中
 
-## FRR 北向接口
+## 北向接口 NETCONF
 
-### SYSREPO + NETCONF
+### 依赖库安装
 
 首先需要检查依赖，安装 sysrepo、libnetconf2 和 netopper2 库。
 
-然后，使用 `./configure --enable-sysrepo=yes` 参数构建 FRR。
+1. 安装 YANG 模型数据库 `sysrepo`。
 
-安装 FRR 的 YANG 模型到 sysrepo 数据库中。YANG 模型的路径为 `${PREFIX}/share/yang/`，首先把模型都安装到数据库中，其次根据需求更改用户和组。例如：
+    ```sh
+    git clone https://github.com/sysrepo/sysrepo.git
+    mkdir build; cd build
+    cmake -D CMAKE_INSTALL_PREFIX:PATH=/usr -DREPO_PATH=/opt/sysrepo/repository -DSR_PLUGINS_PATH=/opt/sysrepo/plugins -DSRPD_PLUGINS_PATH=/opt/sysrepo-plugind/plugins ..
+    make
+    sudo make install
+    ```
+
+2. 安装 NETCONF 协议库 `libnetconf2`。
+
+    ```sh
+    git clone https://github.com/CESNET/libnetconf2.git
+    cd libnetconf2/
+    mkdir build; cd build
+    cmake -D CMAKE_INSTALL_PREFIX:PATH=/usr -D CMAKE_BUILD_TYPE:String="Release" ..
+    make
+    sudo make install
+    ```
+
+3. 安装集成套件 `netopeer2`。
+
+    ```sh
+    $ git clone https://github.com/CESNET/netopeer2.git
+    $ cd netopeer2
+    $ mkdir build; cd build
+    cmake -D CMAKE_INSTALL_PREFIX:PATH=/usr -D CMAKE_BUILD_TYPE:String="Release" ..
+    make
+    sudo make install
+    ```
+
+### 构建 FRR
+
+依赖安装完毕后，configure 时新增 `--enable-sysrepo=yes` 参数重新构建 FRR。FRR 使用了动态模块加载机制，使能该参数后，将会编译出 sysrepo 的动态链接库，若模块路径，例如 `/opt/frr/lib/frr/modules/` 下查看到 `sysrepo.so` 文件，则表示构建成功。构建成功后，继续执行编译和安装命令即可。
+
+### 配置 sysrepo
+
+安装 FRR 的 YANG 模型到 sysrepo 数据库中。FRR 中 YANG 模型的路径为 `${PREFIX}/share/yang/`，首先把模型都安装到数据库中，其次根据需求更改用户和组。以下是常用命令：
 
 ```sh
-sudo sysrepoctl --install ${PREFIX}/share/yang/frr-isisd.yang 
-sudo sysrepoctl -c frr-isisd --owner frr --group frr
-sudo sysrepoctl -u examples # uninstall module
+sudo sysrepoctl --install ${PREFIX}/share/yang/frr-isisd.yang   # install yang model to sysrepo as a module
+sudo sysrepoctl -c frr-isisd --owner frr --group frr            # change yang module ownership
+sudo sysrepoctl -c :ALL -p 666                                  # change all modules permission to rw-rw-rw-。
+sudo sysrepoctl -u examples                                     # uninstall module
+sudo sysrepoctl -l                                              # list all module
 ```
 
-这一步可能出现 install 错误的情况，是因为 frr-ripd 模型中引用了其他的 YANG 模型文件，因此把所有模型都安装一遍就行了。
+!> 如果出现 install 错误的情况，是因为安装模型中引用了其他的 YANG 模型文件，因此把所有模型按照依赖顺序都安装一遍就行了。以下是安装 frr-ripd 的依赖。
 
-`sudo sysrepoctl -c :ALL -p 666` 可将所有模块权限设为 rw-rw-rw-。
+```sh
+sudo sysrepoctl --install /opt/frr/share/yang/frr-vrf.yang
+sudo sysrepoctl --install /opt/frr/share/yang/ietf-interfaces.yang
+sudo sysrepoctl --install /opt/frr/share/yang/frr-interface.yang
+sudo sysrepoctl --install /opt/frr/share/yang/frr-filter.yang
+sudo sysrepoctl --install /opt/frr/share/yang/frr-route-map.yang 
+sudo sysrepoctl --install /opt/frr/share/yang/frr-if-rmap.yang
+sudo sysrepoctl --install /opt/frr/share/yang/frr-route-types.yang
+sudo sysrepoctl --install /opt/frr/share/yang/frr-bfdd.yang
+sudo sysrepoctl --install /opt/frr/share/yang/frr-routing.yang 
+sudo sysrepoctl --install /opt/frr/share/yang/ietf-routing-types.yang
+sudo sysrepoctl --install /opt/frr/share/yang/frr-nexthop.yang
+sudo sysrepoctl --install /opt/frr/share/yang/frr-ripd.yang
+```
 
-后台启动 NETCONF 服务端。
+sysrepo 是基于共享内存的数据库，因此，其全部数据可以在 `/dev/shm` 查看，以 `sr` 开头的即是 sysrepo 数据库相关文件。
+
+在安装时，sysrepo 的库文件指定在 `/opt/sysrepo/repository` 路径下。
+
+```sh
+/opt/sysrepo/repository$ tree
+.
+├── conn                            # 连接目录
+│   ├── conn_66.lock                # netconf server 连接
+│   └── conn_67.lock                # frr 连接
+├── data                            # 数据文件目录
+│   ├── frr-bfdd.candidate.perm
+│   ├── ...
+├── ...
+├── sr_main_lock                    # sysrepo 全局文件锁
+└── yang                            # 模型目录
+    ├── frr-bfdd@2019-05-09.yang
+    ├── ...
+```
+
+!> 后续启动 FRR 或 netopper2-server 后，二者连接到 sysrepo 时 conn 会有相应连接产生。
+
+### 启动 FRR
+
+如果需要调试，可以单独启动 ripd 进程，启动时选择 sysrepo 模块，并且在前台打印。
+
+```sh
+sudo ripd -M sysrepo --log=stdout
+```
+
+如果使用脚本启动，则在 `daemon` 配置中指定启动参数，效果相同。
+
+启动后，进入 `vtysh` 后，通过 `show modules` 命令，可以查看 sysrepo 是否加载成功。或者通过查看日志信息确认是否加载成功。
+
+```plain
+frr# show modules
+Module information for ripd:
+Module Name  Version                   Description
+
+libfrr       9.0.1                     libfrr core module
+ripd         9.0.1                     ripd daemon
+frr_sysrepo  9.0.1                     FRR sysrepo integration module
+        from: /opt/frr/lib/frr/modules/sysrepo.so
+pid: 383788
+```
+
+为了便于查看北向接口的信息，可以添加以下配置，并开启 monitor。
+
+```plain
+frr# debug northbound libyang 
+frr# debug northbound callbacks 
+frr# debug northbound notifications 
+frr# debug northbound events 
+terminal monitor
+```
+
+### 启动 NETCONF 服务器
+
+安装好 netopper2 后，后台启动 NETCONF 服务端。
 
 ```sh
 sudo netopeer2-server -d &
 ```
 
-单独启动 ripd 进程，启动时选择 sysrepo 模块，并且在前台打印。或者在 `daemon` 配置中指定启动参数，效果相同。
+!> 如果启动时输出以下错误信息，重新 `make install` 即可。这是因为改动了 sysrepo 的某些文件。重新安装会将 sysrepo 中所有的特性启动。
 
 ```sh
-sudo isisd -M sysrepo --log=stdout
+[ERR]: NP: Module "ietf-netconf" feature "writable-running" not enabled in sysrepo.
+[ERR]: NP: Server init failed.
 ```
+
+### NETCONF 客户端
+
+TODO：编写 python 客户端
 
 编写 NETCONF 客户端脚本，进行配置管理。脚本使用 Python 编写，依赖 ncclient 库，可以通过 `apt install -y python3-ncclient` 进行安装。
 
@@ -660,6 +736,63 @@ if __name__ == '__main__':
 ```
 
 上述脚本的 username 和 password 换位自己主机的用户名和密码。
+
+### CLI 示例
+
+
+
+```sh
+liyj-virtual-machine(config-router)# no route 10.0.1.0/24
+2023-12-05 14:49:09.825 [DEBG] ripd: [W7XQT-PM3RC] nb_config_diff: {
+  "frr-ripd:ripd": {
+    "@": {
+      "yang:operation": "none"
+    },
+    "instance": [
+      {
+        "vrf": "default",
+        "static-route": [
+          "10.0.1.0/24"
+        ],
+        "@static-route": [
+          {
+            "yang:operation": "delete"
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2023-12-05 14:49:09.825 [DEBG] ripd: [SWK28-M149C] northbound callback: event [validate] op [destroy] xpath [/frr-ripd:ripd/instance[vrf='default']/static-route[.='10.0.1.0/24']] value [10.0.1.0/24]
+2023-12-05 14:49:09.825 [DEBG] ripd: [SWK28-M149C] northbound callback: event [prepare] op [destroy] xpath [/frr-ripd:ripd/instance[vrf='default']/static-route[.='10.0.1.0/24']] value [10.0.1.0/24]
+2023-12-05 14:49:09.825 [DEBG] ripd: [SWK28-M149C] northbound callback: event [apply] op [destroy] xpath [/frr-ripd:ripd/instance[vrf='default']/static-route[.='10.0.1.0/24']] value [10.0.1.0/24]
+liyj-virtual-machine(config-router)# route 10.0.1.0/24
+2023-12-05 14:49:32.501 [DEBG] ripd: [W7XQT-PM3RC] nb_config_diff: {
+  "frr-ripd:ripd": {
+    "@": {
+      "yang:operation": "none"
+    },
+    "instance": [
+      {
+        "vrf": "default",
+        "static-route": [
+          "10.0.1.0/24"
+        ],
+        "@static-route": [
+          {
+            "yang:operation": "create"
+          }
+        ]
+      }
+    ]
+  }
+}
+
+2023-12-05 14:49:32.501 [DEBG] ripd: [SWK28-M149C] northbound callback: event [validate] op [create] xpath [/frr-ripd:ripd/instance[vrf='default']/static-route[.='10.0.1.0/24']] value [10.0.1.0/24]
+2023-12-05 14:49:32.501 [DEBG] ripd: [SWK28-M149C] northbound callback: event [prepare] op [create] xpath [/frr-ripd:ripd/instance[vrf='default']/static-route[.='10.0.1.0/24']] value [10.0.1.0/24]
+2023-12-05 14:49:32.501 [DEBG] ripd: [SWK28-M149C] northbound callback: event [apply] op [create] xpath [/frr-ripd:ripd/instance[vrf='default']/static-route[.='10.0.1.0/24']] value [10.0.1.0/24]
+```
 
 ## FRR 源码分析
 
@@ -776,3 +909,19 @@ gdb --args bgpd -f config_file arg1 arg2 arg3
 ```
 
 需要调试多线程时
+
+## FRR 源码 - 模块加载
+
+## FRR 源码 - 北向接口
+
+初始化函数
+
+```c
+nb_init(master, di->yang_modules, di->n_yang_modules, true);
+
+void nb_init(struct event_loop *tm,
+         const struct frr_yang_module_info *const modules[],
+         size_t nmodules, bool db_enabled)
+```
+
+yang_module 是
