@@ -739,8 +739,6 @@ if __name__ == '__main__':
 
 ### CLI 示例
 
-
-
 ```sh
 liyj-virtual-machine(config-router)# no route 10.0.1.0/24
 2023-12-05 14:49:09.825 [DEBG] ripd: [W7XQT-PM3RC] nb_config_diff: {
