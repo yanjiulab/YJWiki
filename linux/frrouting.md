@@ -14,7 +14,7 @@ Quagga 支持的路由协议包括：
 
 quagga 架构包括内核、zebra 守护进程、路由模块守护进程三部分。其中 zebra 模块与内核进行交互、维护路由表等，同时提供 `zserv` API 供路由模块使用。
 
-```
+```txt
 +----+  +----+  +-----+  +-----+
 |bgpd|  |ripd|  |ospfd|  |zebra|
 +----+  +----+  +-----+  +-----+
@@ -30,7 +30,7 @@ quagga 架构包括内核、zebra 守护进程、路由模块守护进程三部�
 
 相较于 FRRouting，Quagga 的安装方式较为简单。
 
-```
+```sh
 cd quagga-master # 进入安装目录
 ./bootstrap   # 部署准备
 ./configure   # 相关环境配置
@@ -57,7 +57,7 @@ make install  # 将编译好的文件复制到安装目录
 
 用户可以通过 VTY 接口同 Quagga 守护进程交互，在 `/etc/services` 添加如下进行使用。
 
-```
+```sh
 zebrasrv      2600/tcp    # zebra service
 zebra         2601/tcp    # zebra vty
 ripd          2602/tcp    # RIPd vty
@@ -136,7 +136,7 @@ sudo apt install -y build-essential autoconf libtool pkg-config
 
 如果需要，可以根据需求配置 FRR 成员和组。如果不想创建这些组和用户，可以直接用 root，因此就不需要本节的配置。
 
-```shell
+```sh
 sudo groupadd -r -g 92 frr
 sudo groupadd -r -g 85 frrvty
 sudo adduser --system --ingroup frr --home /var/run/frr/ --gecos "FRR suite" --shell /sbin/nologin frr
@@ -167,7 +167,7 @@ sudo usermod -a -G frrvty frr
 
 安装守护进程配置文件到相关安装目录中。
 
-```shell
+```sh
 sudo install -p -m 644 tools/etc/frr/daemons /etc/frr/
 sudo chown frr:frr /etc/frr/daemons
 ```
@@ -178,7 +178,7 @@ sudo chown frr:frr /etc/frr/daemons
 
 FRR 服务如下，在 `/etc/services` 添加如下进行使用。安装后会有默认设置，具体以该文件中的端口为准。
 
-```
+```sh
 zebrasrv      2600/tcp                 # zebra service
 zebra         2601/tcp                 # zebra vty
 ripd          2602/tcp                 # RIPd vty
@@ -274,7 +274,7 @@ sudo chmod 640 /etc/frr/*.conf
 
 首先进行配置，这里将 FRR 安装到 `/opt/frr` 目录下，这样的好处是将 FRR 相关的可执行及配置文件集中到一起，否则各种目录将散落到 `/usr/local/` 目录下面。另外，由于是个人使用，所以直接使用 `root:root` 来管理 FRR，简化了了创建用户和组的过程。
 
-```
+```sh
 ./configure \
     --enable-user=root \
     --enable-group=root \
@@ -285,7 +285,7 @@ sudo chmod 640 /etc/frr/*.conf
 
 然后进行编译和安装，安装后可以查看 FRR 都生成了哪些文件。
 
-```
+```sh
 # make -j
 ...
 
@@ -306,7 +306,7 @@ VTY 表示 Virtual TeletYpe Interface (Virtual Terminal  Interface ) ，即虚�
 
 !> 要使用 VTY 接口，必须设置 VTY 密码。
 
-```
+```sh
 % telnet localhost 2601
 Trying 127.0.0.1...
 Connected to localhost.
@@ -349,7 +349,7 @@ Neither option present (default) # 默认行为。若 frr.conf 存在则写入�
 
 在终端中即可启动 vtysh。
 
-```
+```sh
 root@msi-ryzen3600:/home/liyanjiu# vtysh
 
 Hello, this is FRRouting (version 8.1).
@@ -384,13 +384,13 @@ isisd_options=" --daemon -A 127.0.0.1 -M grpc:PORT" # 使用自定义端口
 
 `/etc/frr/vtysh.conf` 内容如下：
 
-```
+```sh
 service integrated-vtysh-config
 ```
 
 `/etc/frr/frr.conf` 内容如下：
 
-```
+```sh
 frr version 8.1
 frr defaults traditional
 password frr
@@ -450,7 +450,7 @@ service integrated-vtysh-config
 
 FRR 使用一系列守护进程共同构建路由表，每个进程实现一种协议，所有进程通过中间守护进程 `zebra` 与路由信息进行交互。
 
-```
+```txt
 +----+  +----+  +-----+  +----+  +----+  +----+  +-----+
 |bgpd|  |ripd|  |ospfd|  |ldpd|  |pbrd|  |pimd|  |.....|
 +----+  +----+  +-----+  +----+  +----+  +----+  +-----+
@@ -497,7 +497,7 @@ zebra is an IP routing manager. It provides kernel routing table updates, interf
 
 RIP 简要配置如下：
 
-```
+```sh
 debug rip events
 debug rip packet
 

@@ -23,10 +23,7 @@ SR 是一种**源路由协议**（Source Routing），在 RFC 791 中，定义�
 
 【图】
 
-解释图，segment 
-
-
-
+解释图，segment
 
 ### SR 简介
 
@@ -76,8 +73,6 @@ In Segment Routing, there are two segment classes:
 
 **A global segment is an ID value bearing significance inside the entire SR domain.** This means that **every node in the SR domain knows about this value and assigns the same action to the associated instruction in its LFIB**. **The reserved label range used for these purposes is <16000 - 23999>**, it is called **Segment Routing Global Block** (SRGB) and **it is a vendor-specific range**, therefore, other vendors may use a different range.
 
-
-
 **A local segment**, on the other hand, **is an ID value holding local significance, and only the originating node** (the router advertising it) **can execute the associated instruction.** As this range is only relevant for that particular node, **these values are not in the SRGB range** but in the locally configured label range.
 
 分段路由可识别属于全局或本地分段类的许多特定类型的分段。让我们来看看其中的一些：
@@ -104,31 +99,19 @@ IGP 邻接分段：由 IGP （IS-IS/OSPF） 分布的本地重要分段，它描
 
 Pushing multiple labels representing segments of the same type onto a packet essentially provides exactly the same functionality as IP Source Routing does: Multiple IGP Prefix Segments are nothing else than Loose Source Routing; multiple IGP Adjacency segments are nothing else than Strict Source Routing - but here, based on MPLS labeling, and, provided with a sufficient MTU reserve, not limited anymore to just 9 explicit hops.
 
-
-
 What might not be obvious is that labels for both segment types can be freely combined and pushed onto a packet! Their combination is a superset of what plain IP Source Routing was able to accomplish, and provides ample space for more complex source routing scenarios including backup paths and fast-reroute-alike detours where traffic can be steered through the network routing around a failure. A simple scenario is shown in Figure
 
 BGP 前缀段：与 IGP 前缀段类似并具有全局意义，BGP 前缀段表示到特定 BGP 前缀的最短路径，当然，它是 ECMP 感知的。与 IGP 通告的 IGP 前缀分段相反，此分段由 BGP 发出信号。【图】
 
 **BGP Prefix Segment:** Similar to IGP Prefix segment and holding global significance, BGP Prefix Segment represents the shortest path to a specific BGP prefix and, of course, is ECMP-aware. As opposed to IGP Prefix Segment that is advertised by an IGP, this segment is signaled by BGP.
 
-
-
 Since the Prefix segments (IGP Prefix and BGP Prefix segment types) have a global significance, it was necessary to consider that MPLS routers might reserve the same range of label values for SR deployment, and it might not be possible to expect that all routers will be able to use the same label for the same segment. There are various reasons for that: Different vendors might allocate different default ranges; gradual SR deployment into an existing MPLS network may face the obvious issue of the label range already partially used or label ranges configured differently on different routers. Therefore, Prefix segments introduce a level of indirection: Each router advertises its own range of labels reserved for Prefix segments in its link-state packets, and this range is called the Segment Routing Global Block (SRGB). Individual Prefix segment IDs are then advertised as offsets, or indexes, from the beginning of the label range, instead of absolute values. Typically, the SRGB range starts at 16,000, and this is what we call the default SRGB.
-
-
 
 How does this help? Check the Figure 4 again. The rightmost router is shown to advertise the prefix segment for prefix 5.5.5.5/32 as 16005. In reality, though, the router would advertise that its own SRGB starts at 16,000, and that the index for prefix 5.5.5.5/32 is 5 (16,005 = 16,000 + 5). If all routers in the SR domain use the same SRGB, they will all arrive at the same label of 16,005 when forwarding packets along the path toward 5.5.5.5/32. However, if the top middle router used a SRGB that starts at 20,000, its own SID for this prefix would be 20,005 (20,000 + 5). Every neighbor of this router would know that, too, since each router’s SRGB is advertised in its link-state packets. So when a neighbor would forward packets toward 5.5.5.5/32 through the top middle router, knowing that the index of this prefix is 5 and the router uses a SRGB range starting at 20,000, it would use a label of 20,005 instead. Again, with global SIDs, their originating routers advertise their index rather than their absolute value; the actual value to be used in the label is computed as the index plus the SRGB base of the next hop.
 
-
-
 **As a summary:** Segment Routing is able to accomplish exactly what MPLS itself can, and brings with itself a new paradigm of encoding the forwarding state into the packet itself as a label stack, opening a whole new area of possible applications. From a control plane perspective, Segment Routing relies on extensions made for link-state routing protocols to advertise the segment IDs, and to provide detailed knowledge about the network topology required to accomplish the source routing operations. Each segment represents a forwarding instruction that gets discarded once the task is fully carried out, and, as the segments taken into account each hop are the ones on the top of the MPLS label stack, labels are discarded once their task is done and forwarding is achieved, this process is repeated till the packet reaches its destination. Reducing operational complexity while simplifying the forwarding process grants Segment Routing a positive position among ISPs, considered as an attractive technology to implement in complex environments where simplification can make a difference in daily operations and meeting tight service level agreements contracted by exigent customers.
 
-
-
 This article was intentionally meant to be a light introduction into the topic, tying strongly into the roots of Segment Routing rather than in its advanced features, and does not cover more advanced topics or deployments such as Path Computation Element (where Segment Routing demonstrates its capacity to be SDN-ready) deployment in conjunction with BGP-LS, or data plane related features like Topology Independent LFA and several others. These are coming, though - stay tuned!
-
-
 
 ## Overview
 
@@ -169,12 +152,12 @@ Adjacency SID：包含路由器与邻居的邻居关系。Adjacency SID 是针�
 
 ## SR 数据平面
 
-SR 协议数据面
+目前，SR 协议支持 MPLS 和 IPv6 两种数据面：
 
-- MPLS
-- IPv6
+- 基于 MPLS 数据平面的 SR 称为 SR-MPLS。
+- 基于 IPv6 数据平面的 SR 称为 SRv6.
 
-### SR MPLS 数据平面
+### SR-MPLS
 
 SR MPLS 数据平面复用已有的 MPLS 数据平面：
 
@@ -219,7 +202,9 @@ label range
 
 - LDP，RSVP，L2VPN，BGP（LU，VPN），ISIS（Adj-SID），OSPF（Adj-SID），TE（Binding-SID）
 
-## SR IGP 控制平面
+### SRv6
+
+## SR 控制平面
 
 使用 IGP 协议来分发 segment
 
@@ -262,10 +247,10 @@ draft-ietf-isis-segment-routing-extensions-02
 
 draft-ietf-ospf-segment-routing-extensions-02
 
+### SR BGP 控制平面
+
 ## 参考
 
 - [Introduction to Segment Routing](https://learningnetwork.cisco.com/s/blogs/a0D3i000002SKP6EAO/introduction-to-segment-routing)
-
 - [Segment Routing - Tutorials](https://www.segment-routing.net/tutorials)
 - [MPLS History and building blocks](https://learningnetwork.cisco.com/s/article/MPLS-History-and-building-blocks)
-

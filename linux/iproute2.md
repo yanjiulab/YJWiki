@@ -489,7 +489,20 @@ sysctl -w net.ipv4.tcp_l3mdev_accept=0
 
 该参数可以自动识别从隶属于某 VRF 域的网卡是上收到的数据包所属的具体 VRF 域。
 
+### 常用命令
+
+命令|说明
+:---:|:---:
+`ip link show type vrf`\br`ip vrf show`| 列出 vrf
+
 ## 单播路由（ip route）
+
+命令|说明
+:---:|:---:
+`ip route list/show`|查看 main 路由表路由
+`ip route list table local`|查看 local 路由表路由
+`ip route list vrf blue`| 查看 blue vrf 中 main 路由表路由
+`ip -f inet6 route [list]`|查看 IPv6 路由
 
 ## 组播路由（ip mroute）
 
