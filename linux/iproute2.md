@@ -495,6 +495,58 @@ sysctl -w net.ipv4.tcp_l3mdev_accept=0
 :---:|:---:
 `ip link show type vrf`\br`ip vrf show`| 列出 vrf
 
+### 示例
+
+创建 vrf0 并且绑定 tap0 到 vrf0 中。
+
+```sh
+ip link add dev vrf0 type vrf table 10
+ip link set vrf0 up
+ip tuntap add dev tap0 mode tap
+ip link set tap0 master vrf0
+ip addr add 172.18.1.2/24 dev tap0
+ip link set tap0 up
+```
+
+创建 vrf1 并且绑定 tap1 到 vrf1 中。
+
+```sh
+ip link add dev vrf1 type vrf table 11
+ip link set vrf1 up
+ip tuntap add dev tap1 mode tap
+ip link set tap1 master vrf1
+ip addr add 172.18.2.2/24 dev tap1
+ip link set tap1 up
+```
+
+通过 veth pair 连接 vrf0 和 vrf1
+
+```sh
+ip link add veth0 type veth peer name veth1
+ip link set veth0 master vrf0
+ip link set veth1 master vrf1
+ip link set veth0 up
+ip link set veth1 up
+ip route add 172.18.2.0/24 dev veth0 vrf vrf0
+ip route add 172.18.1.0/24 dev veth1 vrf vrf1
+```
+
+ping 命令
+
+```sh
+ping 172.18.2.2 -I vrf0 -I 172.18.1.2
+```
+
+清理
+
+```sh
+ip link del dev vrf0
+ip link del dev vrf1
+ip link del dev tap0
+ip link del dev tap1
+ip link del dev veth0
+```
+
 ## 单播路由（ip route）
 
 命令|说明
@@ -507,6 +559,22 @@ sysctl -w net.ipv4.tcp_l3mdev_accept=0
 ## 组播路由（ip mroute）
 
 ## 邻居（ip neigh）
+
+`ip neigh add 10.0.0.3 lladdr 50:54:33:00:00:0a dev vxlan0` 
+
+`nud` 是 Neighbour Unreachability Detection 的缩写。具有以下状态：
+
+值|含义
+:---:|:---:
+**permanent**|表项永久有效，只能被管理员删除。
+**noarp**|表项有效，但不会尝试校验（ARP），有过期时间。
+**reachable**|表项有效，且没有过期，是正常状态。
+**stale**|表项有效，但需要重新校验（ARP）。
+failed|表项失败。尝试最大探测次数后仍然失败。
+none|表项无状态，刚刚初始化或删除。
+incomplete|表项不完整，还没有被正确校验或解析。
+delay|表项校验目前被延迟。
+probe|表项目前正在尝试探测中。
 
 ## 策略路由（ip rule）
 
