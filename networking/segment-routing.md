@@ -2,7 +2,14 @@
 
 Segment Routing 是路由领域的一个新宠儿，特别契合于自治网络或集中式控制网络（如 SDN），SR 深度重用了 MPLS 和 IPv6 两种技术。因此，在学习 SR 之前需要熟悉相关技术。
 
+目前，SR 协议支持 MPLS 和 IPv6 两种数据面：
+
+- 基于 MPLS 数据平面的 SR 称为 SR-MPLS。
+- 基于 IPv6 数据平面的 SR 称为 SRv6.
+
 ## SR 原理
+
+对路径进行分段（Segment）以及在起始节点对路径进行排序组合（Segment List），确定出行路径。
 
 ### 源路由
 
@@ -150,14 +157,7 @@ Adjacency SID：包含路由器与邻居的邻居关系。Adjacency SID 是针�
 
 【图】
 
-## SR 数据平面
-
-目前，SR 协议支持 MPLS 和 IPv6 两种数据面：
-
-- 基于 MPLS 数据平面的 SR 称为 SR-MPLS。
-- 基于 IPv6 数据平面的 SR 称为 SRv6.
-
-### SR-MPLS
+## SR-MPLS 数据平面
 
 SR MPLS 数据平面复用已有的 MPLS 数据平面：
 
@@ -166,7 +166,7 @@ SR MPLS 数据平面复用已有的 MPLS 数据平面：
 
 可以使用 PHP 特性和 Explicit-Null 功能。
 
-#### 转发流程
+### 转发流程
 
 【图-总体图】
 
@@ -179,7 +179,7 @@ pl --- pl+16004 ------  pl+16004 ----------pl ----------
 - pop
 - exp-null
 
-#### SRGB
+### SRGB
 
 范围：16000-23999
 
@@ -189,7 +189,7 @@ E.g. Prefix 1.1.1.65/32 with prefix-SID index 65 gets label 16065
 
 建议所有节点 SRGB 相同，不同可以，但没必要。转发时会减去base值看index值。
 
-#### 标签动态分配
+### 标签动态分配
 
 label range
 
@@ -202,7 +202,34 @@ label range
 
 - LDP，RSVP，L2VPN，BGP（LU，VPN），ISIS（Adj-SID），OSPF（Adj-SID），TE（Binding-SID）
 
-### SRv6
+## SRv6 数据平面
+
+### SRv6 基本概念
+
+基于 IPv6 转发平面的段路由，通过灵活的 IPv6 扩展头，实现网络可编程。
+
+### SRv6 SID
+
+SRv6 Segment定义了SRv6网络编程中的网络指令，指示要去哪，怎么去。标识SRv6 Segment的ID被称为SRv6 SID。SRv6 SID是一个128bit的值，为IPv6地址形式，由Locator、Function和Arguments三部分组成。
+
+- Locator：具有定位功能。提供IPv6的路由能力，报文通过该字段实现寻址转发。此外，Locator对应的路由也是可聚合的。
+- Function：用来表达该设备指令要执行的转发动作，不同的转发行为由不同的Function来表达。
+- Arguments：可选字段，是对Function的补充，是指令在执行时对应的参数，这些参数可能包含流、服务或任何其他相关的信息。
+SRv6的每个Segment是128bit，可以灵活分为多段，每段功能和长度可以自定义，由此具备灵活编程能力，即业务可编辑。
+
+### SRv6 报文
+
+为基于IPv6转发平面实现SR技术，在IPv6路由扩展头新增SRH（Segment Routing Header）扩展头，该扩展头指定一个IPv6的显式路径，存储IPv6的Segment List信息。Segment List即对段和网络节点进行有序排列得到的一条转发路径。报文转发时，依靠Segments Left和Segment List字段共同决定IPv6目的地址（IPv6 DA）信息，从而指导报文的转发路径和行为。
+
+### 实战
+
+```sh
+sysctl -w net.ipv6.conf.all.seg6_enabled=1
+sysctl -w net.ipv6.conf.all.forwarding=1
+sysctl -w net.ipv4.ip_forward=1
+sysctl -w net.ipv4.conf.all.rp_filter=0
+
+```
 
 ## SR 控制平面
 
