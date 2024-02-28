@@ -6,7 +6,7 @@
 
 rsyslogd 的配置文件为 `/etc/rsyslog.conf`，该文件会加载 `/etc/rsyslog.d/` 目录下的所有配置文件，其默认配置为 `50-default.conf`。
 
-```sh
+```shell
 ls /var/log/ | grep syslog
 syslog          # 当前日志文件
 syslog.1        # 最近一次日志文件
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
 
 查看 `/var/log/syslog` 文件，即可看到输出。
 
-```sh
+```shell
 tail /var/log/syslog
 ...
 Jan  8 16:14:08 liyj-virtual-machine a.out: hello syslog.

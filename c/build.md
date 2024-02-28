@@ -115,7 +115,7 @@ file3:
 
 正常情况下，make 会打印每条命令（包括命令中的注释），然后再执行，这就叫做回声（echoing）。在命令的前面加上@，就可以关闭回声。
 
-### 通配符 
+### 通配符
 
 通配符（wildcard）用来指定一组符合条件的文件名。Makefile 的通配符与 Bash 一致，主要有星号（*）、问号（？）和 [...] 。比如， `*.o` 表示所有后缀名为o的文件。
 
@@ -197,7 +197,6 @@ all:
     for i in $(LIST); do echo $i; done
 ```
 
-
 ### 函数
 
 Makefile 还可以使用函数，格式如下。
@@ -252,12 +251,12 @@ LDFLAGS = -lpthread
 .PHONY: clean
 
 %.o: %.c
-	$(CC) ${CFLAGS} -c $< -o $@
+    $(CC) ${CFLAGS} -c $< -o $@
 $(TARGET_EXEC): $(OBJS)
-	$(CC) $(OBJS) -o $@ $(LDFLAGS)
+    $(CC) $(OBJS) -o $@ $(LDFLAGS)
 
 clean:
-	rm -f ${TARGET_EXEC} $(OBJS)
+    rm -f ${TARGET_EXEC} $(OBJS)
 ```
 
 ### 中小型项目
@@ -305,27 +304,27 @@ CPPFLAGS := $(INC_FLAGS) -g -W -Wall -MMD -MP
 LDFLAGS := -L$(LIB_DIRS) -llog
 
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
-	$(CC) $(OBJS) -o $@ $(LDFLAGS)
+    $(CC) $(OBJS) -o $@ $(LDFLAGS)
 
 # assembly
 $(BUILD_DIR)/%.s.o: %.s
-	$(MKDIR_P) $(dir $@)
-	$(AS) $(ASFLAGS) -c $< -o $@
+    $(MKDIR_P) $(dir $@)
+    $(AS) $(ASFLAGS) -c $< -o $@
 
 # c source
 $(BUILD_DIR)/%.c.o: %.c
-	$(MKDIR_P) $(dir $@)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+    $(MKDIR_P) $(dir $@)
+    $(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 # c++ source
 $(BUILD_DIR)/%.cpp.o: %.cpp
-	$(MKDIR_P) $(dir $@)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+    $(MKDIR_P) $(dir $@)
+    $(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: clean
 
 clean:
-	$(RM) -r $(BUILD_DIR)
+    $(RM) -r $(BUILD_DIR)
 
 -include $(DEPS)
 
@@ -346,14 +345,14 @@ TARGET = $(patsubst %.c, %, ${SRCS})
 .PHONY: all clean
 
 %.o: %.c
-	$(CC) ${CFLAGS} -c -o $@
+    $(CC) ${CFLAGS} -c -o $@
 %: %.o
-	$(CC) ${LDFLAGS} -o $@
+    $(CC) ${LDFLAGS} -o $@
 
 all: ${TARGET}
 
 clean:
-	rm -f ${TARGET}
+    rm -f ${TARGET}
 ```
 
 在 Makefile 规则中，通配符会被自动展开。但在变量的定义和函数引用时，通配符将失效。这种情况下如果需要通配符有效，就需要使用函数 wildcard，它的用法是：`$(wildcard PATTERN...)`。首先使用 wildcard 函数获取工作目录下的 `.c` 文件列表；在Makefile中，它被展开为已经存在的、使用空格分开的、匹配此模式的所有文件列表。如果不存在任何符合此模式的文件，函数会忽略模式字符并返回空。
@@ -421,55 +420,55 @@ all : compile run
 .PHONY: all
 
 start:
-	@echo "Creating project: $(PROJECT_NAME)"
-	@mkdir -pv $(PROJECT_PATH)
-	@echo "Copying files from template to new directory:"
-	@cp -rvf ./* $(PROJECT_PATH)/
-	@echo
-	@echo "Go to $(PROJECT_PATH) and compile your project: make"
-	@echo "Then execute it: build/$(BINARY) --help"
-	@echo "Happy hacking :-P"
+    @echo "Creating project: $(PROJECT_NAME)"
+    @mkdir -pv $(PROJECT_PATH)
+    @echo "Copying files from template to new directory:"
+    @cp -rvf ./* $(PROJECT_PATH)/
+    @echo
+    @echo "Go to $(PROJECT_PATH) and compile your project: make"
+    @echo "Then execute it: build/$(BINARY) --help"
+    @echo "Happy hacking :-P"
 
 install:
-	@echo Installing dependencies...
+    @echo Installing dependencies...
 # Install required libraries here.
-	@echo Installed
+    @echo Installed
 
 dirs: 
-	@echo $(DIRS)
+    @echo $(DIRS)
 
 compile:
-	@mkdir -p build
-	@echo Building...
-	$(CC) $(CFLAGS) $(MAIN_FILE) $(SOURCES) $(INCLUDES) $(LIBS) -o $(OUTPUT)
-	@echo Build completed.
+    @mkdir -p build
+    @echo Building...
+    $(CC) $(CFLAGS) $(MAIN_FILE) $(SOURCES) $(INCLUDES) $(LIBS) -o $(OUTPUT)
+    @echo Build completed.
 
 run: compile
-	@echo 
-	./$(OUTPUT)
+    @echo 
+    ./$(OUTPUT)
 
 test-build:
-	@mkdir -p build
-	@echo Preparing tests...
-	$(CC) $(TCFLAGS) $(TESTS) $(SOURCES) $(INCLUDES) $(LIBS) $(TEST_LIBS) -o $(TEST_OUTPUT)
+    @mkdir -p build
+    @echo Preparing tests...
+    $(CC) $(TCFLAGS) $(TESTS) $(SOURCES) $(INCLUDES) $(LIBS) $(TEST_LIBS) -o $(TEST_OUTPUT)
 
 test: test-build
-	./$(TEST_OUTPUT)
-	@echo Tests completed.
-	
+    ./$(TEST_OUTPUT)
+    @echo Tests completed.
+    
 leaks: compile
-	@mkdir -p log
-	valgrind --leak-check=yes --log-file="$(LEAKS)" --track-origins=yes ./$(OUTPUT)
+    @mkdir -p log
+    valgrind --leak-check=yes --log-file="$(LEAKS)" --track-origins=yes ./$(OUTPUT)
 
 threads: compile
-	@mkdir -p log
-	valgrind --tool=helgrind --log-file="$(HELGRIND)" ./$(OUTPUT)
+    @mkdir -p log
+    valgrind --tool=helgrind --log-file="$(HELGRIND)" ./$(OUTPUT)
 
 clean:
-	$(RM) ./$(OUTPUT)
+    $(RM) ./$(OUTPUT)
 
 cleanLogs:
-	$(RM) -r log || true
+    $(RM) -r log || true
 
 remove: clean cleanLogs
 ```
@@ -491,9 +490,9 @@ remove: clean cleanLogs
 开发者决定将软件进行源码发布之后，通常倾向于让用户以尽量简洁的方式来安装。在 GNU 风格中，开发者将倾向于让用户可以直接执行以下三部分操作来完成安装。
 
 ```shell
-$ ./configure			# 配置脚本
-$ make					# 构建命令
-$ [sudo] make install	# 安装命令
+./configure            # 配置脚本
+make                    # 构建命令
+[sudo] make install    # 安装命令
 ```
 
 其中每一行命令完成一件事：
@@ -560,5 +559,4 @@ hello_SOURCES = main.c
 
 `bin_PROGRAMS` 表明最终需要在 `Makefile` 中构建 `hello` 程序，并且安装到 `bindir` 目录中。
 
-对于每一个在 `_PROGRAMS` 变量中定义的 `prog` 程序，将会寻找一个 `prog_SOURCES` 变量中定义的源文件，这些文件将会编译、链接到一起。 
-
+对于每一个在 `_PROGRAMS` 变量中定义的 `prog` 程序，将会寻找一个 `prog_SOURCES` 变量中定义的源文件，这些文件将会编译、链接到一起。

@@ -213,7 +213,7 @@ with manager.connect(host=host, port=830, username='root', password='root', host
 
 服务端提供了 yang 模型文件，但开发者可能并不十分清楚如何根据模型文件构造 data 的结构，或者开发者根据 yang 模型文件，人工构造出了一个 XML 结构，但并不知道其是否合法。基于以上情况，可以使用 `pyang` 命令生成 XML 数据实例模板：
 
-```sh
+```shell
 pyang -f sample-xml-skeleton --sample-xml-skeleton-defaults --sample-xml-skeleton-path "/ripd/" module.yang -o module.xml
 ```
 
@@ -221,7 +221,7 @@ pyang -f sample-xml-skeleton --sample-xml-skeleton-defaults --sample-xml-skeleto
 
 如果需要转换为 JSON 实例数据（例如采用 RESTCONF 协议时），可以通过以下命令获取：
 
-```sh
+```shell
 export PYANG_XSLT_DIR=/home/liyj/.local/share/yang/xslt # if pyang is installed in user path
 pyang -f jsonxsl module.yang -o module.xsl
 xsltproc -o module.json module.xsl module.xml

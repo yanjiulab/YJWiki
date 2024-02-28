@@ -31,7 +31,7 @@
 
 总结，在 SST 阶段，组播数据沿着 Source-Specific Tree 发送到 RP，然后再沿 RPT 发送到接收者。如果两个树有交叉，则数据会从 SST 转发至 RPT，从而跳过 RP。
 
-###  阶段 3：SP Tree
+### 阶段 3：SP Tree
 
 虽然 SST 阶段解决了数据包封装解封的问题，但仍然没有完全优化转发路径。相比于直接经过最短路径，数据从组播源到组播接收者，都需要经过 RP ，而这可能会造成走弯路。因此，为了获取更低的时延和更高的带宽利用率，接收端 DR 可以选择将 RPT 切换至 SPT (Source Specific Shortest Path Tree)。
 
@@ -102,8 +102,6 @@ For every RP, a router keeps the following state:
           • Last RPF Neighbor towards RP that was used
 ```
 
-
-
 ### `(*,G)`
 
 ```
@@ -111,26 +109,24 @@ For every group G, a router keeps the following state:
   (*,G) state:
     For each interface:
         Local Membership:
-        	State: One of {"NoInfo", "Include"}
+            State: One of {"NoInfo", "Include"}
         PIM (*,G) Join/Prune State:
             • State: One of {"NoInfo" (NI), "Join" (J), "Prune-Pending" (PP)}
             • Prune-Pending Timer (PPT)
             • Join/Prune Expiry Timer (ET)
         (*,G) Assert Winner State
-        	• State: One of {"NoInfo" (NI), "I lost Assert" (L), "I won Assert"
+            • State: One of {"NoInfo" (NI), "I lost Assert" (L), "I won Assert"
         (W)}
             • Assert Timer (AT)
             • Assert winner’s IP Address (AssertWinner)
             • Assert winner’s Assert Metric (AssertWinnerMetric)
     Not interface specific:
       Upstream (*,G) Join/Prune State:
-    	• State: One of {"NotJoined(*,G)", "Joined(*,G)"}
+        • State: One of {"NotJoined(*,G)", "Joined(*,G)"}
       • Upstream Join/Prune Timer (JT)
       • Last RP Used
       • Last RPF Neighbor towards RP that was used
 ```
-
-
 
 ### `(S,G)`
 
@@ -139,7 +135,7 @@ For every source/group pair (S,G), a router keeps the following state:
   (S,G) state:
       For each interface:
         Local Membership:
-        	State: One of {"NoInfo", "Include"}
+            State: One of {"NoInfo", "Include"}
         PIM (S,G) Join/Prune State:
             • State: One of {"NoInfo" (NI), "Join" (J), "Prune-Pending" (PP)}
             • Prune-Pending Timer (PPT)
@@ -151,7 +147,7 @@ For every source/group pair (S,G), a router keeps the following state:
             • Assert winner’s Assert Metric (AssertWinnerMetric)
       Not interface specific:
         Upstream (S,G) Join/Prune State:
-        	• State: One of {"NotJoined(S,G)", "Joined(S,G)"}
+            • State: One of {"NotJoined(S,G)", "Joined(S,G)"}
         • Upstream (S,G) Join/Prune Timer (JT)
         • Last RPF Neighbor towards S that was used
         • SPTbit (indicates (S,G) state is active)
@@ -160,10 +156,8 @@ For every source/group pair (S,G), a router keeps the following state:
             • Register state: One of {"Join" (J), "Prune" (P), "Join-Pending" (JP), "NoInfo" (NI)}
             • Register-Stop timer
         Additional (S,G) state at the RP:
-        	• PMBR: the first PMBR to send a Register for this source with the Border bit set.
+            • PMBR: the first PMBR to send a Register for this source with the Border bit set.
 ```
-
-
 
 ### `(S,G,rpt)`
 
@@ -172,21 +166,17 @@ For every source/group pair (S,G) for which a router also has (*,G) state, it al
 following state:
   (S,G,rpt) state:
     For each interface:
-    	Local Membership:
-    		State: One of {"NoInfo", "Exclude"}
-    	PIM (S,G,rpt) Join/Prune State:
+        Local Membership:
+            State: One of {"NoInfo", "Exclude"}
+        PIM (S,G,rpt) Join/Prune State:
             • State: One of {"NoInfo", "Pruned", "Prune-Pending"}
             • Prune-Pending Timer (PPT)
             • Join/Prune Expiry Timer (ET)
     Not interface specific:
-    	Upstream (S,G,rpt) Join/Prune State:
-    		• State: One of {"RPTNotJoined(G)", "NotPruned(S,G,rpt)", "Pruned(S,G,rpt)"}
-    		• Override Timer (OT)
+        Upstream (S,G,rpt) Join/Prune State:
+            • State: One of {"RPTNotJoined(G)", "NotPruned(S,G,rpt)", "Pruned(S,G,rpt)"}
+            • Override Timer (OT)
 ```
-
-
-
-
 
 ## PIM 数据包格式
 
@@ -253,7 +243,7 @@ Encoded-Group Address 格式如下：
 - Addr Family  （1 字节）
 - Encoding Type  （1 字节）
 - [B]idirectional PIM  
-- Reserved 
+- Reserved
 - Admin Scope [Z]one  
 - Mask Len  
 - Group multicast Address    （IPv4 为 4 字节）
@@ -395,8 +385,6 @@ RP -> S
 
 - Unicast Upstream Neighbor Address：上游邻居单播地址
 
-
-
 ### Bootstrap 消息
 
 ```
@@ -474,8 +462,6 @@ PIM 路由器在接收到邻居路由器发送的相同组播报文后，会以�
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
 
-
-
 ### C-RP-Adv 消息
 
 C−RPs 周期性向 BSR 发送单播 Candidate-RP-Advertisement 消息。
@@ -501,11 +487,12 @@ C−RPs 周期性向 BSR 发送单播 Candidate-RP-Advertisement 消息。
 ```
 
 其中:
+
 - Prefix Count 表示消息中该 C-RP 通告的组地址数量，不能为 0。
 - RP Address 表示该 C-RP 单播地址。
 - Holdtime 表示该通告有效期，一般设为 2.5 倍 C-RP-ADV 消息周期。
 
-
 ## 参考
+
 - RFC 7761 4601
 - RFC 5059

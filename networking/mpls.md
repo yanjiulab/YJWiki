@@ -151,8 +151,6 @@ MPLS 网络架构中并没有规定一种 LEP，因为 LEP 协议所做的事情
 
 ### VPN 架构
 
-
-
 ![img](mpls.assets/mpls_09.png)
 
 ### 控制面

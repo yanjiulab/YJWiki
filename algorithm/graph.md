@@ -66,7 +66,7 @@ TODO
 
 ### 旅行商问题
 
-**旅行商问题** (Travelling Salesman Problem**, **TSP) 是给定一系列城市和每对城市之间的距离，求解访问每一座城市一次并回到起始城市的最短回路。
+**旅行商问题** (Travelling Salesman Problem**,**TSP) 是给定一系列城市和每对城市之间的距离，求解访问每一座城市一次并回到起始城市的最短回路。
 
 ## 网络流问题
 
@@ -84,9 +84,6 @@ TODO
 
 ## 二分匹配
 
-
-
 ## 参考
 
 - [Graph theory - Wikipedia](https://en.wikipedia.org/wiki/Graph_theory)
-

@@ -3,6 +3,7 @@
 IP 协议提供无连接的（connectionless）、尽力而为（unreliable, best effort service）的服务，是 TCP/IP 网络中的网络层承载协议，也称为 routed 协议，由 RFC751 定义。
 
 ## IPv4 头格式
+
 IP 头格式如下所示：
 
 ```
@@ -41,8 +42,8 @@ IP 头格式如下所示：
 TOS 字段主要在以下三个方面进行 tradeoff：
 
 - low-delay
-- high-reliability 
-- high-throughput 
+- high-reliability
+- high-throughput
 
 TOS 8 位含义如下：
 
@@ -73,6 +74,7 @@ Precedence
 ### IP 头校验
 
 以下是一段 C 语言代码。
+
 ```c
 uint16_t ip_checksum(uint16_t *pbuf, uint16_t bytes) {
     unsigned int sum;
@@ -115,8 +117,6 @@ uint16_t ip_checksum(uint16_t *pbuf, uint16_t bytes) {
 ```
 
 ## IPv6
-
-
 
 ## RFC
 

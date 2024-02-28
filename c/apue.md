@@ -45,10 +45,10 @@ Unix 将系统视为若干层，其中**内核** (operating system, system kerne
 
 - C 标准库
 - 其他库
-    - POSIX (Portable Operating System Interface of Unix)
-    - Linux Library
-    - Windows Library
-    - …
+  - POSIX (Portable Operating System Interface of Unix)
+  - Linux Library
+  - Windows Library
+  - …
 
 编程时首先考虑使用 C 标准库中的接口，这些库保证了最佳的可移植性。C POSIX 库是与标准库同时发展的，它是 POSIX 系统中 C 标准库的规范，作为标准库的超集，其不仅兼容标准库，同时还引入了额外的功能。虽然 POSIX 是为 Unix 标准制定的接口，但对于 Linux、Mac OS X 系统，甚至 Windows 都具有较好的可移植性。
 
@@ -186,8 +186,6 @@ IEEE POSIX 标准定义了接口的规范，而不同的操作系统根据自身
 |    <wctype.h>    |      |
 |   <wordexp.h>    |      |
 
-
-
 ### 系统重要文件
 
 TODO
@@ -230,15 +228,13 @@ Unix 文件大部分是普通文件和目录，但也包括其他类型。
 |       符号链接 symbolic file        |              指向另一个文件              |
 |            套接字 socket            |              网络进程间通信              |
 
-TODO 
+TODO
 
 stat 函数
 
 `stat /etc/passwd /etc /run/systemd/journal/dev-log  /dev/tty /dev/sr0 /dev/cdrom | grep -E 'File|Size'` 可以查看各类文件类型 。
 
 ### 文件系统
-
-
 
 ### 文件存储结构
 
@@ -251,7 +247,7 @@ stat 函数
     - The file status flags for the file, such as read, write, append, sync, and nonblocking
     - The current file offset
     - A pointer to the **v-node table entry** for the file
-3. 
+3.
 
 ### 文件所属及权限
 
@@ -283,8 +279,6 @@ chown
 | **read**  | 从打开文件中读数据             | ssize_t read(int fd, void *buf, size_t nbytes);              | <unistd.h> | number of bytes read, 0 if end of file, −1 on error |
 | **write** | 向打开文件中写数据             | ssize_t write(int fd, const void *buf, size_t nbytes);       | unistd.h   | number of bytes written if OK, −1 on error          |
 
-
-
 | 系统函数  | 描述                                         | 头文件                                                   |
 | --------- | -------------------------------------------- | -------------------------------------------------------- |
 | dup2      | 复制一个现有的文件描述符                     | <unistd.h>                                               |
@@ -295,8 +289,6 @@ chown
 | fcntl     | 改变己经打开文件的属性                       | <fcntl.h>                                                |
 | ioctl     | I/O操作的杂货箱                              | <unistd.h> in System V <br><sys/ioctl.h> in BSD or Linux |
 
-
-
 ## 标准 I/O
 
 ### 格式化 I/O 输入
@@ -305,7 +297,7 @@ C 语言的输入函数家族主要包括三个函数，其区别在于**输入�
 
 - `scanf`：从标准输入流 `stdin` 读入。
 - `fscanf`：从文件流指针 `steam` 读入。
-- `sscanf`：从字符串指针 `str` 读入。 
+- `sscanf`：从字符串指针 `str` 读入。
 
 ```c
 #include <stdio.h>
@@ -426,9 +418,9 @@ C 语言的输入函数家族主要包括五个函数，其区别在于**输出�
 
 - `printf`：输出至标准输入流 `stdin` 。
 - `fprintf`：输出至文件流指针 `steam` 。
-- `dprintf`：输出至文件描述符 `fd` 。 
-- `sprintf`：输出至字符串指针 `str` 。 
-- `snprintf`：输出至字符串指针 `str` 。 
+- `dprintf`：输出至文件描述符 `fd` 。
+- `sprintf`：输出至字符串指针 `str` 。
+- `snprintf`：输出至字符串指针 `str` 。
 
 ```c
 #include <stdio.h>
@@ -503,13 +495,12 @@ int main() {
 // p:      0x7ffc9df49a5c
 ```
 
-
-
 ## 进程
 
 ### 进程开始
 
 C 语言的程序总是从 main 函数开始执行，main 函数的原型如下：
+
 ```
 int main(int argc, char *argv[]);
 ```
@@ -544,9 +535,9 @@ argv[3]: foo
 
 |   函数   | 声明                                                         |
 | :------: | ------------------------------------------------------------ |
-|  getenv  | char *getenv(const char *name);                              |
+|  getenv  | char *getenv(const char*name);                              |
 |  putenv  | int putenv(char *str);                                       |
-|  setenv  | int setenv(const char *name, const char *value, int rewrite); |
+|  setenv  | int setenv(const char *name, const char*value, int rewrite); |
 | unsetenv | int unsetenv(const char *name);                              |
 | clearenv |                                                              |
 
@@ -556,14 +547,14 @@ argv[3]: foo
 
 1. 从 main 返回
 2. 调用 exit
-3. 调用 _exti 或 _Exit
+3. 调用 _exti 或_Exit
 4. 最后一个线程从其 start routine 返回
 5. 从最后一个线程调用 pthread_exit
 6. 调用 abort
 7. 接受到一个信号
 8. 最后一个线程对取消请求做出响应
 
-exit, _exit, _Exit 三个函数用于正常终止一个进程，其中 _exit, _Exit 直接返回内核，而 exit 先执行一些清理处理，然后返回内核。由于历史原因，exit 总会执行一个标准 I/O 库的清理关闭操作，这会导致所有打开流调用 fclose 函数，使得所有输出缓存中的所有数据都被 flush (写到文件)。
+exit, _exit,_Exit 三个函数用于正常终止一个进程，其中 _exit,_Exit 直接返回内核，而 exit 先执行一些清理处理，然后返回内核。由于历史原因，exit 总会执行一个标准 I/O 库的清理关闭操作，这会导致所有打开流调用 fclose 函数，使得所有输出缓存中的所有数据都被 flush (写到文件)。
 
 3 个退出函数都带有一个整型参数，称为终止状态。在大部分 Unix 的 shell 中，可以使用 `echo $?` 查看上一条执行语句的终止状态。
 
@@ -574,11 +565,9 @@ exit, _exit, _Exit 三个函数用于正常终止一个进程，其中 _exit, _E
 int atexit(void (*func)(void));
 ```
 
-内核使程序唯一执行的方法是调用 exec 函数，进程自愿终止的唯一方法是显式或隐式地 (通过 exit) 调用 _exit 或 _Exit 函数。进程也可非自愿的由一个信号终止。
+内核使程序唯一执行的方法是调用 exec 函数，进程自愿终止的唯一方法是显式或隐式地 (通过 exit) 调用 _exit 或_Exit 函数。进程也可非自愿的由一个信号终止。
 
 ![image-20221115223432113](apue.assets/image-20221115223432113.png)
-
-
 
 ### C 程序存储空间布局
 
@@ -594,7 +583,7 @@ malloc
 
 ### 拓展
 
-setjump,longjmp 
+setjump,longjmp
 
 setrlimit
 
@@ -621,12 +610,13 @@ setrlimit
 ### fork 函数
 
 由 fork 创建的新进程被称为子进程 (child process)。一个 fork 函数被调用一次，但返回两次。两次返回的区别是：
+
 - 父进程的返回值则是新建子进程的进程 ID，因为一个进程的子进程可以有多个，并且没有一个函数使一个进程可以获得其所有子进程的进程 ID。
 - 子进程的返回值是 0，理由是一个进程只会有一个父进程，所以子进程总是可以调用 getppid 以获得其父进程的进程 ID。
 
 子进程和父进程继续执行 fork 调用之后的指令。**子进程是父进程的副本**。例如，子进程获得父进程数据空间、堆和栈的副本。父进程和子进程并**不共享这些存储空间部分**，父进程和子进程**共享正文段**。
 
-由于在 fork 之后经常跟随着 exec, 而后者又会将所有的运行时内存结构替换掉，所以每次 fork 为子进程创建一个副本可能是不划算的。因此现在很多实现并不执行一个父进程数据段、栈和堆的完全副本.作为替代使用了**写时复制 (Copy-On-Write, COW) **技术，意思是父进程或子进程任何一个试图修改的时候才会创建真正的副本，否则内核只是将权限修改为只读，实际上这些区域还是共享的。
+由于在 fork 之后经常跟随着 exec, 而后者又会将所有的运行时内存结构替换掉，所以每次 fork 为子进程创建一个副本可能是不划算的。因此现在很多实现并不执行一个父进程数据段、栈和堆的完全副本.作为替代使用了**写时复制 (Copy-On-Write, COW)**技术，意思是父进程或子进程任何一个试图修改的时候才会创建真正的副本，否则内核只是将权限修改为只读，实际上这些区域还是共享的。
 
 ### exec 函数
 
@@ -648,14 +638,14 @@ int fexecve(int fd, char *const argv[], char *const envp[]);
 几种函数的区别在名字里已经有所暗示：
 
 - 待运行程序名
-    - 空：表示取路径名作为参数。
-    - p：表示取文件名作为参数，且在 PATH 环境变量中指定的各个目录中搜索。
+  - 空：表示取路径名作为参数。
+  - p：表示取文件名作为参数，且在 PATH 环境变量中指定的各个目录中搜索。
 - 待运行程序参数
-    - l：表示以参数列表（list）方式提供。
-    - v：表示以数组（vector）方式提供。
+  - l：表示以参数列表（list）方式提供。
+  - v：表示以数组（vector）方式提供。
 - 待运行程序环境表：
-    - 空：使用调用进程中的 environ 变量为新程序复制现有的环境。
-    - e：表示可以传递一个指向环境字符串指针数组的指针。
+  - 空：使用调用进程中的 environ 变量为新程序复制现有的环境。
+  - e：表示可以传递一个指向环境字符串指针数组的指针。
 
 在很多 Unix 实现中，这 7 个函数中只有 execve 是**内核的系统调用**。另外 6 个只是库函数，关系如下：
 
@@ -679,7 +669,7 @@ int clone(int (*fn)(void *), void *child_stack,
 
 clone() 创建新进程，其行为类似于 fork()，通常使用 glibc 库中的包装函数 clone()，该函数基于 clone 系统调用。与 fork 不同，clone 允许子进程与父进程共享部分执行上下文的参数，例如虚拟地址空间、文件描述符表、信号处理程序等。
 
-fork 是标准的 Unix 系统调用，用来创建进程，而在 Linux 中 clone 可以根据传递的选项创建不同的执行线程，新的执行线程可以遵循 UNIX 进程、POSIX 线程、介于两者之间或完全不同的事物（例如不同的容器）的语义。`pthread_create()` 和 `fork()` 底层实现都使用了 `clone()`。 
+fork 是标准的 Unix 系统调用，用来创建进程，而在 Linux 中 clone 可以根据传递的选项创建不同的执行线程，新的执行线程可以遵循 UNIX 进程、POSIX 线程、介于两者之间或完全不同的事物（例如不同的容器）的语义。`pthread_create()` 和 `fork()` 底层实现都使用了 `clone()`。
 
 通过 clone() 创建的子进程，从调用指向的函数 fn() 开始执行，而 fork() 创建的子进程将会从 fork 的调用点开始执行。当 fn(arg) 函数返回，子进程结束，函数 fn 的返回值就是子进程的退出状态码，子进程同样可以通过调用 exit() 和收到结束信号而显式结束。
 
@@ -721,8 +711,8 @@ flags 还可以与零个或多个常量进行按位或运算，以指定在调�
 - 几个进程组可分为：一个前台进程组和若干后台进程组
 - 终端键入：ctrl+c，发送到前台进程组所有进程
 - 创建会话：进程调用 setsid
-    - 不是进程组长：变成新会话首进程，成为新进程组组长进程，pgid为pid
-    - 已经是进程组长：出错。如要创建，可以fork然后关闭父进程。
+  - 不是进程组长：变成新会话首进程，成为新进程组组长进程，pgid为pid
+  - 已经是进程组长：出错。如要创建，可以fork然后关闭父进程。
 
 ### 作业控制
 
@@ -769,8 +759,8 @@ ubuntu@sdnhubvm:~/liyj[18:38]$   PID  PPID  PGID   SID COMMAND
 通常是由 shell 的管道将几个进程编成一组的。
 
 ```
-$ proc1 | proc2 &
-$ proc3 | proc4 | proc5
+proc1 | proc2 &
+proc3 | proc4 | proc5
 ```
 
 ![session-control](index/session-control.png)
@@ -780,7 +770,6 @@ $ proc3 | proc4 | proc5
 2. 该进程成为一个新进程组的组长进程。新进程组 ID 是该调用进程的进程 ID。
 3. 该进程没有控制终端(下一节讨论控制终端)。如果在调用setsid之前该进程有一个
 控制终端，那么这种联系也被切断。
-
 
 ![job-control](index/job-control.png)
 
@@ -1067,19 +1056,19 @@ Nov 19 02:45:19 msi-ryzen3600 daemon: got SIGTERM; exiting
 信号具有编号，一般而言用宏定义表示。其中用户可以使用的为 1-31，实时信号一般是内核使用的。
 
 ```
- 1) SIGHUP	     2) SIGINT	     3) SIGQUIT	     4) SIGILL	     5) SIGTRAP
- 6) SIGABRT	     7) SIGBUS	     8) SIGFPE	     9) SIGKILL	    10) SIGUSR1
-11) SIGSEGV 	12) SIGUSR2	    13) SIGPIPE	    14) SIGALRM	    15) SIGTERM
-16) SIGSTKFLT	17) SIGCHLD 	18) SIGCONT	    19) SIGSTOP	    20) SIGTSTP
-21) SIGTTIN 	22) SIGTTOU 	23) SIGURG	    24) SIGXCPU	    25) SIGXFSZ
-26) SIGVTALRM	27) SIGPROF 	28) SIGWINCH	29) SIGIO	    30) SIGPWR
-31) SIGSYS	    34) SIGRTMIN	35) SIGRTMIN+1	36) SIGRTMIN+2	37) SIGRTMIN+3
-38) SIGRTMIN+4	39) SIGRTMIN+5	40) SIGRTMIN+6	41) SIGRTMIN+7	42) SIGRTMIN+8
-43) SIGRTMIN+9	44) SIGRTMIN+10	45) SIGRTMIN+11	46) SIGRTMIN+12	47) SIGRTMIN+13
-48) SIGRTMIN+14	49) SIGRTMIN+15	50) SIGRTMAX-14	51) SIGRTMAX-13	52) SIGRTMAX-12
-53) SIGRTMAX-11	54) SIGRTMAX-10	55) SIGRTMAX-9	56) SIGRTMAX-8	57) SIGRTMAX-7
-58) SIGRTMAX-6	59) SIGRTMAX-5	60) SIGRTMAX-4	61) SIGRTMAX-3	62) SIGRTMAX-2
-63) SIGRTMAX-1	64) SIGRTMAX
+ 1) SIGHUP         2) SIGINT         3) SIGQUIT         4) SIGILL         5) SIGTRAP
+ 6) SIGABRT         7) SIGBUS         8) SIGFPE         9) SIGKILL        10) SIGUSR1
+11) SIGSEGV     12) SIGUSR2        13) SIGPIPE        14) SIGALRM        15) SIGTERM
+16) SIGSTKFLT    17) SIGCHLD     18) SIGCONT        19) SIGSTOP        20) SIGTSTP
+21) SIGTTIN     22) SIGTTOU     23) SIGURG        24) SIGXCPU        25) SIGXFSZ
+26) SIGVTALRM    27) SIGPROF     28) SIGWINCH    29) SIGIO        30) SIGPWR
+31) SIGSYS        34) SIGRTMIN    35) SIGRTMIN+1    36) SIGRTMIN+2    37) SIGRTMIN+3
+38) SIGRTMIN+4    39) SIGRTMIN+5    40) SIGRTMIN+6    41) SIGRTMIN+7    42) SIGRTMIN+8
+43) SIGRTMIN+9    44) SIGRTMIN+10    45) SIGRTMIN+11    46) SIGRTMIN+12    47) SIGRTMIN+13
+48) SIGRTMIN+14    49) SIGRTMIN+15    50) SIGRTMAX-14    51) SIGRTMAX-13    52) SIGRTMAX-12
+53) SIGRTMAX-11    54) SIGRTMAX-10    55) SIGRTMAX-9    56) SIGRTMAX-8    57) SIGRTMAX-7
+58) SIGRTMAX-6    59) SIGRTMAX-5    60) SIGRTMAX-4    61) SIGRTMAX-3    62) SIGRTMAX-2
+63) SIGRTMAX-1    64) SIGRTMAX
 ```
 
 大部分 Unix 系统都提供了编号到信号名的映射数组，数组下标为信号编号，数组元素为指向信号名字符串的指针。通常使用 `strsignal` 函数取出其描述内容，类似于 `strerror`。
@@ -1093,6 +1082,7 @@ char *strsignal(int sig);
 ```
 
 如果需要将其输出到标准错误，可以使用 `psignal`，类似于 `perror`。
+
 ```c
 #include <signal.h>
 
@@ -1147,10 +1137,10 @@ kill -<signal> <pid> [...]
 例如：
 
 ```shell
-kill -SIGUSR1 18742		# send SIGUSR1
-kill -USR2 18742		# send SIGUSR2
-kill 18742				# send SIGTERM
-kill -9 18742			# send SIGKILL
+kill -SIGUSR1 18742        # send SIGUSR1
+kill -USR2 18742        # send SIGUSR2
+kill 18742                # send SIGTERM
+kill -9 18742            # send SIGKILL
 ```
 
 ### 信号设置
@@ -1166,9 +1156,9 @@ void (*signal(int signo, void (*func)(int)))(int);
 
 - signo 为感兴趣的信号名。
 - func 为信号处理程序指针，表示该信号发生时的动作，
-    - 常量 SIG_IGN 表示忽略此信号。
-    - 常量 SIG_DFL 表示执行默认动作。
-    - 函数地址表示在信号发生时调用该函数。
+  - 常量 SIG_IGN 表示忽略此信号。
+  - 常量 SIG_DFL 表示执行默认动作。
+  - 函数地址表示在信号发生时调用该函数。
 
 **信号处理函数要求一个整形参数，并且返回值为 void。**当调用 signal 设置信号处理程序时，返回该函数的指针。简化一下 signal 的声明如下：
 
@@ -1205,13 +1195,13 @@ int main(void) {
 当我们执行时，对于已经设置过的信号，会执行 sig_usr 函数，否则执行默认动作。
 
 ```
-$ ./sig &										# 启动程序
-[1] 17497										# shell 打印作业编号和进程 ID
-$ kill -USR1 17497								# 使用 kill 命令向进程发送 USR1 信号
+$ ./sig &                                        # 启动程序
+[1] 17497                                        # shell 打印作业编号和进程 ID
+$ kill -USR1 17497                                # 使用 kill 命令向进程发送 USR1 信号
 received User defined signal 1 (10)
-$ kill -USR2 17497								# 使用 kill 命令向进程发送 USR2 信号
+$ kill -USR2 17497                                # 使用 kill 命令向进程发送 USR2 信号
 received User defined signal 2 (12)
-$ kill 17497									# 使用 kill 命令向进程发送 SIGTERM 信号
+$ kill 17497                                    # 使用 kill 命令向进程发送 SIGTERM 信号
 [1]+  Terminated              ./sig
 ```
 
@@ -1280,8 +1270,6 @@ int sigismember(const sigset_t *set, int signo);
 #include <unistd.h>
 unsigned int alarm(unsigned int seconds);
 ```
-
-
 
 ## 线程基础
 
@@ -1543,14 +1531,12 @@ API
 
 | 函数                                                         | 解释                                                        |
 | ------------------------------------------------------------ | ----------------------------------------------------------- |
-| int pthread_mutex_init(pthread_mutex_t *restrict mutex, const pthread_mutexattr_t *restrict attr); | 动态初始化                                                  |
+| int pthread_mutex_init(pthread_mutex_t *restrict mutex, const pthread_mutexattr_t*restrict attr); | 动态初始化                                                  |
 | int pthread_mutex_destroy(pthread_mutex_t *mutex);           | 动态释放                                                    |
 | int pthread_mutex_lock(pthread_mutex_t *mutex);              | 加锁。若已上锁，则阻塞直止解锁。                            |
 | int pthread_mutex_trylock(pthread_mutex_t *mutex);           | 尝试加锁。若已上锁，则失败返回 EBUSY。                      |
-| int pthread_mutex_timedlock(pthread_mutex_t *restrict mutex, const struct timespec *restrict tsptr); | 超时加锁。若已上锁，则等待直到绝对时间超时，返回 ETIMEOUT。 |
+| int pthread_mutex_timedlock(pthread_mutex_t *restrict mutex, const struct timespec*restrict tsptr); | 超时加锁。若已上锁，则等待直到绝对时间超时，返回 ETIMEOUT。 |
 | int pthread_mutex_unlock(pthread_mutex_t *mutex);            | 解锁。                                                      |
-
-
 
 ### 条件变量
 
@@ -1558,17 +1544,19 @@ API
 
 见 OSTEP
 
-int pthread_cond_wait(pthread_cond_t *restrict cond, pthread_mutex_t *restrict mutex);
-int pthread_cond_timedwait(pthread_cond_t *restrict cond, pthread_mutex_t *restrict mutex, const struct timespec *restrict abstime);
-int pthread_cond_signal(pthread_cond_t *cond);
+int pthread_cond_wait(pthread_cond_t *restrict cond, pthread_mutex_t*restrict mutex);
+int pthread_cond_timedwait(pthread_cond_t *restrict cond, pthread_mutex_t*restrict mutex, const struct timespec *restrict abstime);
+int pthread_cond_signal(pthread_cond_t*cond);
 
 ### 死锁
 
 为什么发生死锁？
+
 - 循环依赖
 - 封装
 
 产生死锁的条件：
+
 1. 互斥：线程对于需要的资源互斥的访问
 2. 持有并等待：线程持有了资源，同时又在等待其他资源
 3. 非抢占：线程获得的资源，不能被抢占

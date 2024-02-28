@@ -9,6 +9,7 @@ TLS 协议的几种版本在 WEB 浏览、电子邮件、即时通讯 (Instant M
 TLS 不能很好的对应 OSI 模型或者 TCP/IP 模型。TLS 运行在某些可靠传输协议（如 TCP）之上，这暗示着它位于传输层之上。它为更高层提供加密，这通常是表示层的功能。但是，**应用程序通常将 TLS 视为传输层**，即使使用 TLS 的应用程序必须**主动控制**发起 TLS 握手以及交换身份验证证书。
 
 ### TLS 应用场景
+
 在应用程序设计中，TLS 通常在传输层协议的基础上实现，从而对相关协议的数据进行加密，例如 HTTP、FTP、SMTP、NNTP 和 XMPP。 从历史上看，**TLS 主要用于可靠的传输协议，例如传输控制协议 (TCP)**。但是，它也已通过面向数据报的传输协议来实现，例如用户数据报协议 (UDP) 和数据报拥塞控制协议 (DCCP)，其使用独立术语**数据报传输层安全性 (DTLS)**。
 
 **TLS 的主要用途是用来加密使用 HTTP 协议编码的 Web 浏览器与 Web 服务器之间的万维网流量**，使用 TLS 保护 HTTP 流量的用法构成了 **HTTPS** 协议。
@@ -18,6 +19,7 @@ TLS 也可以保护简单邮件传输协议（SMTP），这些应用程序使用
 TLS 还是用于保护会话初始协议（SIP）应用程序信令的标准方法。TLS 可用于为与 VoIP 和其他基于 SIP 的应用程序相关的 SIP 信令提供身份验证和加密。
 
 ### TLS 发展历史
+
 TLS 从 SSL 发展而来，其间因为安全性问题经历了一系列版本的变迁，一个保证安全性的协议本身存在安全性问题，确实是不容忽视的。不过有一些安全问题不在于 TLS 或 SSL 协议本身，而是其支持的密码协议或客户端实现存在被攻击的漏洞，因此 TLS 协议的安全性也取决于密码和客户端的攻击应对措施。
 
 早期的一些文章可能将 TLS 称为 TLS/SSL，如今 SSL 正在渐渐退出舞台，目前广泛使用的是 TLS 1.2。
@@ -68,10 +70,10 @@ TLS 主要分为两层：
 
 - 底层的是 TLS 记录协议 (The TLS Record Protocol)，主要负责使用对称密码对消息进行加密。
 - 上层的是 TLS 握手协议 (The TLS Handshaking Protocols)，又具体分为四个协议：
-    - **握手协议** (Handshake Protocol) 负责在客户端和服务器端商定密码算法和共享密钥，包括证书认证，是 4 个协议中最最复杂的部分。
-    - 密码规格变更协议 (Change Cipher Spec Protocol) 负责向通信对象传达变更密码方式的信号
-    - 警告协议 (Alert Protocol) 负责在发生错误的时候将错误传达给对方
-    - 应用数据协议 (Application data protocol) 负责将 TLS 承载的应用数据传达给通信对象的协议。
+  - **握手协议** (Handshake Protocol) 负责在客户端和服务器端商定密码算法和共享密钥，包括证书认证，是 4 个协议中最最复杂的部分。
+  - 密码规格变更协议 (Change Cipher Spec Protocol) 负责向通信对象传达变更密码方式的信号
+  - 警告协议 (Alert Protocol) 负责在发生错误的时候将错误传达给对方
+  - 应用数据协议 (Application data protocol) 负责将 TLS 承载的应用数据传达给通信对象的协议。
 
 以下重点介绍一下握手协议和记录协议。
 
@@ -85,12 +87,11 @@ TODO
 
 TODO
 
-
 ## 参考
+
 - [RFC 5246 - TLS v1.2](https://tools.ietf.org/html/rfc5246)
 - [RFC 8446 - TLS v1.3](https://tools.ietf.org/html/rfc8446)
 - [SSL/TLS工作原理](https://zhuanlan.zhihu.com/p/66029254)
 - [Cryptography, Encryption, Hash Functions and Digital Signature](https://medium.com/@ealtili/cryptography-encryption-hash-functions-and-digital-signature-101-298a03eb9462)
 - [Is encrypting data with a private key dangerous?](https://security.stackexchange.com/questions/11879/is-encrypting-data-with-a-private-key-dangerous/20362)
 - [数字签名](https://www.ruanyifeng.com/blog/2011/08/what_is_a_digital_signature.html)
-

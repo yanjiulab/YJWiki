@@ -12,10 +12,13 @@ NumPy Array|Standard Python Library
 许多科学计算包将其作为基础数据结构|许多科学计算包将其用于兼容性输入
 
 # 多维数组 (ndarray)
+
 NumPy 的主要对象是**齐次多维数组（简称数组）**，数组的所有元素**类型相同**，通过非负元组索引，其维度称为 axes。
 
 ## 基本属性
+
 NumPy 的数组类为 ndarray，该类有几个比较重要的属性：
+
 - ndarray.ndim：数组维度个数，使用整数表示。
 - ndarray.shape：维度，使用整数元组表示每一维大小。例如 n 行 m 列二维数组的 shape 为 (n, m)
 - ndarray.size：数组大小。等同于 shape 元素乘积。
@@ -41,7 +44,9 @@ print(a.dtype.name)
 ```
 
 ## 创建数组
+
 如果已知数组元素，可以**通过 List 进行创建**。创建时可以选择元素类型。
+
 ```python
 >>> import numpy as np
 >>> a = np.array([2, 3, 4])
@@ -88,6 +93,7 @@ array([0. , 0.3, 0.6, 0.9, 1.2, 1.5, 1.8])
 ```
 
 由于浮点数精度原因，这样创建浮点数组元素个数可能和预期值不符合。因此可以使用 linspace 函数创建**指定个数**的数组。
+
 ```python
 >>> np.linspace(0, 2, 9)
 array([0.  , 0.25, 0.5 , 0.75, 1.  , 1.25, 1.5 , 1.75, 2.  ])
@@ -96,6 +102,7 @@ array([0.  , 0.25, 0.5 , 0.75, 1.  , 1.25, 1.5 , 1.75, 2.  ])
 ```
 
 ## 打印数组
+
 数组的打印直接通过 print() 函数即可。但如果数组个数较多，默认会省略中间值。但如果需要强制打印所有，可以设置如下。
 
 ```python
@@ -103,7 +110,9 @@ np.set_printoptions(threshold=sys.maxsize)
 ```
 
 ## 基本运算
+
 数组的代数运算是**逐元素**（elementwise）进行的，**运算结果由一个新数组保存**。
+
 ```python
 >>> a = np.array( [20,30,40,50] )
 >>> b = np.arange(4)
@@ -160,6 +169,7 @@ array([20, 31, 42, 53])
 还有一些一元运算符是以函数的形式出现的。例如求和等。
 
 ## 通用函数
+
 NumPy 提供了熟悉的数学函数，例如 sin，cos 和 exp。 在 NumPy 中，这些称为**通用函数**（ufunc），这些函数在数组上**逐元素**操作，生成数组作为输出。常用的有:
 
 ```python
@@ -185,6 +195,7 @@ array([      -inf, 0.        , 0.69314718])
 all, any, apply_along_axis, argmax, argmin, argsort, average, bincount, ceil, clip, conj, corrcoef, cov, cross, cumprod, cumsum, diff, dot, floor, inner, invert, lexsort, max, maximum, mean, median, min, minimum, nonzero, outer, prod, re, round, sort, std, sum, trace, transpose, var, vdot, vectorize, where
 
 ## 索引、切片、迭代
+
 **一维数组**可以如 List 一样进行索引（indexing）、切片（slicing）、迭代（iterating）操作。
 
 **多维数组**可以逐个维度进行索引和切片，以元组形式给出，并用逗号分隔。其中 `:` 表示该维度所有元素，连续的 `:` 可以替换为 `...`。
@@ -241,9 +252,10 @@ array([ 2, 12, 22, 32, 42])
 43
 ```
 
-
 ## 整形操作
+
 ### 改变形状
+
 ```python
 >>> a = np.floor(10*rg.random((3,4)))
 >>> a
@@ -279,6 +291,7 @@ array([[5., 9., 1., 9.],
 ```
 
 ### 重组数组
+
 几个数组可以堆叠重组到一起。
 
 ```python
@@ -301,6 +314,7 @@ array([[0., 5., 6., 8.],
 ```
 
 如果维度不同，堆叠效果不同。
+
 ```python
 >>> from numpy import newaxis
 >>> np.column_stack((a,b)) # with 2D arrays
@@ -332,6 +346,7 @@ True
 ```
 
 ### 分割数组
+
 ```python
 >>> a = np.floor(10*rg.random((2,12)))
 >>> 
@@ -355,6 +370,7 @@ array([[1., 4., 2., 2., 7., 2., 4., 9.],
 ```
 
 ## 拷贝和视图
+
 拷贝和视图 (Copies and Views) 也就是深拷贝和浅拷贝问题。
 
 ```python
@@ -411,16 +427,25 @@ array([  10,   10,    2, 1000])
 ```
 
 ## API 总结
+
 TODO
 
 # 进阶技巧
+
 TODO
+
 ## 广播 (Broadcasting)
+
 ## 数组创建 (Creation)
+
 ## 索引 (Advanced Indexing)
+
 TODO
+
 ### 索引数组索引
+
 ### 布尔数组索引
+
 ### 字符串索引
 
 ## I/O
@@ -428,7 +453,9 @@ TODO
 ## 结构体数组 (Structured arrays)
 
 # 例程 (Routines)
+
 在官方例程中 [NumPy Routines](https://numpy.org/doc/1.19/reference/routines.html) 包含了众多功能和用法。主要有：
+
 - Binary operations
 - String operations
 - Datetime Support Functions
@@ -445,10 +472,11 @@ TODO
 其中常用的重要部分分类写出。
 
 ## 数学运算
+
 在基本运算和通用函数章节，我们以及介绍了一些数学运算符和函数，本章根据数学运算分类总结 NumPy 中的相关内容。
 
 TODO
 
 # 参考
-- [User Guide](https://numpy.org/doc/stable/numpy-user.pdf)
 
+- [User Guide](https://numpy.org/doc/stable/numpy-user.pdf)

@@ -30,7 +30,7 @@ quagga 架构包括内核、zebra 守护进程、路由模块守护进程三部�
 
 相较于 FRRouting，Quagga 的安装方式较为简单。
 
-```sh
+```shell
 cd quagga-master # 进入安装目录
 ./bootstrap   # 部署准备
 ./configure   # 相关环境配置
@@ -57,7 +57,7 @@ make install  # 将编译好的文件复制到安装目录
 
 用户可以通过 VTY 接口同 Quagga 守护进程交互，在 `/etc/services` 添加如下进行使用。
 
-```sh
+```shell
 zebrasrv      2600/tcp    # zebra service
 zebra         2601/tcp    # zebra vty
 ripd          2602/tcp    # RIPd vty
@@ -86,7 +86,7 @@ FRRouting（以下简称 FRR）目前仍然在不断更新中，从使用者角�
 
 上述步骤命令如下：
 
-```sh
+```shell
 git clone https://github.com/frrouting/frr.git frr
 cd frr
 ./bootstrap.sh
@@ -107,7 +107,7 @@ sudo make install
 
 下面列出 FRR 可能用到的需要源码编译的依赖。
 
-```sh
+```shell
 sudo apt-get install git cmake build-essential bison flex libpcre3-dev libev-dev libavl-dev libprotobuf-c-dev protobuf-c-compiler libcmocka0 libcmocka-dev doxygen libssl-dev libssl-dev libssh-dev
 ```
 
@@ -136,7 +136,7 @@ sudo apt install -y build-essential autoconf libtool pkg-config
 
 如果需要，可以根据需求配置 FRR 成员和组。如果不想创建这些组和用户，可以直接用 root，因此就不需要本节的配置。
 
-```sh
+```shell
 sudo groupadd -r -g 92 frr
 sudo groupadd -r -g 85 frrvty
 sudo adduser --system --ingroup frr --home /var/run/frr/ --gecos "FRR suite" --shell /sbin/nologin frr
@@ -145,7 +145,7 @@ sudo usermod -a -G frrvty frr
 
 ## 编译安装
 
-```sh
+```shell
 ./configure \
     CFLAGS=-Wl,--copy-dt-needed-entries \
     --prefix=/opt/frr \
@@ -167,7 +167,7 @@ sudo usermod -a -G frrvty frr
 
 安装守护进程配置文件到相关安装目录中。
 
-```sh
+```shell
 sudo install -p -m 644 tools/etc/frr/daemons /etc/frr/
 sudo chown frr:frr /etc/frr/daemons
 ```
@@ -178,7 +178,7 @@ sudo chown frr:frr /etc/frr/daemons
 
 FRR 服务如下，在 `/etc/services` 添加如下进行使用。安装后会有默认设置，具体以该文件中的端口为准。
 
-```sh
+```shell
 zebrasrv      2600/tcp                 # zebra service
 zebra         2601/tcp                 # zebra vty
 ripd          2602/tcp                 # RIPd vty
@@ -274,7 +274,7 @@ sudo chmod 640 /etc/frr/*.conf
 
 首先进行配置，这里将 FRR 安装到 `/opt/frr` 目录下，这样的好处是将 FRR 相关的可执行及配置文件集中到一起，否则各种目录将散落到 `/usr/local/` 目录下面。另外，由于是个人使用，所以直接使用 `root:root` 来管理 FRR，简化了了创建用户和组的过程。
 
-```sh
+```shell
 ./configure \
     --enable-user=root \
     --enable-group=root \
@@ -285,7 +285,7 @@ sudo chmod 640 /etc/frr/*.conf
 
 然后进行编译和安装，安装后可以查看 FRR 都生成了哪些文件。
 
-```sh
+```shell
 # make -j
 ...
 
@@ -306,7 +306,7 @@ VTY 表示 Virtual TeletYpe Interface (Virtual Terminal  Interface ) ，即虚�
 
 !> 要使用 VTY 接口，必须设置 VTY 密码。
 
-```sh
+```shell
 % telnet localhost 2601
 Trying 127.0.0.1...
 Connected to localhost.
@@ -349,7 +349,7 @@ Neither option present (default) # 默认行为。若 frr.conf 存在则写入�
 
 在终端中即可启动 vtysh。
 
-```sh
+```shell
 root@msi-ryzen3600:/home/liyanjiu# vtysh
 
 Hello, this is FRRouting (version 8.1).
@@ -384,13 +384,13 @@ isisd_options=" --daemon -A 127.0.0.1 -M grpc:PORT" # 使用自定义端口
 
 `/etc/frr/vtysh.conf` 内容如下：
 
-```sh
+```shell
 service integrated-vtysh-config
 ```
 
 `/etc/frr/frr.conf` 内容如下：
 
-```sh
+```shell
 frr version 8.1
 frr defaults traditional
 password frr
@@ -497,7 +497,7 @@ zebra is an IP routing manager. It provides kernel routing table updates, interf
 
 RIP 简要配置如下：
 
-```sh
+```shell
 debug rip events
 debug rip packet
 
@@ -533,7 +533,7 @@ access-list private-only deny any
 
 1. 安装 YANG 模型数据库 `sysrepo`。
 
-    ```sh
+    ```shell
     git clone https://github.com/sysrepo/sysrepo.git
     mkdir build; cd build
     cmake -D CMAKE_INSTALL_PREFIX:PATH=/usr -DREPO_PATH=/opt/sysrepo/repository -DSR_PLUGINS_PATH=/opt/sysrepo/plugins -DSRPD_PLUGINS_PATH=/opt/sysrepo-plugind/plugins ..
@@ -543,7 +543,7 @@ access-list private-only deny any
 
 2. 安装 NETCONF 协议库 `libnetconf2`。
 
-    ```sh
+    ```shell
     git clone https://github.com/CESNET/libnetconf2.git
     cd libnetconf2/
     mkdir build; cd build
@@ -554,7 +554,7 @@ access-list private-only deny any
 
 3. 安装集成套件 `netopeer2`。
 
-    ```sh
+    ```shell
     $ git clone https://github.com/CESNET/netopeer2.git
     $ cd netopeer2
     $ mkdir build; cd build
@@ -571,7 +571,7 @@ access-list private-only deny any
 
 安装 FRR 的 YANG 模型到 sysrepo 数据库中。FRR 中 YANG 模型的路径为 `${PREFIX}/share/yang/`，首先把模型都安装到数据库中，其次根据需求更改用户和组。以下是常用命令：
 
-```sh
+```shell
 sudo sysrepoctl --install ${PREFIX}/share/yang/frr-isisd.yang   # install yang model to sysrepo as a module
 sudo sysrepoctl -c frr-isisd --owner frr --group frr            # change yang module ownership
 sudo sysrepoctl -c :ALL -p 666                                  # change all modules permission to rw-rw-rw-。
@@ -581,7 +581,7 @@ sudo sysrepoctl -l                                              # list all modul
 
 !> 如果出现 install 错误的情况，是因为安装模型中引用了其他的 YANG 模型文件，因此把所有模型按照依赖顺序都安装一遍就行了。以下是安装 frr-ripd 的依赖。
 
-```sh
+```shell
 sudo sysrepoctl --install /opt/frr/share/yang/frr-vrf.yang
 sudo sysrepoctl --install /opt/frr/share/yang/ietf-interfaces.yang
 sudo sysrepoctl --install /opt/frr/share/yang/frr-interface.yang
@@ -600,7 +600,7 @@ sysrepo 是基于共享内存的数据库，因此，其全部数据可以在 `/
 
 在安装时，sysrepo 的库文件指定在 `/opt/sysrepo/repository` 路径下。
 
-```sh
+```shell
 /opt/sysrepo/repository$ tree
 .
 ├── conn                            # 连接目录
@@ -622,7 +622,7 @@ sysrepo 是基于共享内存的数据库，因此，其全部数据可以在 `/
 
 如果需要调试，可以单独启动 ripd 进程，启动时选择 sysrepo 模块，并且在前台打印。
 
-```sh
+```shell
 sudo ripd -M sysrepo --log=stdout
 ```
 
@@ -656,13 +656,13 @@ terminal monitor
 
 安装好 netopper2 后，后台启动 NETCONF 服务端。
 
-```sh
+```shell
 sudo netopeer2-server -d &
 ```
 
 !> 如果启动时输出以下错误信息，重新 `make install` 即可。这是因为改动了 sysrepo 的某些文件。重新安装会将 sysrepo 中所有的特性启动。
 
-```sh
+```shell
 [ERR]: NP: Module "ietf-netconf" feature "writable-running" not enabled in sysrepo.
 [ERR]: NP: Server init failed.
 ```
@@ -673,7 +673,7 @@ TODO：编写 python 客户端
 
 编写 NETCONF 客户端脚本，进行配置管理。脚本使用 Python 编写，依赖 ncclient 库，可以通过 `apt install -y python3-ncclient` 进行安装。
 
-```sh
+```shell
 sudo ./netconf-edit.py 127.0.0.1
 sudo ./netconf-get-config.py 127.0.0.1
 <?xml version="1.0" encoding="UTF-8"?><data xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0"><isis xmlns="http://frrouting.org/yang/isisd"><instance><area-tag>testnet</area-tag><is-type>level-1</is-type></instance></isis></data>
@@ -739,7 +739,7 @@ if __name__ == '__main__':
 
 ### CLI 示例
 
-```sh
+```shell
 liyj-virtual-machine(config-router)# no route 10.0.1.0/24
 2023-12-05 14:49:09.825 [DEBG] ripd: [W7XQT-PM3RC] nb_config_diff: {
   "frr-ripd:ripd": {

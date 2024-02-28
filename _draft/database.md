@@ -41,7 +41,7 @@ MySQL Community 包含了各种组件，例如：
 
 除此之外还包含了一些针对不同平台的安装向导：
 
-- MySQL on Windows (Installer & Tools) 
+- MySQL on Windows (Installer & Tools)
 - MySQL Yum Repository
 - MySQL APT Repository
 - MySQL SUSE Repository
@@ -113,7 +113,7 @@ Redis 支持很多特性，例如将内存中的数据持久化到硬盘中，�
 
 ### 参考
 
-- https://cyc2018.github.io/CS-Notes/#/notes/Redis
+- <https://cyc2018.github.io/CS-Notes/#/notes/Redis>
 
 ## MongoDB
 
@@ -154,7 +154,6 @@ sudo systemctl enable mongod
 sudo systemctl stop mongod
 sudo systemctl restart mongod
 ```
-
 
 mongo 启动失败解决方案：
 
@@ -200,9 +199,8 @@ net:
 
 MongoDB 官方支持多种编程语言的[驱动库](https://docs.mongodb.com/drivers/)，可以方便开发人员将应用程序连接到数据库。
 
-
 ### 参考
 
 - [mongodb 主从配置及备份](https://www.jianshu.com/p/647ddfd1f5d7)
 - [MongoDB 集群搭建 —— 主从模式](https://www.jianshu.com/p/aec4899df434)
-- https://blog.csdn.net/pelick/article/details/8644116
+- <https://blog.csdn.net/pelick/article/details/8644116>

@@ -223,7 +223,7 @@ SRv6的每个Segment是128bit，可以灵活分为多段，每段功能和长度
 
 ### 实战
 
-```sh
+```shell
 sysctl -w net.ipv6.conf.all.seg6_enabled=1
 sysctl -w net.ipv6.conf.all.forwarding=1
 sysctl -w net.ipv4.ip_forward=1

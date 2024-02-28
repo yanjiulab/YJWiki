@@ -384,14 +384,14 @@ modprobe --show-depends module_name   # 列出模块的依赖项（包括模块�
 
 - 当需要加载 Linux 内核中的标准内核模块时，通过内核模块守护程序 `kmod` 执行 `modprobe` 来加载/卸载模块。`modprobe` 需要模块名称或模块标识符之一的字符串作为参数。
 
-    ```sh
+    ```shell
     modprobe module_name  # 加载标准内核模块
     modprobe -r module_name # 卸载标准内核模块
     ```
 
 - 当需要加载自定义内核模块时，通过 `insmod` 来加载模块，通过 `rmmod` 来卸载模块。
 
-    ```sh
+    ```shell
     insmod filename [args]    # 不在标准目录下的内核模块，可以通过文件名加载。
     rmmod module_name   # 不在标准目录下的内核模块，可以通过文件名卸载。
     ```
@@ -427,7 +427,7 @@ clean:
 
 如果需要发送二进制文件，可以接触 vim 和 xdd 软件。
 
-```sh
+```shell
 vim -b data # 二进制打开文件
 :%!xdd      # 转换为二进制格式显示
 # 编辑文件

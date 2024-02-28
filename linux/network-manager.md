@@ -7,11 +7,12 @@ Module change subscriptions
 ·sr_module_change_subscribe· 函数
 
 事件：
-  - SR_EV_CHANGE
-  - SR_EV_DONE
-  - SR_EV_ABORT
 
-Operational subscriptions 
+- SR_EV_CHANGE
+- SR_EV_DONE
+- SR_EV_ABORT
+
+Operational subscriptions
 
 客户端获取时提供数据
 ·sr_oper_get_items_subscribe· 函数
@@ -29,6 +30,5 @@ notifications subscription
 
 sr_noti_send
 sr_notif_subscribe
-
 
 sr_unsubscribe

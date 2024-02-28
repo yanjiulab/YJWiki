@@ -2,7 +2,7 @@
 
 ## Tcpdump
 
-```sh
+```shell
 tcpdump [option] [proto] [dir] [type]
 [type]: host, net, port, portrange
 [dir]: src, dst, src or dst

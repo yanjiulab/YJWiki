@@ -85,7 +85,6 @@ IPC 对象有三种类型的**持续性**：
 
 ### IPC 应用场景
 
-
 | 方法                                                     | 简述                                                         | 特点                                                         | 适用场景 |
 | -------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | -------- |
 | 文件 (File)                                              | 存储在磁盘或文件服务器上的记录，可以由多个进程访问。         |                                                              |          |
@@ -103,21 +102,17 @@ IPC 对象有三种类型的**持续性**：
 
 以下三种类型的 IPC 合称 POSIX IPC，本文重点介绍它们。
 
-
-
 |                  |     头文件      |           创建函数            | 打开函数 | 删除函数 | 控制函数 | 操作函数 |
 | :--------------: | :-------------: | :---------------------------: | :------: | :------: | :------: | :------: |
 |  Posix 消息队列  |  `<mqueue.h>`   | mq_open<br>mq_open<br>mq_open |          |          |          |          |
 |   Posix 信号量   | `<semaphore.h>` |                               |          |          |          |          |
 | Posix 共享内存区 | `<sys/mman.h>`  |                               |          |          |          |          |
 
-
-
 - Posix 消息队列
 - Posix 信号量
 - Posix 共享内存区
 
-Posix IPC 
+Posix IPC
 
 ## 管道
 
@@ -125,7 +120,7 @@ Posix IPC
 
 ## 消息队列
 
-**消息队列 (Message Queue) **实际上是一个消息链表，每个消息都是一个记录。有写权限的进程可以向队列中放置消息，有读权限的进程可以从队列中取走消息。某进程写队列前不需要另一个进程在队列上等待。，
+**消息队列 (Message Queue)**实际上是一个消息链表，每个消息都是一个记录。有写权限的进程可以向队列中放置消息，有读权限的进程可以从队列中取走消息。某进程写队列前不需要另一个进程在队列上等待。，
 
 msgget()|创建一个新队列
 ftok()|用于产生一个唯一的键
@@ -170,10 +165,9 @@ Posix 提供了两种进程间共享内存的方法：
 
 rpcgen
 
-
 ## 参考
 
 - UNIX Network Programming - volume 2 IPC, by Richard Stevens
 - [IPC using Message Queues](https://www.geeksforgeeks.org/ipc-using-message-queues/)
 - [How do I read a string entered by the user in C?](https://stackoverflow.com/questions/4023895/how-do-i-read-a-string-entered-by-the-user-in-c)
-- 
+-

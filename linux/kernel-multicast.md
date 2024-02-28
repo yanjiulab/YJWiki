@@ -11,7 +11,7 @@ Linux 内核和组播相关的代码：
 
 Linux 内核 MFC (Multicast Forwarding Cache) 存储了组播转发表，通过如下命令可以查看相关表项和接口信息。
 
-```sh
+```shell
 # Check Linux kernel multicast interfaces:
 cat /proc/net/dev_mcast
 

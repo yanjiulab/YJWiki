@@ -10,7 +10,7 @@
 
 不追求最新版，建议直接使用发行版的包管理器安装。
 
-如果想要特定版本/新版本的 Go，建议使用源码安装。 
+如果想要特定版本/新版本的 Go，建议使用源码安装。
 
 ```
 wget -c https://dl.google.com/go/go1.14.2.linux-amd64.tar.gz -O - | sudo tar -xz -C /usr/local
@@ -40,8 +40,6 @@ Go 安装完之后，便可以使用 `go` 命令行工具来管理 go 代码，�
 |   go run   |    编译并运行 go 程序    |
 |  go build  | 编译 go 程序为可执行文件 |
 |   go fmt   |       格式化源文件       |
-
-
 
 ## GO 开发配置
 
@@ -85,7 +83,4 @@ func main() {
 
 ## Go 标准库
 
-
-
 ## Go 第三方库
-

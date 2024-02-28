@@ -13,7 +13,6 @@
 
 ![protocol-interface](arch.assets/protocol-interface.png)
 
-
 !> 协议定义了不同节点上运行的同一层模块的交互规则，而接口定义了在同一节点上相邻层模块间的交互规则。实质上两者都是物体间交互过程的标准化描述，因此下文将两者统称为通信协议。低层次 (arch.assets layers) 的通信协议通常由硬件和软件共同实现，更高层 (host layers) 的通信协议通常只由软件实现。
 
 !> 通信协议需要遵循标准，只有标准化的协议才能更广泛的流行。通信协议的标准一般由国际或国家的标准化组织来完成，Internet 是全球最流行的互联系统，定义 Internet 标准的文件被称为**请求批注** (Re quest For Comment, RFC)。全世界成千上万的大学、科研机构、硬件、软件厂商等的 IT 工作者参与了该标准的开发，因此 RFC 成了事实上的国际标准。所有 RFC 文档都可以在 [http://www.rfc-editor.org](http://www.rfc-editor.org/) 访问或免费下载。

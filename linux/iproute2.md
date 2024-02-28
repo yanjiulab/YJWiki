@@ -499,7 +499,7 @@ sysctl -w net.ipv4.tcp_l3mdev_accept=0
 
 创建 vrf0 并且绑定 tap0 到 vrf0 中。
 
-```sh
+```shell
 ip link add dev vrf0 type vrf table 10
 ip link set vrf0 up
 ip tuntap add dev tap0 mode tap
@@ -510,7 +510,7 @@ ip link set tap0 up
 
 创建 vrf1 并且绑定 tap1 到 vrf1 中。
 
-```sh
+```shell
 ip link add dev vrf1 type vrf table 11
 ip link set vrf1 up
 ip tuntap add dev tap1 mode tap
@@ -521,7 +521,7 @@ ip link set tap1 up
 
 通过 veth pair 连接 vrf0 和 vrf1
 
-```sh
+```shell
 ip link add veth0 type veth peer name veth1
 ip link set veth0 master vrf0
 ip link set veth1 master vrf1
@@ -533,13 +533,13 @@ ip route add 172.18.1.0/24 dev veth1 vrf vrf1
 
 ping 命令
 
-```sh
+```shell
 ping 172.18.2.2 -I vrf0 -I 172.18.1.2
 ```
 
 清理
 
-```sh
+```shell
 ip link del dev vrf0
 ip link del dev vrf1
 ip link del dev tap0
@@ -560,7 +560,7 @@ ip link del dev veth0
 
 ## 邻居（ip neigh）
 
-`ip neigh add 10.0.0.3 lladdr 50:54:33:00:00:0a dev vxlan0` 
+`ip neigh add 10.0.0.3 lladdr 50:54:33:00:00:0a dev vxlan0`
 
 `nud` 是 Neighbour Unreachability Detection 的缩写。具有以下状态：
 

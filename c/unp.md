@@ -1540,7 +1540,7 @@ bind 组播地址可以防止所在主机 IP 层把收取到的目的地址为�
 
 查看或指定 IGMP 版本，0 表示根据收到的查询报文自动选择版本，当设置为 2 或 3 时可以强制指定发送的 IGMP 报文版本。
 
-```sh
+```shell
 $ cat /proc/sys/net/ipv4/conf/ens38/force_igmp_version 
 0
 ```

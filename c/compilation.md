@@ -58,7 +58,8 @@ Hello world!
 ![img](compilation.assets/compilation-system.svg)
 
 通常情况下，我们重点需要了解以下三种文件：
-- 源文件 (source file) `hello.c` 
+
+- 源文件 (source file) `hello.c`
 - 可重定位目标文件 (Relocatable object file) `hello.o`
 - 可执行目标文件 (Executable object file) `hello`
 
@@ -87,7 +88,7 @@ Hello world!
 - 静态链接
 - 动态链接
 
-https://stackoverflow.com/questions/2055840/difference-between-load-time-dynamic-linking-and-run-time-dynamic-linking
+<https://stackoverflow.com/questions/2055840/difference-between-load-time-dynamic-linking-and-run-time-dynamic-linking>
 
 ### 总结
 
@@ -128,7 +129,7 @@ gcc 是 Linux 上常用的编译套件，常用选项如下。
 首先，我们需要将库的源代码编译为目标文件。
 
 ```
-$ gcc -c hello.c
+gcc -c hello.c
 ```
 
 接着，制作静态链接库文件。这里只有一个目标文件，但是可以将多个目标文件打包到一起。
@@ -148,10 +149,10 @@ collect2: error: ld returned 1 exit status
 然而链接器 `ld` 无法找到 `libhello.a` 文件，GCC 有一个默认的搜索目录列表，GCC 首先搜索这些目录，然后按顺序搜索 `-L` 参数指定的目录。很明显，我们项目的当前目录并没有在其中。所以，我们直接通过 `-L` 参数将当前目录（`./`）加入搜索路径中。
 
 ```
-$ gcc -o main main.c -lhello -L.
+gcc -o main main.c -lhello -L.
 ```
 
->  事实上，链接器的搜索路径很多，可以通过以下命令查看全部搜索路径。
+> 事实上，链接器的搜索路径很多，可以通过以下命令查看全部搜索路径。
 >
 >  ```
 >  $ ld --verbose | grep SEARCH_DIR | tr -s ' ;' \\012
@@ -187,19 +188,19 @@ Hello world!
 首先，我们需要将库的源代码编译为位置无关代码（position-independent code, PIC）的目标文件。
 
 ```
-$ gcc -c -fpic hello.c
+gcc -c -fpic hello.c
 ```
 
 接着，根据目标文件生成动态链接库。
 
 ```
-$ gcc -shared -o libhello.so hello.o
+gcc -shared -o libhello.so hello.o
 ```
 
 最后，链接动态链接库至主程序中。
 
 ```
-$ gcc -o main main.c -lhello -L.
+gcc -o main main.c -lhello -L.
 ```
 
 由于我们有静态链接的经验，加入了 `-L` 参数，因此没有任何链接错误，运行程序试试。
@@ -239,8 +240,8 @@ Hello world!
 如果没有管理员权限，那么可以使用第二种方式，直接在链接期将当前路径写入到可执行文件本身的 `rpath` (run path) 中。
 
 ```
-$ rm main	# delete old executable file
-$ gcc -o main main.c -lhello -L. -Wl,-rpath=.	# make new file
+$ rm main    # delete old executable file
+$ gcc -o main main.c -lhello -L. -Wl,-rpath=.    # make new file
 $ ./main
 Hello world!
 ```
@@ -259,9 +260,8 @@ Hello world!
 
 不出意外的，我们再一次看到了成功的输出。
 
-
-
 参考：
+
 - [Shared libraries with GCC on Linux](https://www.cprogramming.com/tutorial/shared-libraries-linux-gcc.html#fn:loadorder)
 - [How to print the ld(linker) search path](https://stackoverflow.com/questions/9922949/how-to-print-the-ldlinker-search-path)
 - [Where do executables look for shared objects at runtime?](https://unix.stackexchange.com/questions/22926/where-do-executables-look-for-shared-objects-at-runtime)
@@ -282,7 +282,6 @@ Hello world!
 | `strings` |                                      |
 |  `strip`  |                                      |
 |   `ldd`   | 列出可执行文件运行时需要的动态链接库 |
-
 
 ## gcc
 
