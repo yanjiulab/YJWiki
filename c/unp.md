@@ -1288,10 +1288,6 @@ int ioctl(int fd, unsigned long request, ...);
 
 Netlink 是一种在内核与用户应用间进行**双向数据传输**的方式。
 
-
-
-
-
 ## 接口操作
 
 ### 数据结构
@@ -1489,7 +1485,65 @@ if (setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on)) < 0) {
 
 ## 组播
 
-TODO
+### 组播 API
+
+以下三个选项均为**指定一个本地接口加入一个不限源的组播组**。
+
+选项名|数据类型|说明
+:---:|:---:|:---:
+IP_ADD_MEMBERSHIP|struct ip_mreq|本地接口通过 IP 地址指定。
+IPV6_JOIN_GROUP|struct ipv6_mreq|本地接口通过接口索引指定。
+MCAST_JOIN_GROUP|struct group_req|本地接口通过接口索引指定。
+
+加入组播组会触发内核向该接口所在网络发送 IGMP 加入消息，用于通告本网段其他组播设备。
+
+在一个套接字上可以多次调用加入组播组，但每次地址必须是不同的地址。或者在不同的接口上加入同一个组播组。
+
+以下三个选项均为**指定一个本地接口离开一个不限源的组播组**。
+
+选项名|数据类型|说明
+:---:|:---:|:---:
+IP_DROP_MEMBERSHIP|struct ip_mreq|本地接口通过 IP 地址指定。
+IPV6_LEAVE_GROUP|struct ipv6_mreq|本地接口通过接口索引指定。
+MCAST_LEAVE_GROUP|struct group_req|本地接口通过接口索引指定。
+
+如果一个进程加入组播组后，没有调用退出组播组函数，当进程终止时，该成员关系会自动删除。单个主机上可能有多个套接字各自加入相同的组播组，这种情况下，单个套接字退出不会影响主机继续作为该组播组的成员，直到最后一个套接字离开组播组时，触发发送 IGMP 离开消息。
+
+选项名|数据类型|说明
+:---:|:---:|:---:
+IP_BLOCK_SOURCE|struct ip_mreq_source|接口上已存在一个不限源组播组，阻塞来自某个源的组播分组。
+MCAST_BLOCK_SOURCE|struct group_source_req|接口上已存在一个不限源组播组，阻塞来自某个源的组播分组。
+IP_UNBLOCK_SOURCE|struct ip_mreq_source|开通一个先前被阻塞的源。
+MCAST_UNBLOCK_SOURCE|struct group_source_req|开通一个先前被阻塞的源。
+
+选项名|数据类型|说明
+:---:|:---:|:---:
+IP_ADD_SOURCE_MEMBERSHIP|struct ip_mreq_source|加入一个指定源组播组。
+MCAST_JOIN_SOURCE_GROUP|struct group_source_req|加入一个指定源组播组。
+IP_DROP_SOURCE_MEMBERSHIP|struct ip_mreq_source|离开一个指定源组播组。
+MCAST_LEAVE_SOURCE_GROUP|struct group_source_req|离开一个指定源组播组。
+
+选项名|数据类型|说明
+:---:|:---:|:---:
+IP_MULTICAST_IF|struct in_addr|指定通过本套接字发送组播数据的出接口。
+IPV6_MULTICAST_IF|u_int|指定通过本套接字发送组播数据的出接口。
+IP_MULTICAST_TTL|uchar|指定发送组播数据的 TTL。
+IPV6_MULTICAST_HOPS|int|定发送组播数据的 HopLimit。
+IP_MULTICAST_LOOP|u_char|开启或禁止组播数据报文本地回环。
+IPV6_MULTICAST_LOOP|u_int|开启或禁止组播数据报文本地回环。
+
+默认情况下，组播回环功能开启，即：如果一个主机在某个接口上属于某个组播组，则该主机上由某个进程发送的目的地址为该组的每个数据报都产生一个副本进行回环，被该主机作为一个收取的数据包进行处理。
+
+为了接收目的地址为某个组播地址且端口为某个端口的组播数据，进程必须加入该组播组，并且 bind 该端口到某个 UDP 套接字。
+
+bind 组播地址可以防止所在主机 IP 层把收取到的目的地址为单播、广播或其他组播地址的数据包递送到该套接字。
+
+查看或指定 IGMP 版本，0 表示根据收到的查询报文自动选择版本，当设置为 2 或 3 时可以强制指定发送的 IGMP 报文版本。
+
+```sh
+$ cat /proc/sys/net/ipv4/conf/ens38/force_igmp_version 
+0
+```
 
 ## 原始套接字
 
