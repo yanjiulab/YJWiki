@@ -46,10 +46,10 @@ Hello world!
 
 将 C 程序从**源文件**转化为**可执行目标文件**，是由**编译器驱动程序 (compiler driver)** 来完成的，这个翻译过程可以分为 4 个阶段，每个阶段由一个程序负责，分别是：
 
-1. 预处理器 (preprocessor)：将 `hello.c` 处理为 `hello.i`
-2. 编译器 (compiler)：将 `hello.i` 编译为汇编文件 `hello.s`
-3. 汇编器 (assembler)：将 `hello.s` 汇编为目标文件 `hello.o`
-4. 链接器 (linking driver) ：将 `hello.o` 与其他目标文件链接为可执行文件`hello`
+1. 预处理器 (preprocessor)：将 `hello.c` 处理为 `hello.i`。预处理器负责处理源代码中以 ·#· 开头的预处理指令，主要包括宏定义、头文件包含、条件编译等。预处理器根据指令修改源代码，生成一个没有注释和空白行的文本文件。
+2. 编译器 (compiler)：将 `hello.i` 编译为汇编文件 `hello.s`。编译器根据预处理后的代码，将其转换为汇编语言。这个过程主要包括：词法分析、语法分析、语义分析和优化步骤，最后生成汇编文件。
+3. 汇编器 (assembler)：将 `hello.s` 汇编为目标文件 `hello.o`。
+4. 链接器 (linking driver) ：将 `hello.o` 与其他目标文件链接为可执行文件 `hello`。
 
 上述四个程序一同构成了**编译系统 (compilation system)** 。例如 Unix 系统中常用的 **GCC** (the GNU  Compiler Collection) 驱动程序就是编译系统的一种实现。
 
@@ -63,11 +63,7 @@ Hello world!
 - 可重定位目标文件 (Relocatable object file) `hello.o`
 - 可执行目标文件 (Executable object file) `hello`
 
-### 预处理 (Preprocessing)
 
-### 编译 (Compiling)
-
-### 汇编 (Assembling)
 
 ### 链接 (Linking)
 
@@ -286,5 +282,78 @@ Hello world!
 ## gcc
 
 `-I` 不会递归搜索目录!!!!!!
+`-lm` 链接时指定库名称
+
+gcc [-c|-S|-E] [-std=standard]
+    [-g] [-pg] [-Olevel]
+    [-Wwarn...] [-Wpedantic]
+    [-Idir...] [-Ldir...]
+    [-Dmacro[=defn]...] [-Umacro]
+    [-foption...] [-mmachine-option...]
+    [-o outfile] [@file] infile...
+
+-llibrary
+-l library
+    Search the library named library when linking.  (The second alternative with the library as a separate argument is only for POSIX compliance and is not recommended.)
+
+    The -l option is passed directly to the linker by GCC.  Refer to your linker documentation for exact details.  The general description below applies to the GNU linker.
+
+    The linker searches a standard list of directories for the library.  The directories searched include several standard system directories plus any that you specify with
+    -L.
+
+    Static libraries are archives of object files, and have file names like liblibrary.a.  Some targets also support shared libraries, which typically have names like
+    liblibrary.so.  If both static and shared libraries are found, the linker gives preference to linking with the shared library unless the -static option is used.
+
+    It makes a difference where in the command you write this option; the linker searches and processes libraries and object files in the order they are specified.  Thus,
+    foo.o -lz bar.o searches library z after file foo.o but before bar.o.  If bar.o refers to functions in z, those functions may not be loaded.
+
+-pie
+    Produce a dynamically linked position independent executable on targets that support it.  For predictable results, you must also specify the same set of options used for
+    compilation (-fpie, -fPIE, or model suboptions) when you specify this linker option.
+
+-no-pie
+    Don't produce a dynamically linked position independent executable.
+
+-static-pie
+    Produce a static position independent executable on targets that support it.  A static position independent executable is similar to a static executable, but can be
+    loaded at any address without a dynamic linker.  For predictable results, you must also specify the same set of options used for compilation (-fpie, -fPIE, or model
+    suboptions) when you specify this linker option.
+
+-Wl,option
+    Pass option as an option to the linker.  If option contains commas, it is split into multiple options at the commas.  You can use this syntax to pass an argument to the
+    option.  For example, -Wl,-Map,output.map passes -Map output.map to the linker.  When using the GNU linker, you can also get the same effect with -Wl,-Map=output.map.
+
+    NOTE: In Ubuntu 8.10 and later versions, for LDFLAGS, the option -Wl,-z,relro is used.  To disable, use -Wl,-z,norelro.
 
 ## ld
+
+## ldd
+
+ldd (**l**ist **d**ynamic **d**ependencies) 是 Linux 上一个 Shell 脚本，可以列出程序动态库依赖关系。其原理是通过设置以下一系列环境变量来完成的。
+
+- `LD_TRACE_LOADED_OBJECTS`
+- `LD_WARN`
+- `LD_BIND_NOW`
+- `LD_LIBRARY_VERSION`
+- `LD_VERBOSE`
+- `LD_DEBUG`
+
+ldd 主要使用了 `LD_TRACE_LOADED_OBJECTS` 环境变量，当其不为空时，任何可执行程序在运行时，它都会只显示模块的依赖，而程序并不真正执行。
+
+```shell
+$ export LD_TRACE_LOADED_OBJECTS=1
+$ ls
+        linux-vdso.so.1 (0x00007fffa55e6000)
+        libselinux.so.1 => /lib/x86_64-linux-gnu/libselinux.so.1 (0x00007f08e4b3a000)
+        libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f08e4800000)
+        libpcre2-8.so.0 => /lib/x86_64-linux-gnu/libpcre2-8.so.0 (0x00007f08e4aa3000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007f08e4b78000)
+$ ldd ls
+        linux-vdso.so.1 (0x00007ffc561e7000)
+        libtinfo.so.6 => /lib/x86_64-linux-gnu/libtinfo.so.6 (0x00007fcc2ea38000)
+        libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fcc2e800000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007fcc2ea7c000)
+$ unset LD_TRACE_LOADED_OBJECTS
+$ ls
+bin  games  include  lib  lib32  lib64  libexec  libx32  local  sbin  share  src
+```

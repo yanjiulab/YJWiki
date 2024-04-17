@@ -1,4 +1,4 @@
-# GDB
+# 调试系统
 
 GDB (The GNU Debugger) 是常用的 Linux 调试器。
 
