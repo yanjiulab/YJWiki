@@ -46,7 +46,7 @@ Hello world!
 
 将 C 程序从**源文件**转化为**可执行目标文件**，是由**编译器驱动程序 (compiler driver)** 来完成的，这个翻译过程可以分为 4 个阶段，每个阶段由一个程序负责，分别是：
 
-1. 预处理器 (preprocessor)：将 `hello.c` 处理为 `hello.i`。预处理器负责处理源代码中以 ·#· 开头的预处理指令，主要包括宏定义、头文件包含、条件编译等。预处理器根据指令修改源代码，生成一个没有注释和空白行的文本文件。
+1. 预处理器 (preprocessor)：将 `hello.c` 处理为 `hello.i`。预处理器负责处理源代码中以 `#` 开头的预处理指令，主要包括宏定义、头文件包含、条件编译等。预处理器根据指令修改源代码，生成一个没有注释和空白行的文本文件。
 2. 编译器 (compiler)：将 `hello.i` 编译为汇编文件 `hello.s`。编译器根据预处理后的代码，将其转换为汇编语言。这个过程主要包括：词法分析、语法分析、语义分析和优化步骤，最后生成汇编文件。
 3. 汇编器 (assembler)：将 `hello.s` 汇编为目标文件 `hello.o`。
 4. 链接器 (linking driver) ：将 `hello.o` 与其他目标文件链接为可执行文件 `hello`。
@@ -62,8 +62,6 @@ Hello world!
 - 源文件 (source file) `hello.c`
 - 可重定位目标文件 (Relocatable object file) `hello.o`
 - 可执行目标文件 (Executable object file) `hello`
-
-
 
 ### 链接 (Linking)
 
@@ -89,18 +87,6 @@ Hello world!
 ### 总结
 
 gcc 是 Linux 上常用的编译套件，常用选项如下。
-
-|     参数     |             解释             |
-| :----------: | :--------------------------: |
-|     `-c`     |   编译生成可重定位目标文件   |
-|   `-Idir`    |   `dir` 是头文件所在的目录   |
-|   `-Ldir`    |   `dir` 是库文件所在的目录   |
-| `-o outfile` | `outfile` 是输出文件的文件名 |
-|     `-w`     |         隐藏所有警告         |
-|     `-W`     |  显示编译器认为有错误的警告  |
-|   `-Wall`    |        显示大多数警告        |
-|    `-O2`     |         编译优化选项         |
-|     `-g`     |         产生调试信息         |
 
 ## 可重定位目标文件
 
@@ -150,20 +136,20 @@ gcc -o main main.c -lhello -L.
 
 > 事实上，链接器的搜索路径很多，可以通过以下命令查看全部搜索路径。
 >
->  ```
->  $ ld --verbose | grep SEARCH_DIR | tr -s ' ;' \\012
->  SEARCH_DIR("=/usr/local/lib/x86_64-linux-gnu")
->  SEARCH_DIR("=/lib/x86_64-linux-gnu")
->  SEARCH_DIR("=/usr/lib/x86_64-linux-gnu")
->  SEARCH_DIR("=/usr/lib/x86_64-linux-gnu64")
->  SEARCH_DIR("=/usr/local/lib64")
->  SEARCH_DIR("=/lib64")
->  SEARCH_DIR("=/usr/lib64")
->  SEARCH_DIR("=/usr/local/lib")
->  SEARCH_DIR("=/lib")
->  SEARCH_DIR("=/usr/lib")
->  SEARCH_DIR("=/usr/x86_64-linux-gnu/lib64")
->  SEARCH_DIR("=/usr/x86_64-linux-gnu/lib")
+> ```
+> $ ld --verbose | grep SEARCH_DIR | tr -s ' ;' \\012
+> SEARCH_DIR("=/usr/local/lib/x86_64-linux-gnu")
+> SEARCH_DIR("=/lib/x86_64-linux-gnu")
+> SEARCH_DIR("=/usr/lib/x86_64-linux-gnu")
+> SEARCH_DIR("=/usr/lib/x86_64-linux-gnu64")
+> SEARCH_DIR("=/usr/local/lib64")
+> SEARCH_DIR("=/lib64")
+> SEARCH_DIR("=/usr/lib64")
+> SEARCH_DIR("=/usr/local/lib")
+> SEARCH_DIR("=/lib")
+> SEARCH_DIR("=/usr/lib")
+> SEARCH_DIR("=/usr/x86_64-linux-gnu/lib64")
+> SEARCH_DIR("=/usr/x86_64-linux-gnu/lib")
 >  ```
 
 很好，现在没有任何链接错误了，运行程序得到正确输出。
@@ -279,11 +265,11 @@ Hello world!
 |  `strip`  |                                      |
 |   `ldd`   | 列出可执行文件运行时需要的动态链接库 |
 
-## gcc
+## GCC
 
-`-I` 不会递归搜索目录!!!!!!
-`-lm` 链接时指定库名称
+gcc 格式及常用选项如下。
 
+```shell
 gcc [-c|-S|-E] [-std=standard]
     [-g] [-pg] [-Olevel]
     [-Wwarn...] [-Wpedantic]
@@ -291,41 +277,52 @@ gcc [-c|-S|-E] [-std=standard]
     [-Dmacro[=defn]...] [-Umacro]
     [-foption...] [-mmachine-option...]
     [-o outfile] [@file] infile...
+```
 
--llibrary
--l library
-    Search the library named library when linking.  (The second alternative with the library as a separate argument is only for POSIX compliance and is not recommended.)
+|     参数     |             解释             |
+| :----------: | :--------------------------: |
+| Overall Options||
+| `-c` |   编译生成可重定位目标文件   |
+| `-o outfile` | `outfile` 是输出文件的文件名 |
+| C Language Options  ||
+|`-std=standard`| 指定 C 标准 |
+| C++ Language Options ||
+| Warning Options ||
+| `-w` | 隐藏所有警告|
+| `-Wall -Wextra`| 开启所有警告|
+| `-Werror` | 将警告视为错误|
+| `-Wxxx` | 打开特定警告 `xxx`|
+| `-Wno-xxx` | 关闭特定警告 `xxx`|
+| Debuging/Optimazation Options ||
+| `-g` | 产生调试信息 |
+| `-Olevel` | 设置编译优化选项为 `level` 等级 |
+| Preprocessor Options ||
+| `-MMD` | 生成一个包含 Makefile 所需依赖关系的文件，不包括系统头文件。 |
+| `-MP` | 生成一个伪目标来表示每个源文件的依赖关系。 |
+| Linker Options ||
+| `-llibrary` | 在链接时搜索 library 库，多个库从左向右依次加载。在 Linux 上静态库为 liblibrary.a，动态库为 liblibrary.so。|
+| `-static` | 链接时强制使用静态链接库，默认优先选择动态库。 |
+| `-shared` | 生成动态链接库 |
+| `-pie` | 生成完全位置无关的可执行文件 |
+| `-no-pie` | 不生成完全位置无关的可执行文件 |
+| `-Wl,option` | 将 `option` 作为链接器选项传入。例如 `-Wl,-rpath,./lib` 将 `-rpath ./lib` 参数传入链接器，其含义为指定运行时链接器的搜索库路径。 |
+| Directory Options ||
+| `-Ldir` | 将 `dir` 目录加入到 `-l` 参数的搜索路径列表中 |
+| `-Idir` | 将 `dir` 目录加入到预处理过程中头文件搜索路径列表中，该参数不会递归搜索目录。|
+| Code Generation Options ||
+| `-fcommon` | 允许多个源文件共享相同名称的全局变量（默认行为）|
+| `-fPIC` | 生成位置无关代码 (Positional Independent Code, PIC) |
+| `-fPIE` | 类似于 `-fPIC`，但生成的 PIC 只能用于链接到可执行文件。|
 
-    The -l option is passed directly to the linker by GCC.  Refer to your linker documentation for exact details.  The general description below applies to the GNU linker.
+## GNU 链接器 (ld)
 
-    The linker searches a standard list of directories for the library.  The directories searched include several standard system directories plus any that you specify with
-    -L.
+ld 是 GNU 的链接器，通常情况下 gcc 在编译过程中会调用 dl 来执行链接操作。ld 也可以单独使用，手动将目标文件链接为可执行文件或共享库。
 
-    Static libraries are archives of object files, and have file names like liblibrary.a.  Some targets also support shared libraries, which typically have names like
-    liblibrary.so.  If both static and shared libraries are found, the linker gives preference to linking with the shared library unless the -static option is used.
+## 动态链接器 (ld.so)
 
-    It makes a difference where in the command you write this option; the linker searches and processes libraries and object files in the order they are specified.  Thus,
-    foo.o -lz bar.o searches library z after file foo.o but before bar.o.  If bar.o refers to functions in z, those functions may not be loaded.
+ld.so 或者 ld-linux.so 是运行时动态链接器，用于在程序加载时，将程序依赖的共享库链接到内存中。
 
--pie
-    Produce a dynamically linked position independent executable on targets that support it.  For predictable results, you must also specify the same set of options used for
-    compilation (-fpie, -fPIE, or model suboptions) when you specify this linker option.
-
--no-pie
-    Don't produce a dynamically linked position independent executable.
-
--static-pie
-    Produce a static position independent executable on targets that support it.  A static position independent executable is similar to a static executable, but can be
-    loaded at any address without a dynamic linker.  For predictable results, you must also specify the same set of options used for compilation (-fpie, -fPIE, or model
-    suboptions) when you specify this linker option.
-
--Wl,option
-    Pass option as an option to the linker.  If option contains commas, it is split into multiple options at the commas.  You can use this syntax to pass an argument to the
-    option.  For example, -Wl,-Map,output.map passes -Map output.map to the linker.  When using the GNU linker, you can also get the same effect with -Wl,-Map=output.map.
-
-    NOTE: In Ubuntu 8.10 and later versions, for LDFLAGS, the option -Wl,-z,relro is used.  To disable, use -Wl,-z,norelro.
-
-## ld
+安装了新库之后，需要使用 `ldconfig` 用来刷新系统的共享库缓存。
 
 ## ldd
 

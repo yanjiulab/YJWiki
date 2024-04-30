@@ -126,16 +126,16 @@ C 语言中所有函数参数都是通过**值传递**的。传递给被调用�
 
 - 数组参数：数组名作参数，实际传递的是数组起始元素地址，效果等同指针变量，数组本身不会被复制。
 
-## C 预处理器
+## 预处理指令
 
-文件包含
+### 文件包含
 
 ```c
 #include <filename>
 #include "filename"
 ```
 
-宏定义
+### 宏定义
 
 ```c
 #define IDENTIFIER TEXT
@@ -143,13 +143,42 @@ C 语言中所有函数参数都是通过**值传递**的。传递给被调用�
 #undef IDENTIFIER
 ```
 
-条件编译
+### 条件编译
 
-TODO
+条件编译通过 `#if`、`#ifdef`、`#ifndef`、`#elif`、`#else`、`#endif` 组合实现。
 
-OS 特定编译功能
+其中 `#ifdef` 用来检查一个宏是否被定义，而不论该宏的值是多少。
 
-TODO
+### 编译器指示
+
+编译指示使用 `#pragma` 指令，用于向编译器发出特定的指令或控制编译过程中的行为。用于设置编译器选项，告诉编译器如何处理警告、错误或执行编译相关的操作。**编译指示指令在不同的编译器中行为是不同的**，因此最好写比较通用的写法。如果需要了解该指令的具体使用方式，需要查阅相关编译器手册。
+
+`#pragma pack` 指令用于控制结构体成员在内存中的对齐方式。
+
+- `#pragma pack(n)` 指令指定全局对齐方式，其中 n 表示对齐的字节数，可以为 1，2，4，8 等。其生效范围为指定位置开始直到文件结束或遇到另一个`#pragma pack(n)` 指令。
+- `#pragma pack(push, n)` 指令和`#pragma pack(pop)` 指令共同使用指定局部对齐方式，push 将当前对齐方式入栈，pop 将当前方式出栈，并从堆栈中取出并恢复最近保存的对齐方式。
+
+```c
+// 全局生效
+#pragma pack(4)
+
+// 局部生效
+#pragma pack(push, 1)
+...
+#pragma pack(pop)
+```
+
+`#pragma warning` 指令用于控制编译器警告的行为，例如禁止或开启特定类型的警告
+
+```c
+#pragma warning (disable: 4018) // signed/unsigned comparison
+#pragma warning (disable: 4100) // unused param
+#pragma warning (disable: 4102) // unreferenced label
+#pragma warning (disable: 4244) // conversion loss of data
+#pragma warning (disable: 4267) // size_t => int
+#pragma warning (disable: 4819) // Unicode
+#pragma warning (disable: 4996) // _CRT_SECURE_NO_WARNINGS
+```
 
 ## 数组
 
